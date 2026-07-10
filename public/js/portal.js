@@ -1,14 +1,27 @@
 
 const portalSidebar = document.getElementById('portalSidebar');
+const guruSidebar = document.getElementById('guruSidebar');
+
 document.getElementById('portalMenuButton')?.addEventListener('click', () => {
   portalSidebar?.classList.toggle('open');
 });
+
+document.getElementById('guruMenuButton')?.addEventListener('click', () => {
+  guruSidebar?.classList.toggle('open');
+});
+
 document.addEventListener('click', (event) => {
   if (
-    portalSidebar?.classList.contains('open') &&
-    !portalSidebar.contains(event.target) &&
-    !event.target.closest('#portalMenuButton')
-  ) portalSidebar.classList.remove('open');
+    (portalSidebar?.classList.contains('open') &&
+     !portalSidebar.contains(event.target) &&
+     !event.target.closest('#portalMenuButton')) ||
+    (guruSidebar?.classList.contains('open') &&
+     !guruSidebar.contains(event.target) &&
+     !event.target.closest('#guruMenuButton'))
+  ) {
+    portalSidebar?.classList.remove('open');
+    guruSidebar?.classList.remove('open');
+  }
 });
 
 document.getElementById('studentSwitcher')?.addEventListener('change', (event) => {
