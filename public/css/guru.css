@@ -1,0 +1,14 @@
+/* =========================================================
+   PORTAL GURU
+   ========================================================= */
+.guru-body .portal-heading h1{font-size:clamp(2rem,3.5vw,2.8rem)}
+
+.guru-sidebar .portal-menu-label{font-size:.88rem}
+
+.portal-kpi .portal-kpi-value{letter-spacing:-.04em}
+.portal-dashboard-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
+@media(max-width:980px){.portal-dashboard-grid{grid-template-columns:1fr}}
+
+.portal-empty{padding:40px 20px;text-align:center}
+.portal-empty h2{margin:0 0 8px;font-size:1.3rem}
+.portal-empty p{color:var(--muted);margin:0}

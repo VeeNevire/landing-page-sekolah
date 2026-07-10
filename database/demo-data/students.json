@@ -1,0 +1,207 @@
+[
+  {
+    "id": "STD-001",
+    "name": "Alif Pratama",
+    "initials": "AP",
+    "nisn": "0098765432",
+    "class": "XI RPL 1",
+    "program": "Rekayasa Perangkat Lunak",
+    "homeroom_teacher": "Ibu Rina Kusumawati, S.Kom.",
+    "academic_year": "2026/2027",
+    "semester": "Ganjil",
+    "kkm": 75,
+    "attendance": {
+      "present": 108,
+      "sick": 2,
+      "excused": 1,
+      "unexcused": 1
+    },
+    "behavior": {
+      "discipline": "A",
+      "responsibility": "A",
+      "collaboration": "B+",
+      "independence": "A-"
+    },
+    "extracurricular": [
+      {
+        "name": "Coding Club",
+        "score": "A",
+        "note": "Aktif sebagai koordinator tim web."
+      },
+      {
+        "name": "Basket",
+        "score": "B+",
+        "note": "Kehadiran dan kerja sama baik."
+      }
+    ],
+    "teacher_note": "Alif menunjukkan perkembangan kuat dalam pemrograman dan penyelesaian proyek. Perlu meningkatkan konsistensi pada Matematika, terutama latihan fungsi dan statistika.",
+    "history": [
+      {
+        "label": "X Ganjil",
+        "score": 80.2
+      },
+      {
+        "label": "X Genap",
+        "score": 82.6
+      },
+      {
+        "label": "XI Ganjil",
+        "score": 86.4
+      }
+    ],
+    "schedule": [
+      {"day":"Senin","time":"07:30–09:00","subject":"Matematika","teacher":"Bapak Dimas Arya, S.Pd."},
+      {"day":"Senin","time":"09:15–10:45","subject":"Pemrograman Web","teacher":"Ibu Rina Kusumawati, S.Kom."},
+      {"day":"Senin","time":"11:00–12:30","subject":"Bahasa Indonesia","teacher":"Bapak Ahmad Fauzi, S.Pd."},
+      {"day":"Selasa","time":"07:30–09:00","subject":"Basis Data","teacher":"Ibu Rina Kusumawati, S.Kom."},
+      {"day":"Selasa","time":"09:15–10:45","subject":"Matematika","teacher":"Bapak Dimas Arya, S.Pd."},
+      {"day":"Selasa","time":"11:00–12:30","subject":"Bahasa Inggris","teacher":"Ibu Siti Nurhaliza, S.Pd."},
+      {"day":"Rabu","time":"07:30–09:00","subject":"Pemrograman Mobile","teacher":"Ibu Rina Kusumawati, S.Kom."},
+      {"day":"Rabu","time":"09:15–10:45","subject":"Fisika","teacher":"Bapak Joko Prabowo, S.Pd."},
+      {"day":"Rabu","time":"11:00–12:30","subject":"Pendidikan Agama","teacher":"Bapak H. Muhammad Ridwan, S.Ag."},
+      {"day":"Kamis","time":"07:30–09:00","subject":"Basis Data","teacher":"Ibu Rina Kusumawati, S.Kom."},
+      {"day":"Kamis","time":"09:15–10:45","subject":"Matematika","teacher":"Bapak Dimas Arya, S.Pd."},
+      {"day":"Kamis","time":"11:00–12:30","subject":"PKn","teacher":"Bapak Ahmad Fauzi, S.Pd."},
+      {"day":"Jumat","time":"07:30–09:00","subject":"Pemrograman Web","teacher":"Ibu Rina Kusumawati, S.Kom."},
+      {"day":"Jumat","time":"09:15–10:45","subject":"Bahasa Inggris","teacher":"Ibu Siti Nurhaliza, S.Pd."},
+      {"day":"Jumat","time":"11:00–12:00","subject":"Bimbingan Konseling","teacher":"Ibu Dewi Lestari, S.Psi."}
+    ],
+    "billing": [
+      {"name":"SPP Juli 2026","amount":950000,"status":"lunas","date":"2026-07-05"},
+      {"name":"SPP Agustus 2026","amount":950000,"status":"belum","date":"2026-08-01"},
+      {"name":"Uang Kegiatan Semester","amount":250000,"status":"belum","date":"2026-07-15"},
+      {"name":"Uang Praktikum","amount":150000,"status":"lunas","date":"2026-07-10"}
+    ],
+    "notifications": [
+      {"title":"Jadwal UTS Ganjil 2026/2027","body":"Ujian Tengah Semester akan dilaksanakan pada 15–26 September 2026. Persiapkan diri dengan belajar secara rutin.","date":"2026-07-10","type":"info"},
+      {"title":"Tagihan SPP Agustus","body":"Tagihan SPP bulan Agustus 2026 sudah terbit. Silakan lakukan pembayaran sebelum jatuh tempo.","date":"2026-07-08","type":"warning"},
+      {"title":"Libur Hari Raya","body":"Sekolah libur pada hari Senin 7 Juli 2026 memperingati Hari Raya. Kegiatan belajar mengajar normal pada hari berikutnya.","date":"2026-07-05","type":"info"}
+    ],
+    "activities": [
+      {
+        "icon": "check",
+        "title": "PR Basis Data dikumpulkan",
+        "time": "9 Juli 2026 • tepat waktu"
+      },
+      {
+        "icon": "flask",
+        "title": "Nilai Kuis Matematika diperbarui",
+        "time": "8 Juli 2026 • skor 84"
+      },
+      {
+        "icon": "trophy",
+        "title": "Lolos final lomba web sekolah",
+        "time": "5 Juli 2026"
+      },
+      {
+        "icon": "note",
+        "title": "Catatan wali kelas tersedia",
+        "time": "1 Juli 2026"
+      }
+    ]
+  },
+  {
+    "id": "STD-002",
+    "name": "Alya Pratama",
+    "initials": "AL",
+    "nisn": "0101234567",
+    "class": "X SMA 2",
+    "program": "Sains & Teknologi",
+    "homeroom_teacher": "Bapak Dimas Arya, S.Pd.",
+    "academic_year": "2026/2027",
+    "semester": "Ganjil",
+    "kkm": 75,
+    "attendance": {
+      "present": 110,
+      "sick": 1,
+      "excused": 1,
+      "unexcused": 0
+    },
+    "behavior": {
+      "discipline": "A",
+      "responsibility": "A-",
+      "collaboration": "A",
+      "independence": "B+"
+    },
+    "extracurricular": [
+      {
+        "name": "Klub Sains",
+        "score": "A",
+        "note": "Aktif dalam proyek eksperimen lingkungan."
+      },
+      {
+        "name": "Paduan Suara",
+        "score": "A-",
+        "note": "Konsisten mengikuti latihan."
+      }
+    ],
+    "teacher_note": "Alya memiliki rasa ingin tahu tinggi dan mampu bekerja sangat baik dalam kelompok. Perlu lebih percaya diri saat melakukan presentasi individual.",
+    "history": [
+      {
+        "label": "VIII Genap",
+        "score": 84.5
+      },
+      {
+        "label": "IX Ganjil",
+        "score": 86.8
+      },
+      {
+        "label": "IX Genap",
+        "score": 88.1
+      },
+      {
+        "label": "X Ganjil",
+        "score": 89.3
+      }
+    ],
+    "schedule": [
+      {"day":"Senin","time":"07:30–09:00","subject":"Matematika","teacher":"Bapak Dimas Arya, S.Pd."},
+      {"day":"Senin","time":"09:15–10:45","subject":"Biologi","teacher":"Ibu Ratna Sari, M.Si."},
+      {"day":"Senin","time":"11:00–12:30","subject":"Bahasa Indonesia","teacher":"Bapak Ahmad Fauzi, S.Pd."},
+      {"day":"Selasa","time":"07:30–09:00","subject":"Fisika","teacher":"Bapak Joko Prabowo, S.Pd."},
+      {"day":"Selasa","time":"09:15–10:45","subject":"Matematika","teacher":"Bapak Dimas Arya, S.Pd."},
+      {"day":"Selasa","time":"11:00–12:30","subject":"Bahasa Inggris","teacher":"Ibu Siti Nurhaliza, S.Pd."},
+      {"day":"Rabu","time":"07:30–09:00","subject":"Kimia","teacher":"Ibu Ratna Sari, M.Si."},
+      {"day":"Rabu","time":"09:15–10:45","subject":"Ekonomi","teacher":"Bapak Haryono, S.E."},
+      {"day":"Rabu","time":"11:00–12:30","subject":"Pendidikan Agama","teacher":"Bapak H. Muhammad Ridwan, S.Ag."},
+      {"day":"Kamis","time":"07:30–09:00","subject":"Biologi","teacher":"Ibu Ratna Sari, M.Si."},
+      {"day":"Kamis","time":"09:15–10:45","subject":"Matematika","teacher":"Bapak Dimas Arya, S.Pd."},
+      {"day":"Kamis","time":"11:00–12:30","subject":"PKn","teacher":"Bapak Ahmad Fauzi, S.Pd."},
+      {"day":"Jumat","time":"07:30–09:00","subject":"Fisika","teacher":"Bapak Joko Prabowo, S.Pd."},
+      {"day":"Jumat","time":"09:15–10:45","subject":"Bahasa Inggris","teacher":"Ibu Siti Nurhaliza, S.Pd."},
+      {"day":"Jumat","time":"11:00–12:00","subject":"Bimbingan Konseling","teacher":"Ibu Dewi Lestari, S.Psi."}
+    ],
+    "billing": [
+      {"name":"SPP Juli 2026","amount":1050000,"status":"lunas","date":"2026-07-03"},
+      {"name":"SPP Agustus 2026","amount":1050000,"status":"belum","date":"2026-08-01"},
+      {"name":"Uang Kegiatan Semester","amount":300000,"status":"belum","date":"2026-07-15"}
+    ],
+    "notifications": [
+      {"title":"Jadwal UTS Ganjil 2026/2027","body":"Ujian Tengah Semester akan dilaksanakan pada 15–26 September 2026. Persiapkan diri dengan belajar secara rutin.","date":"2026-07-10","type":"info"},
+      {"title":"Laporan Praktikum Biologi","body":"Laporan praktikum Biologi telah dinilai dengan skor 92. Lihat detail di Laporan Nilai.","date":"2026-07-09","type":"success"},
+      {"title":"Tagihan SPP Agustus","body":"Tagihan SPP bulan Agustus 2026 sudah terbit. Silakan lakukan pembayaran sebelum jatuh tempo.","date":"2026-07-08","type":"warning"}
+    ],
+    "activities": [
+      {
+        "icon": "science",
+        "title": "Laporan praktikum Biologi dinilai",
+        "time": "9 Juli 2026 • skor 92"
+      },
+      {
+        "icon": "book",
+        "title": "Target membaca bulanan tercapai",
+        "time": "7 Juli 2026"
+      },
+      {
+        "icon": "mic",
+        "title": "Presentasi proyek kelompok",
+        "time": "4 Juli 2026 • sangat baik"
+      },
+      {
+        "icon": "check",
+        "title": "Seluruh tugas pekan ini selesai",
+        "time": "3 Juli 2026"
+      }
+    ]
+  }
+]
