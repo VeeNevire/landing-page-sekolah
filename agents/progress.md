@@ -45,7 +45,7 @@
 
 ## 🚧 Modul Belum Dibangun
 
--   [ ] Guru: Upload materi / lampiran per kelas
+-   [x] Guru: Upload materi / lampiran per kelas
 -   [ ] Portal admin — CRUD master data
 -   [ ] Notifikasi email/WA
 -   [ ] Integrasi LMS, absensi, SIAKAD
