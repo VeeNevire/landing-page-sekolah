@@ -18,8 +18,11 @@
         <span class="brand-text">Portal Orang Tua<small>CAKRAWALA NUSANTARA</small></span>
       </a>
       <div class="portal-user-card">
-        <strong>{{ auth()->user()->full_name ?? auth()->user()->name }}</strong>
-        <span>{{ auth()->user()->email }}</span>
+        <div class="portal-user-avatar">{{ substr(auth()->user()->name, 0, 1) }}</div>
+        <div>
+          <strong>{{ auth()->user()->full_name ?? auth()->user()->name }}</strong>
+          <span>{{ auth()->user()->email }}</span>
+        </div>
       </div>
       <nav class="portal-menu" aria-label="Menu Portal">
         <a href="{{ route('portal.dashboard', ['student_id' => $selectedStudentId ?? '']) }}"
@@ -96,7 +99,11 @@
           </button>
           <div>
             <h1 class="portal-topbar-title">@yield('title')</h1>
-            <span class="portal-topbar-date">{{ now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }}</span>
+            <span class="portal-topbar-date">
+              <span>{{ now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }}</span>
+              <span class="portal-clock-sep">•</span>
+              <span id="portalClock">--:--</span>
+            </span>
           </div>
         </div>
         @isset($students)
@@ -118,7 +125,10 @@
           </button>
           <form method="POST" action="{{ route('logout') }}" style="display:inline">
             @csrf
-            <button class="btn btn-outline" type="submit">Keluar</button>
+            <button class="btn btn-outline" type="submit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <span class="btn-text">Keluar</span>
+            </button>
           </form>
         </div>
       </header>

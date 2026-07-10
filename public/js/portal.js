@@ -29,6 +29,16 @@ document.getElementById('subjectFilter')?.addEventListener('change', (event) => 
   });
 });
 
+function updateClock() {
+  var now = new Date();
+  var h = String(now.getHours()).padStart(2,'0');
+  var m = String(now.getMinutes()).padStart(2,'0');
+  var el = document.getElementById('portalClock');
+  if(el) el.textContent = h+':'+m;
+}
+setInterval(updateClock,1000);
+updateClock();
+
 document.querySelectorAll('[data-toggle-password]').forEach(button => {
   button.addEventListener('click', () => {
     const input = document.getElementById(button.dataset.togglePassword);
