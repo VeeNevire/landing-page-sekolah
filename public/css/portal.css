@@ -148,7 +148,8 @@ body.dark .portal-demo-box{background:#312710;border-color:#604d1f;color:#ffe5a6
 }
 .portal-heading h1{font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.045em;line-height:1.05;margin:5px 0}
 .portal-heading p{color:var(--muted);margin:0}
-.portal-actions{display:flex;gap:10px;flex-wrap:nowrap}
+.portal-actions{display:flex;gap:10px;flex-wrap:nowrap;align-items:center}
+.portal-actions .btn{height:44px;line-height:1;padding:0 18px}
 .portal-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
 .portal-kpi{
   background:var(--card);border:1px solid var(--line);border-radius:19px;padding:21px;
@@ -233,9 +234,11 @@ body.dark .portal-demo-box{background:#312710;border-color:#604d1f;color:#ffe5a6
 .detail-score-card strong{display:block;font-size:.82rem}
 .detail-score-card span{color:var(--muted);font-size:.8rem}
 .detail-score-card ul{margin:8px 0 0;padding-left:18px;font-size:.85rem}
-.competency-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
-.competency-card{border:1px solid var(--line);border-radius:15px;padding:16px}
-.competency-card .level{font-weight:900;color:var(--primary-2);margin-bottom:5px}
+.competency-list{display:grid;gap:0}
+.competency-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.competency-row:last-child{border-bottom:none}
+.competency-label{font-weight:600;font-size:.92rem}
+.competency-value{font-weight:900;font-size:1.1rem;color:var(--primary-2);padding:4px 14px;border-radius:10px;background:color-mix(in srgb,var(--primary-2) 8%,transparent)}
 .security-note{font-size:.82rem;color:var(--muted);margin-top:18px}
 .portal-empty{padding:30px;text-align:center;color:var(--muted)}
 @media print{
@@ -286,7 +289,7 @@ body.dark .portal-demo-box{background:#312710;border-color:#604d1f;color:#ffe5a6
   .portal-kpi{padding:17px}
   .portal-kpi-value{font-size:1.7rem}
   .assessment-weights{grid-template-columns:repeat(2,1fr)}
-  .detail-score-grid,.competency-grid{grid-template-columns:1fr}
+  .detail-score-grid{grid-template-columns:1fr}
 }
 @media(max-width:480px){
   .portal-feature-list,.portal-kpis{grid-template-columns:1fr}

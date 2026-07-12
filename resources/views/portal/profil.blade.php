@@ -42,9 +42,12 @@
       <div style="display:grid;gap:20px">
         <section class="portal-panel">
           <div class="portal-panel-header"><div><h3>Karakter & Sikap</h3><p>Penilaian dari wali kelas.</p></div></div>
-          <div class="competency-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="competency-list">
             @foreach ($demoStudent['behavior'] as $label => $value)
-              <div class="competency-card"><div class="level">{{ $value }}</div><strong>{{ ucwords(str_replace('_', ' ', $label)) }}</strong></div>
+              <div class="competency-row">
+                <span class="competency-label">{{ ucwords(str_replace('_', ' ', $label)) }}</span>
+                <span class="competency-value">{{ $value }}</span>
+              </div>
             @endforeach
           </div>
         </section>

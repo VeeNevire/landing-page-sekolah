@@ -16,8 +16,14 @@
         <p>Rekap komponen akademik, kehadiran, karakter, kegiatan, serta catatan tindak lanjut.</p>
       </div>
       <div class="portal-actions no-print">
-        <button class="btn btn-outline" onclick="window.print()">Cetak / Simpan PDF</button>
-        <a class="btn btn-primary" href="{{ route('portal.laporan.csv', ['student_id' => $selectedStudentId]) }}">Unduh CSV</a>
+        <button class="btn btn-outline" onclick="window.print()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+          Cetak / Simpan PDF
+        </button>
+        <a class="btn btn-primary" href="{{ route('portal.laporan.csv', ['student_id' => $selectedStudentId]) }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Unduh CSV
+        </a>
       </div>
     </div>
 
@@ -124,9 +130,12 @@
 
       <section class="portal-panel" id="karakter">
         <div class="portal-panel-header"><div><h2>Karakter & Sikap</h2><p>Pengamatan wali kelas dan guru.</p></div></div>
-        <div class="competency-grid">
+        <div class="competency-list">
           @foreach ($demoStudent['behavior'] as $label => $value)
-            <div class="competency-card"><div class="level">{{ $value }}</div><strong>{{ ucwords(str_replace('_', ' ', $label)) }}</strong></div>
+            <div class="competency-row">
+              <span class="competency-label">{{ ucwords(str_replace('_', ' ', $label)) }}</span>
+              <span class="competency-value">{{ $value }}</span>
+            </div>
           @endforeach
         </div>
       </section>
