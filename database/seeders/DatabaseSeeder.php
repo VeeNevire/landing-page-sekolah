@@ -13,6 +13,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call([
+            AdminUserSeeder::class,
+        ]);
+
         $parent = User::factory()->create([
             'name' => 'Bapak/Ibu Pratama',
             'full_name' => 'Bapak/Ibu Pratama',

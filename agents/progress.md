@@ -43,20 +43,38 @@
 -   [x] Demo data (JSON) — students, grades, schedule, billing, notifications
 -   [x] Sidebar + topbar desain portal
 
+### Portal Admin (`/admin/*`)
+
+-   [x] Akun demo admin (`admin@demo.sch.id` / `Demo123!`)
+-   [x] Admin layout (sidebar, topbar, footer — fork dari guru dengan warna indigo)
+-   [x] Dashboard — KPI siswa/guru/orang tua/kelas, info sistem, recent audit log
+-   [x] Login page contextual — role admin + demo akun + switching link
+-   [x] Role-based redirect setelah login — admin → `/admin/dashboard`
+-   [x] Kelola Pengguna — CRUD user + toggle aktif/nonaktif + reset password + filter role/search
+-   [x] Kelola Siswa — CRUD siswa + assign wali kelas + filter kelas/status/search
+-   [x] Import Siswa CSV — upload file CSV + upsert by NISN
+-   [x] Mata Pelajaran — CRUD + update KKM inline
+-   [x] Periode Akademik — CRUD + activate toggle (hanya 1 aktif)
+-   [x] Penugasan Guru — CRUD penugasan (periode + mapel + guru + kelas) + filter periode
+-   [x] Hubungan Orang Tua–Siswa — link/unlink + set relationship & is_primary
+-   [x] Audit Log — read-only table + filter by user/action/tanggal
+-   [x] Dropdown "Portal" di navbar public — tambah link Admin
+
 ## 🚧 Modul Belum Dibangun
 
 -   [x] Guru: Upload materi / lampiran per kelas
--   [ ] Portal admin — CRUD master data
+-   [x] Portal admin — CRUD master data
 -   [ ] Notifikasi email/WA
 -   [ ] Integrasi LMS, absensi, SIAKAD
 -   [ ] Approval/publikasi nilai (draft vs final)
--   [ ] Security: audit log, rate limiting
+-   [ ] Security: audit log aktif (tabel sudah ada, perlu logging di controller), rate limiting
 
 ## 📦 Data
 
--   Database: MySQL, 15 migrations, 11 models
--   Tabel: users, students, subjects, teaching_assignments, assessments, assessment_scores, attendance, teacher_notes, behavior_scores, parent_student, academic_periods, audit_logs
+-   Database: MySQL, 16 migrations, 12 models
+-   Tabel: users, students, subjects, teaching_assignments, assessments, assessment_scores, attendance, teacher_notes, behavior_scores, parent_student, academic_periods, audit_logs, materials
 -   Demo JSON: `database/demo-data/`
 -   Akun demo orang tua: `orangtua@demo.sch.id` / `Demo123!`
 -   Akun demo guru: `guru@demo.sch.id` / `Demo123!`
 -   Akun wali kelas: `rina@cakrawala.sch.id` / `Demo123!`
+-   Akun demo admin: `admin@demo.sch.id` / `Demo123!`

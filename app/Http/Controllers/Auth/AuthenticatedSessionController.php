@@ -31,7 +31,11 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $role = $user->role ?? 'parent';
 
-        if (in_array($role, ['teacher', 'homeroom', 'admin', 'principal'])) {
+        if ($role === 'admin') {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
+
+        if (in_array($role, ['teacher', 'homeroom', 'principal'])) {
             return redirect()->intended(route('guru.dashboard', absolute: false));
         }
 

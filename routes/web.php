@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\ReportController;
@@ -41,6 +42,50 @@ Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin,principal'])
     Route::get('/materi', [GuruController::class, 'materi'])->name('materi');
     Route::post('/materi', [GuruController::class, 'materiStore'])->name('materi.store');
     Route::delete('/materi/{material}', [GuruController::class, 'materiDestroy'])->name('materi.destroy');
+});
+
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
+    Route::get('/users', [AdminController::class, 'users'])->name('users.index');
+    Route::get('/users/create', [AdminController::class, 'usersCreate'])->name('users.create');
+    Route::post('/users', [AdminController::class, 'usersStore'])->name('users.store');
+    Route::get('/users/{user}/edit', [AdminController::class, 'usersEdit'])->name('users.edit');
+    Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('users.update');
+    Route::patch('/users/{user}/toggle', [AdminController::class, 'usersToggle'])->name('users.toggle');
+    Route::post('/users/{user}/reset-password', [AdminController::class, 'usersResetPassword'])->name('users.reset-password');
+    Route::delete('/users/{user}', [AdminController::class, 'usersDestroy'])->name('users.destroy');
+
+    Route::get('/students', [AdminController::class, 'students'])->name('students.index');
+    Route::get('/students/create', [AdminController::class, 'studentsCreate'])->name('students.create');
+    Route::post('/students', [AdminController::class, 'studentsStore'])->name('students.store');
+    Route::get('/students/import', [AdminController::class, 'studentImportForm'])->name('students.import');
+    Route::post('/students/import', [AdminController::class, 'studentImport'])->name('students.import.store');
+    Route::get('/students/{student}/edit', [AdminController::class, 'studentsEdit'])->name('students.edit');
+    Route::put('/students/{student}', [AdminController::class, 'studentsUpdate'])->name('students.update');
+    Route::delete('/students/{student}', [AdminController::class, 'studentsDestroy'])->name('students.destroy');
+
+    Route::get('/subjects', [AdminController::class, 'subjects'])->name('subjects.index');
+    Route::post('/subjects', [AdminController::class, 'subjectsStore'])->name('subjects.store');
+    Route::put('/subjects/{subject}', [AdminController::class, 'subjectsUpdate'])->name('subjects.update');
+    Route::delete('/subjects/{subject}', [AdminController::class, 'subjectsDestroy'])->name('subjects.destroy');
+
+    Route::get('/periods', [AdminController::class, 'periods'])->name('periods.index');
+    Route::post('/periods', [AdminController::class, 'periodsStore'])->name('periods.store');
+    Route::put('/periods/{period}', [AdminController::class, 'periodsUpdate'])->name('periods.update');
+    Route::delete('/periods/{period}', [AdminController::class, 'periodsDestroy'])->name('periods.destroy');
+    Route::patch('/periods/{period}/activate', [AdminController::class, 'periodsActivate'])->name('periods.activate');
+
+    Route::get('/teaching', [AdminController::class, 'teaching'])->name('teaching.index');
+    Route::get('/teaching/create', [AdminController::class, 'teachingCreate'])->name('teaching.create');
+    Route::post('/teaching', [AdminController::class, 'teachingStore'])->name('teaching.store');
+    Route::delete('/teaching/{assignment}', [AdminController::class, 'teachingDestroy'])->name('teaching.destroy');
+
+    Route::get('/parent-student', [AdminController::class, 'parentStudent'])->name('parent-student.index');
+    Route::post('/parent-student', [AdminController::class, 'parentStudentStore'])->name('parent-student.store');
+    Route::delete('/parent-student', [AdminController::class, 'parentStudentDestroy'])->name('parent-student.destroy');
+
+    Route::get('/audit', [AdminController::class, 'audit'])->name('audit.index');
 });
 
 Route::middleware('auth')->group(function () {
