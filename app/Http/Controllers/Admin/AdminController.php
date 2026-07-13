@@ -84,6 +84,7 @@ class AdminController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
             'is_active' => true,
+            'email_verified_at' => now(),
         ]);
 
         AuditService::log('user.create', 'User', $user->id);
