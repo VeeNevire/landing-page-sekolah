@@ -37,4 +37,9 @@ class AcademicPeriod extends Model
     {
         return $this->hasMany(BehaviorScore::class, 'period_id');
     }
+
+    public function guruMapels()
+    {
+        return $this->hasMany(GuruMapel::class, 'semester_id');
+    }
 }

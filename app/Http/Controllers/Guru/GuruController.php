@@ -42,6 +42,7 @@ class GuruController extends Controller
         $homeroomStudents = $user->homeroomStudents()->where('status', 'active')->get();
         $isHomeroom = $homeroomStudents->isNotEmpty();
         $totalStudents = collect($studentsPerClass)->flatten()->unique('id')->count();
+        $activePeriod = $this->getActivePeriod();
 
         $schedule = $this->generateSchedule($teachingAssignments);
         $dayNames = ['Senin','Selasa','Rabu','Kamis','Jumat'];
@@ -60,6 +61,7 @@ class GuruController extends Controller
             'schedule' => $schedule,
             'todaySchedule' => $todaySchedule,
             'today' => $today,
+            'activePeriod' => $activePeriod,
         ]);
     }
 
@@ -68,24 +70,108 @@ class GuruController extends Controller
         $user = $request->user();
         $teachingAssignments = $this->getAssignments($user);
         $classNames = $teachingAssignments->pluck('class_name')->unique()->values();
+        $activePeriod = $this->getActivePeriod();
 
         $classList = [];
         foreach ($classNames as $class) {
             $students = Student::where('class_name', $class)->where('status', 'active')->get();
             $subjects = $teachingAssignments->where('class_name', $class)
-                ->map(fn($a) => ['id' => $a->subject->id, 'name' => $a->subject->name])
+                ->map(fn($a) => ['id' => $a->subject->id, 'name' => $a->subject->name, 'code' => $a->subject->code])
                 ->unique('id')->values()->all();
+
+            $subjectAverages = [];
+            foreach ($subjects as $subject) {
+                $scores = \App\Models\AssessmentScore::whereHas('assessment.teachingAssignment', function ($q) use ($class, $subject, $activePeriod) {
+                    $q->where('class_name', $class)->where('subject_id', $subject['id'])->where('period_id', $activePeriod?->id);
+                })->pluck('score')->filter()->toArray();
+                $subjectAverages[$subject['id']] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
+            }
+
+            $studentIds = $students->pluck('id');
+            $attendance = \App\Models\Attendance::whereIn('student_id', $studentIds)
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')->pluck('total', 'status')->toArray();
+            $totalDays = array_sum($attendance);
+            $attendanceRate = $totalDays > 0 ? round(($attendance['present'] ?? 0) / $totalDays * 100, 1) : 0;
+
             $classList[] = [
                 'name' => $class,
                 'student_count' => $students->count(),
                 'students' => $students,
                 'subjects' => $subjects,
+                'subject_averages' => $subjectAverages,
+                'attendance_rate' => $attendanceRate,
+                'attendance' => $attendance,
+                'total_attendance_days' => $totalDays,
             ];
         }
 
         return view('guru.kelas', [
             'classList' => $classList,
         ]);
+    }
+
+    public function kelasData(Request $request, $className)
+    {
+        $user = $request->user();
+        $activePeriod = $this->getActivePeriod();
+
+        $students = Student::where('class_name', $className)->where('status', 'active')
+            ->orderBy('full_name')->get()
+            ->map(fn($s) => [
+                'id' => $s->id,
+                'full_name' => $s->full_name,
+                'nisn' => $s->nisn,
+                'birth_date' => $s->birth_date?->format('d M Y'),
+            ]);
+
+        $assignments = \App\Models\TeachingAssignment::where('class_name', $className)
+            ->where('period_id', $activePeriod?->id)
+            ->with('subject')
+            ->get();
+
+        $subjectGrades = [];
+        foreach ($assignments as $a) {
+            $scores = \App\Models\AssessmentScore::whereHas('assessment', fn($q) => $q->where('teaching_assignment_id', $a->id))
+                ->pluck('score')->filter()->toArray();
+            $avg = $scores ? round(array_sum($scores) / count($scores), 1) : null;
+            $subjectGrades[] = [
+                'subject' => $a->subject->name,
+                'code' => $a->subject->code,
+                'average' => $avg,
+                'grade' => $avg !== null ? $this->gradeLetter($avg) : '-',
+            ];
+        }
+
+        $studentIds = $studentIds ?? $students->pluck('id');
+        $attendance = \App\Models\Attendance::whereIn('student_id', $studentIds)
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')->pluck('total', 'status')->toArray();
+
+        $overallAvg = collect($subjectGrades)->whereNotNull('average')->avg('average');
+
+        return response()->json([
+            'class_name' => $className,
+            'students' => $students,
+            'subject_grades' => $subjectGrades,
+            'attendance' => $attendance,
+            'total_attendance_days' => array_sum($attendance),
+            'attendance_rate' => array_sum($attendance) > 0 ? round(($attendance['present'] ?? 0) / array_sum($attendance) * 100, 1) : 0,
+            'overall_average' => $overallAvg ? round($overallAvg, 1) : null,
+        ]);
+    }
+
+    private function gradeLetter(float $score): string
+    {
+        return match (true) {
+            $score >= 90 => 'A',
+            $score >= 85 => 'A-',
+            $score >= 80 => 'B+',
+            $score >= 75 => 'B',
+            $score >= 70 => 'C+',
+            $score >= 65 => 'C',
+            default => 'D',
+        };
     }
 
     public function nilai(Request $request)
@@ -130,7 +216,7 @@ class GuruController extends Controller
             $scores[$assess->id] = $assessScores;
         }
 
-        $savedDraft = session(" nilai_draft.{$class}.{$subject}", []);
+        $savedDraft = session("nilai_draft.{$class}.{$subject}", []);
 
         return view('guru.nilai-detail', [
             'class' => $class,
@@ -299,7 +385,7 @@ class GuruController extends Controller
         ]);
 
         AuditService::log('teacher-note.create', 'TeacherNote', $note->id);
-        return back()->with('success', 'Catatan berhasil disimpan.');
+        return redirect()->route('guru.catatan', ['student' => $validated['student_id']])->with('success', 'Catatan berhasil disimpan.');
     }
 
     public function publikasi(Request $request)

@@ -452,7 +452,7 @@ class AdminController extends Controller
 
     public function subjects(Request $request)
     {
-        $query = Subject::query();
+        $query = Subject::with('gurus');
 
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
@@ -462,8 +462,9 @@ class AdminController extends Controller
         }
 
         $subjects = $query->orderBy('code')->paginate(15)->withQueryString();
+        $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
 
-        return view('admin.subjects', compact('subjects'));
+        return view('admin.subjects', compact('subjects', 'teachers'));
     }
 
     public function subjectData(Subject $subject)
@@ -473,6 +474,7 @@ class AdminController extends Controller
             'code' => $subject->code,
             'name' => $subject->name,
             'kkm' => $subject->kkm,
+            'guru_ids' => $subject->gurus->pluck('id')->toArray(),
         ]);
     }
 
@@ -482,9 +484,19 @@ class AdminController extends Controller
             'code' => 'required|string|max:20|unique:subjects,code',
             'name' => 'required|string|max:120',
             'kkm' => 'required|numeric|min:0|max:100',
+            'guru_ids' => 'nullable|array',
+            'guru_ids.*' => 'exists:users,id',
         ]);
 
-        $subject = Subject::create($validated);
+        $subject = Subject::create([
+            'code' => $validated['code'],
+            'name' => $validated['name'],
+            'kkm' => $validated['kkm'],
+        ]);
+
+        if (!empty($validated['guru_ids'])) {
+            $subject->gurus()->sync($validated['guru_ids']);
+        }
 
         AuditService::log('subject.create', 'Subject', $subject->id);
 
@@ -501,9 +513,17 @@ class AdminController extends Controller
             'code' => 'required|string|max:20|unique:subjects,code,' . $subject->id,
             'name' => 'required|string|max:120',
             'kkm' => 'required|numeric|min:0|max:100',
+            'guru_ids' => 'nullable|array',
+            'guru_ids.*' => 'exists:users,id',
         ]);
 
-        $subject->update($validated);
+        $subject->update([
+            'code' => $validated['code'],
+            'name' => $validated['name'],
+            'kkm' => $validated['kkm'],
+        ]);
+
+        $subject->gurus()->sync($validated['guru_ids'] ?? []);
 
         AuditService::log('subject.update', 'Subject', $subject->id);
 
@@ -517,6 +537,7 @@ class AdminController extends Controller
     public function subjectsDestroy(Request $request, Subject $subject)
     {
         AuditService::log('subject.delete', 'Subject', $subject->id);
+        $subject->gurus()->detach();
         $subject->teachingAssignments()->delete();
         $subject->delete();
 

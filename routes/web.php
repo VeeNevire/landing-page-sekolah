@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\PenugasanController;
+use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\ReportController;
@@ -29,6 +31,7 @@ Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->grou
 Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin,principal'])->prefix('guru')->name('guru.')->group(function () {
     Route::get('/dashboard', [GuruController::class, 'dashboard'])->name('dashboard');
     Route::get('/kelas', [GuruController::class, 'kelas'])->name('kelas');
+    Route::get('/kelas/{className}/data', [GuruController::class, 'kelasData'])->name('kelas.data');
     Route::get('/nilai', [GuruController::class, 'nilai'])->name('nilai');
     Route::get('/nilai/{class}/{subject}', [GuruController::class, 'nilaiDetail'])->name('nilai.detail');
     Route::post('/nilai/{class}/{subject}', [GuruController::class, 'nilaiStore'])->name('nilai.store');
@@ -87,6 +90,15 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('/teaching', [AdminController::class, 'teachingStore'])->name('teaching.store');
     Route::put('/teaching/{assignment}', [AdminController::class, 'teachingUpdate'])->name('teaching.update');
     Route::delete('/teaching/{assignment}', [AdminController::class, 'teachingDestroy'])->name('teaching.destroy');
+
+    Route::get('/penugasan', [PenugasanController::class, 'index'])->name('penugasan.index');
+    Route::post('/penugasan', [PenugasanController::class, 'store'])->name('penugasan.store');
+    Route::delete('/penugasan/{guruMapel}', [PenugasanController::class, 'destroy'])->name('penugasan.destroy');
+    Route::post('/penugasan/copy', [PenugasanController::class, 'copyFromPrevious'])->name('penugasan.copy');
+
+    Route::get('/jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
+    Route::post('/jadwal', [JadwalController::class, 'store'])->name('jadwal.store');
+    Route::delete('/jadwal/{jadwal}', [JadwalController::class, 'destroy'])->name('jadwal.destroy');
 
     Route::get('/parent-student', [AdminController::class, 'parentStudent'])->name('parent-student.index');
     Route::post('/parent-student', [AdminController::class, 'parentStudentStore'])->name('parent-student.store');

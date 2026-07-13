@@ -7,7 +7,7 @@
   <div>
     <span class="kicker">Dashboard guru</span>
     <h1>Selamat datang, {{ auth()->user()->full_name ?? auth()->user()->name }}.</h1>
-    <p>Berikut ringkasan kelas dan jadwal mengajar Anda Semester Ganjil Tahun Ajaran 2026/2027.</p>
+    <p>Berikut ringkasan kelas dan jadwal mengajar Anda {{ $activePeriod?->semester === 'ganjil' ? 'Ganjil' : 'Genap' }} Tahun Ajaran {{ $activePeriod?->academic_year ?? '-' }}.</p>
   </div>
 </div>
 
@@ -30,7 +30,7 @@
   <article class="portal-kpi">
     <div class="portal-kpi-label"><span>Status</span><span class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span></div>
     <strong class="portal-kpi-value" style="color:var(--success);font-size:1.4rem">{{ $isHomeroom ? 'Wali Kelas' : 'Guru Mapel' }}</strong>
-    <span class="portal-kpi-note">{{ $isHomeroom ? 'XI RPL 1' : 'Mengajar' }}</span>
+    <span class="portal-kpi-note">{{ $isHomeroom ? ($homeroomStudents->first()?->class_name ?? '-') : 'Mengajar' }}</span>
   </article>
 </section>
 
@@ -93,7 +93,7 @@
     <section class="portal-panel">
       <div class="portal-panel-header">
         <div>
-          <h3>Wali Kelas — XI RPL 1</h3>
+          <h3>Wali Kelas — {{ $homeroomStudents->first()?->class_name ?? '-' }}</h3>
           <p>{{ $homeroomStudents->count() }} siswa di kelas Anda.</p>
         </div>
       </div>

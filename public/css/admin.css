@@ -61,6 +61,11 @@
 .modal-box .field{margin-bottom:14px}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 
+.guru-check-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:.15s ease;font-size:.88rem}
+.guru-check-item:hover{background:color-mix(in srgb,var(--primary-2) 6%,var(--card))}
+.guru-check-item input[type="checkbox"]{accent-color:var(--primary-2);width:16px;height:16px}
+.guru-check-item small{color:var(--muted);font-size:.75rem;margin-left:auto}
+
 /* Wizard steps */
 .wizard-steps{display:flex;align-items:center;gap:0;margin-bottom:24px;padding:0 24px}
 .wizard-step{display:flex;align-items:center;gap:8px;flex:1;position:relative}

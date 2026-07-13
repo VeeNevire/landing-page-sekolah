@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
   <link rel="stylesheet" href="{{ asset('css/guru.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
   @stack('styles')
 </head>
 <body class="portal-body guru-body">
