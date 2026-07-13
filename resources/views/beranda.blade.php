@@ -1,5 +1,9 @@
 @extends('layouts.public')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+@endpush
+
 @section('title', config('app.name'))
 @section('meta_description', 'Website resmi SMA/SMK Cakrawala Nusantara — sekolah unggul, terampil, dan berkarakter.')
 

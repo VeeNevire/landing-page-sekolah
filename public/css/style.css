@@ -54,18 +54,18 @@ button{cursor:pointer}
 .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.topbar{
-  background:#072c58;color:#d9e7fb;font-size:.88rem;
-}
-.topbar .container{display:flex;justify-content:space-between;gap:20px;padding:8px 0}
-.topbar-info{display:flex;gap:18px;flex-wrap:wrap}
 .navbar{
-  position:sticky;top:0;z-index:50;
-  background:color-mix(in srgb,var(--card) 92%,transparent);
-  backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--line);
+  position:fixed;top:14px;left:50%;transform:translateX(-50%);
+  width:min(calc(100% - 40px),var(--container));
+  z-index:50;
+  background:color-mix(in srgb,var(--card) 88%,transparent);
+  backdrop-filter:blur(20px);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  border:1px solid color-mix(in srgb,var(--line) 60%,transparent);
 }
-.nav-inner{height:78px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+main{padding-top:100px}
+.nav-inner{height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:900}
 .brand-mark{
   width:48px;height:48px;border-radius:15px;display:grid;place-items:center;
@@ -304,8 +304,7 @@ footer p,footer a{color:#afc4df}
 .reveal{opacity:0;transform:translateY(20px);transition:.65s ease}
 .reveal.visible{opacity:1;transform:none}
 @media(max-width:980px){
-  .topbar{display:none}
-  .nav-links{position:fixed;left:16px;right:16px;top:88px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow);display:none;flex-direction:column;align-items:stretch}
+  .nav-links{position:fixed;left:16px;right:16px;top:90px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow);display:none;flex-direction:column;align-items:stretch}
   .nav-links.open{display:flex}
   .nav-links a{padding:12px 14px}
   .menu-btn{display:grid}
