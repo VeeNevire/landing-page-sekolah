@@ -9,6 +9,7 @@ use App\Models\Attendance;
 use App\Models\Material;
 use App\Models\Student;
 use App\Models\TeacherNote;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 
 class GuruController extends Controller
@@ -181,6 +182,8 @@ class GuruController extends Controller
             }
         }
 
+        AuditService::log('assessment.create', 'Assessment', $assessment->id);
+
         return back()->with('success', "Nilai \"{$validated['title']}\" berhasil disimpan.");
     }
 
@@ -231,6 +234,7 @@ class GuruController extends Controller
             }
         }
 
+        AuditService::log('attendance.record', 'Attendance', null, $user->id);
         return back()->with('success', 'Absensi berhasil disimpan.');
     }
 
@@ -285,7 +289,7 @@ class GuruController extends Controller
 
         $period = $this->getActivePeriod();
 
-        TeacherNote::create([
+        $note = TeacherNote::create([
             'student_id' => $validated['student_id'],
             'period_id' => $period?->id,
             'author_id' => $request->user()->id,
@@ -294,6 +298,7 @@ class GuruController extends Controller
             'follow_up' => $validated['follow_up'] ?? null,
         ]);
 
+        AuditService::log('teacher-note.create', 'TeacherNote', $note->id);
         return back()->with('success', 'Catatan berhasil disimpan.');
     }
 
@@ -333,6 +338,7 @@ class GuruController extends Controller
             ->whereNull('published_at')
             ->update(['published_at' => now()]);
 
+        AuditService::log('grade.publish', 'Assessment', null);
         return back()->with('success', "Nilai untuk kelas {$class} berhasil dipublikasikan.");
     }
 
@@ -369,8 +375,9 @@ class GuruController extends Controller
             'url' => 'nullable|url|max:500',
         ]);
 
-        Material::create($validated);
+        $material = Material::create($validated);
 
+        AuditService::log('material.create', 'Material', $material->id);
         return back()->with('success', 'Materi berhasil ditambahkan.');
     }
 
@@ -382,6 +389,7 @@ class GuruController extends Controller
             abort(403);
         }
 
+        AuditService::log('material.delete', 'Material', $material->id);
         $material->delete();
 
         return back()->with('success', 'Materi berhasil dihapus.');

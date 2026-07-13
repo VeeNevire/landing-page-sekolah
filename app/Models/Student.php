@@ -53,4 +53,19 @@ class Student extends Model
     {
         return $this->hasMany(BehaviorScore::class);
     }
+
+    public function billings()
+    {
+        return $this->hasMany(Billing::class);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function extracurriculars()
+    {
+        return $this->hasMany(Extracurricular::class);
+    }
 }

@@ -2,6 +2,7 @@
 /* =========================================================
    PORTAL ORANG TUA
    ========================================================= */
+main{padding-top:0}
 .portal-body{background:#eef3f9}
 body.dark.portal-body{background:#07111e}
 .portal-login-page{

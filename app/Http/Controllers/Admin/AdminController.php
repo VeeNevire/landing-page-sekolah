@@ -11,8 +11,10 @@ use App\Models\Subject;
 use App\Models\TeachingAssignment;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use App\Services\AuditService;
 
 class AdminController extends Controller
 {
@@ -38,7 +40,8 @@ class AdminController extends Controller
     {
         $query = User::query();
         if ($role = $request->query('role')) {
-            $query->where('role', $role);
+            $roles = explode(',', $role);
+            $query->whereIn('role', $roles);
         }
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
@@ -49,7 +52,14 @@ class AdminController extends Controller
         }
         $users = $query->latest()->paginate(15)->withQueryString();
 
-        return view('admin.users', compact('users'));
+        $tabCounts = [
+            'all' => User::count(),
+            'parent' => User::where('role', 'parent')->count(),
+            'guru' => User::whereIn('role', ['teacher', 'homeroom', 'principal'])->count(),
+            'admin' => User::where('role', 'admin')->count(),
+        ];
+
+        return view('admin.users', compact('users', 'tabCounts'));
     }
 
     public function usersCreate()
@@ -67,7 +77,7 @@ class AdminController extends Controller
             'role' => 'required|in:parent,teacher,homeroom,admin,principal',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'full_name' => $validated['full_name'] ?? null,
             'email' => $validated['email'],
@@ -76,12 +86,30 @@ class AdminController extends Controller
             'is_active' => true,
         ]);
 
+        AuditService::log('user.create', 'User', $user->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Pengguna berhasil ditambahkan.', 'user' => $user]);
+        }
+
         return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil ditambahkan.');
     }
 
     public function usersEdit(User $user)
     {
         return view('admin.user-form', ['user' => $user]);
+    }
+
+    public function userData(User $user)
+    {
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'full_name' => $user->full_name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'is_active' => $user->is_active,
+        ]);
     }
 
     public function usersUpdate(Request $request, User $user)
@@ -100,13 +128,26 @@ class AdminController extends Controller
             'role' => $validated['role'],
         ]);
 
+        AuditService::log('user.update', 'User', $user->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Pengguna berhasil diperbarui.', 'user' => $user]);
+        }
+
         return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil diperbarui.');
     }
 
-    public function usersToggle(User $user)
+    public function usersToggle(Request $request, User $user)
     {
         $user->update(['is_active' => !$user->is_active]);
         $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        AuditService::log('user.toggle', 'User', $user->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => "Akun {$user->name} berhasil {$status}.", 'is_active' => $user->is_active]);
+        }
+
         return back()->with('success', "Akun {$user->name} berhasil {$status}.");
     }
 
@@ -117,15 +158,27 @@ class AdminController extends Controller
         ]);
 
         $user->update(['password' => Hash::make($validated['new_password'])]);
+
+        AuditService::log('user.reset-password', 'User', $user->id);
         return back()->with('success', "Password {$user->name} berhasil direset.");
     }
 
-    public function usersDestroy(User $user)
+    public function usersDestroy(Request $request, User $user)
     {
         if ($user->id === auth()->id()) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Tidak bisa menghapus akun sendiri.']);
+            }
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
         }
+
+        AuditService::log('user.delete', 'User', $user->id);
         $user->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Pengguna berhasil dihapus.']);
+        }
+
         return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil dihapus.');
     }
 
@@ -147,14 +200,63 @@ class AdminController extends Controller
 
         $students = $query->with('homeroomTeacher')->latest()->paginate(15)->withQueryString();
         $classNames = Student::distinct()->pluck('class_name')->sort()->values();
+        $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
 
-        return view('admin.students', compact('students', 'classNames'));
+        $tabCounts = [
+            'all' => Student::count(),
+            'active' => Student::where('status', 'active')->count(),
+            'graduated' => Student::where('status', 'graduated')->count(),
+            'inactive' => Student::where('status', 'inactive')->count(),
+        ];
+
+        return view('admin.students', compact('students', 'classNames', 'teachers', 'tabCounts'));
     }
 
     public function studentsCreate()
     {
         $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
         return view('admin.student-form', ['student' => null, 'teachers' => $teachers]);
+    }
+
+    public function studentData(Student $student)
+    {
+        $parents = $student->parents()->get()->map(fn($p) => [
+            'id' => $p->id,
+            'name' => $p->full_name ?: $p->name,
+            'email' => $p->email,
+            'pivot' => [
+                'relationship' => $p->pivot->relationship,
+                'is_primary' => $p->pivot->is_primary,
+            ],
+        ]);
+
+        return response()->json([
+            'id' => $student->id,
+            'nisn' => $student->nisn,
+            'full_name' => $student->full_name,
+            'birth_date' => $student->birth_date?->format('Y-m-d'),
+            'class_name' => $student->class_name,
+            'program_name' => $student->program_name,
+            'homeroom_teacher_id' => $student->homeroom_teacher_id,
+            'status' => $student->status,
+            'parents' => $parents,
+        ]);
+    }
+
+    public function parentsList()
+    {
+        $parents = User::where('role', 'parent')
+            ->withCount('students')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->full_name ?: $p->name,
+                'email' => $p->email,
+                'students_count' => $p->students_count,
+            ]);
+
+        return response()->json($parents);
     }
 
     public function studentsStore(Request $request)
@@ -167,9 +269,53 @@ class AdminController extends Controller
             'program_name' => 'required|string|max:120',
             'homeroom_teacher_id' => 'nullable|exists:users,id',
             'status' => 'required|in:active,graduated,inactive',
+            'parent_action' => 'required|in:existing,new,none',
+            'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
+            'parent_name' => 'required_if:parent_action,new|nullable|string|max:255',
+            'parent_email' => 'required_if:parent_action,new|nullable|email|unique:users,email',
+            'parent_password' => 'required_if:parent_action,new|nullable|min:6',
+            'parent_relationship' => 'nullable|string|max:40',
         ]);
 
-        Student::create($validated);
+        $student = Student::create([
+            'nisn' => $validated['nisn'],
+            'full_name' => $validated['full_name'],
+            'birth_date' => $validated['birth_date'] ?? null,
+            'class_name' => $validated['class_name'],
+            'program_name' => $validated['program_name'],
+            'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? null,
+            'status' => $validated['status'],
+        ]);
+
+        if (($validated['parent_action'] ?? 'none') !== 'none') {
+            if ($validated['parent_action'] === 'existing') {
+                $parentId = $validated['parent_id'];
+            } else {
+                $parent = User::create([
+                    'name' => $validated['parent_name'],
+                    'full_name' => $validated['parent_name'],
+                    'email' => $validated['parent_email'],
+                    'password' => Hash::make($validated['parent_password']),
+                    'role' => 'parent',
+                    'is_active' => true,
+                ]);
+                $parentId = $parent->id;
+            }
+
+            DB::table('parent_student')->insert([
+                'parent_id' => $parentId,
+                'student_id' => $student->id,
+                'relationship' => $validated['parent_relationship'] ?? 'Orang Tua',
+                'is_primary' => true,
+            ]);
+        }
+
+        AuditService::log('student.create', 'Student', $student->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Siswa berhasil ditambahkan.']);
+        }
+
         return redirect()->route('admin.students.index')->with('success', 'Siswa berhasil ditambahkan.');
     }
 
@@ -189,15 +335,72 @@ class AdminController extends Controller
             'program_name' => 'required|string|max:120',
             'homeroom_teacher_id' => 'nullable|exists:users,id',
             'status' => 'required|in:active,graduated,inactive',
+            'parent_action' => 'nullable|in:existing,new,none,disconnect',
+            'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
+            'parent_name' => 'required_if:parent_action,new|nullable|string|max:255',
+            'parent_email' => 'required_if:parent_action,new|nullable|email|unique:users,email',
+            'parent_password' => 'required_if:parent_action,new|nullable|min:6',
+            'parent_relationship' => 'nullable|string|max:40',
+            'disconnect_parent_id' => 'nullable|exists:users,id',
         ]);
 
-        $student->update($validated);
+        $student->update([
+            'nisn' => $validated['nisn'],
+            'full_name' => $validated['full_name'],
+            'birth_date' => $validated['birth_date'] ?? null,
+            'class_name' => $validated['class_name'],
+            'program_name' => $validated['program_name'],
+            'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? null,
+            'status' => $validated['status'],
+        ]);
+
+        if (!empty($validated['disconnect_parent_id'])) {
+            $student->parents()->detach($validated['disconnect_parent_id']);
+        }
+
+        if (!empty($validated['parent_action']) && $validated['parent_action'] !== 'none') {
+            if ($validated['parent_action'] === 'existing') {
+                $parentId = $validated['parent_id'];
+            } else {
+                $parent = User::create([
+                    'name' => $validated['parent_name'],
+                    'full_name' => $validated['parent_name'],
+                    'email' => $validated['parent_email'],
+                    'password' => Hash::make($validated['parent_password']),
+                    'role' => 'parent',
+                    'is_active' => true,
+                ]);
+                $parentId = $parent->id;
+            }
+
+            if (!$student->parents()->where('parent_id', $parentId)->exists()) {
+                DB::table('parent_student')->insert([
+                    'parent_id' => $parentId,
+                    'student_id' => $student->id,
+                    'relationship' => $validated['parent_relationship'] ?? 'Orang Tua',
+                    'is_primary' => true,
+                ]);
+            }
+        }
+
+        AuditService::log('student.update', 'Student', $student->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Data siswa berhasil diperbarui.']);
+        }
+
         return redirect()->route('admin.students.index')->with('success', 'Data siswa berhasil diperbarui.');
     }
 
-    public function studentsDestroy(Student $student)
+    public function studentsDestroy(Request $request, Student $student)
     {
+        AuditService::log('student.delete', 'Student', $student->id);
         $student->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Siswa berhasil dihapus.']);
+        }
+
         return redirect()->route('admin.students.index')->with('success', 'Siswa berhasil dihapus.');
     }
 
@@ -248,8 +451,28 @@ class AdminController extends Controller
 
     public function subjects(Request $request)
     {
-        $subjects = Subject::orderBy('code')->paginate(15);
+        $query = Subject::query();
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%");
+            });
+        }
+
+        $subjects = $query->orderBy('code')->paginate(15)->withQueryString();
+
         return view('admin.subjects', compact('subjects'));
+    }
+
+    public function subjectData(Subject $subject)
+    {
+        return response()->json([
+            'id' => $subject->id,
+            'code' => $subject->code,
+            'name' => $subject->name,
+            'kkm' => $subject->kkm,
+        ]);
     }
 
     public function subjectsStore(Request $request)
@@ -260,7 +483,14 @@ class AdminController extends Controller
             'kkm' => 'required|numeric|min:0|max:100',
         ]);
 
-        Subject::create($validated);
+        $subject = Subject::create($validated);
+
+        AuditService::log('subject.create', 'Subject', $subject->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Mata pelajaran berhasil ditambahkan.']);
+        }
+
         return back()->with('success', 'Mata pelajaran berhasil ditambahkan.');
     }
 
@@ -273,19 +503,66 @@ class AdminController extends Controller
         ]);
 
         $subject->update($validated);
+
+        AuditService::log('subject.update', 'Subject', $subject->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Mata pelajaran berhasil diperbarui.']);
+        }
+
         return back()->with('success', 'Mata pelajaran berhasil diperbarui.');
     }
 
-    public function subjectsDestroy(Subject $subject)
+    public function subjectsDestroy(Request $request, Subject $subject)
     {
+        AuditService::log('subject.delete', 'Subject', $subject->id);
+        $subject->teachingAssignments()->delete();
         $subject->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Mata pelajaran berhasil dihapus.']);
+        }
+
         return back()->with('success', 'Mata pelajaran berhasil dihapus.');
     }
 
     public function periods(Request $request)
     {
-        $periods = AcademicPeriod::withCount(['teachingAssignments', 'teacherNotes', 'behaviorScores'])->latest()->paginate(15);
-        return view('admin.periods', compact('periods'));
+        $query = AcademicPeriod::withCount(['teachingAssignments', 'teacherNotes', 'behaviorScores']);
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('academic_year', 'like', "%{$search}%")
+                  ->orWhere('semester', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->query('status')) {
+            $query->where('is_active', $status === 'active');
+        }
+
+        $periods = $query->latest()->paginate(15)->withQueryString();
+
+        $tabCounts = [
+            'all' => AcademicPeriod::count(),
+            'active' => AcademicPeriod::where('is_active', true)->count(),
+            'inactive' => AcademicPeriod::where('is_active', false)->count(),
+        ];
+
+        return view('admin.periods', compact('periods', 'tabCounts'));
+    }
+
+    public function periodData(AcademicPeriod $period)
+    {
+        return response()->json([
+            'id' => $period->id,
+            'academic_year' => $period->academic_year,
+            'semester' => $period->semester,
+            'start_date' => $period->start_date->format('Y-m-d'),
+            'end_date' => $period->end_date->format('Y-m-d'),
+            'is_active' => $period->is_active,
+            'teaching_assignments_count' => $period->teaching_assignments_count,
+        ]);
     }
 
     public function periodsStore(Request $request)
@@ -298,6 +575,13 @@ class AdminController extends Controller
         ]);
 
         AcademicPeriod::create($validated);
+
+        AuditService::log('period.create', 'AcademicPeriod');
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Periode akademik berhasil ditambahkan.']);
+        }
+
         return back()->with('success', 'Periode akademik berhasil ditambahkan.');
     }
 
@@ -311,32 +595,65 @@ class AdminController extends Controller
         ]);
 
         $period->update($validated);
+
+        AuditService::log('period.update', 'AcademicPeriod', $period->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Periode akademik berhasil diperbarui.']);
+        }
+
         return back()->with('success', 'Periode akademik berhasil diperbarui.');
     }
 
-    public function periodsDestroy(AcademicPeriod $period)
+    public function periodsDestroy(Request $request, AcademicPeriod $period)
     {
+        AuditService::log('period.delete', 'AcademicPeriod', $period->id);
         $period->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Periode akademik berhasil dihapus.']);
+        }
+
         return back()->with('success', 'Periode akademik berhasil dihapus.');
     }
 
-    public function periodsActivate(AcademicPeriod $period)
+    public function periodsActivate(Request $request, AcademicPeriod $period)
     {
         AcademicPeriod::where('is_active', true)->update(['is_active' => false]);
         $period->update(['is_active' => true]);
+
+        AuditService::log('period.activate', 'AcademicPeriod', $period->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => "Periode {$period->academic_year} {$period->semester} diaktifkan."]);
+        }
+
         return back()->with('success', "Periode {$period->academic_year} {$period->semester} diaktifkan.");
     }
 
     public function teaching(Request $request)
     {
         $query = TeachingAssignment::with(['period', 'subject', 'teacher']);
+
         if ($periodId = $request->query('period')) {
             $query->where('period_id', $periodId);
         }
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('teacher', fn($tq) => $tq->where('name', 'like', "%{$search}%")->orWhere('full_name', 'like', "%{$search}%"))
+                  ->orWhereHas('subject', fn($sq) => $sq->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"))
+                  ->orWhere('class_name', 'like', "%{$search}%");
+            });
+        }
+
         $assignments = $query->latest()->paginate(15)->withQueryString();
         $periods = AcademicPeriod::orderByDesc('is_active')->orderByDesc('academic_year')->get();
+        $subjects = Subject::orderBy('code')->get();
+        $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
+        $classNames = Student::distinct()->pluck('class_name')->sort()->values();
 
-        return view('admin.teaching', compact('assignments', 'periods'));
+        return view('admin.teaching', compact('assignments', 'periods', 'subjects', 'teachers', 'classNames'));
     }
 
     public function teachingCreate()
@@ -347,6 +664,22 @@ class AdminController extends Controller
         $classNames = Student::distinct()->pluck('class_name')->sort()->values();
 
         return view('admin.teaching-form', compact('periods', 'subjects', 'teachers', 'classNames'));
+    }
+
+    public function teachingData(TeachingAssignment $assignment)
+    {
+        $assignment->load(['period', 'subject', 'teacher']);
+
+        return response()->json([
+            'id' => $assignment->id,
+            'period_id' => $assignment->period_id,
+            'subject_id' => $assignment->subject_id,
+            'teacher_id' => $assignment->teacher_id,
+            'class_name' => $assignment->class_name,
+            'period_label' => $assignment->period->academic_year . ' ' . ucfirst($assignment->period->semester),
+            'subject_label' => $assignment->subject->code . ' — ' . $assignment->subject->name,
+            'teacher_label' => $assignment->teacher->full_name ?? $assignment->teacher->name,
+        ]);
     }
 
     public function teachingStore(Request $request)
@@ -360,16 +693,60 @@ class AdminController extends Controller
 
         $exists = TeachingAssignment::where($validated)->exists();
         if ($exists) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Penugasan ini sudah ada.']);
+            }
             return back()->with('error', 'Penugasan ini sudah ada.');
         }
 
         TeachingAssignment::create($validated);
+
+        AuditService::log('teaching.create', 'TeachingAssignment');
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Penugasan guru berhasil ditambahkan.']);
+        }
+
         return redirect()->route('admin.teaching.index')->with('success', 'Penugasan guru berhasil ditambahkan.');
     }
 
-    public function teachingDestroy(TeachingAssignment $assignment)
+    public function teachingUpdate(Request $request, TeachingAssignment $assignment)
     {
+        $validated = $request->validate([
+            'period_id' => 'required|exists:academic_periods,id',
+            'subject_id' => 'required|exists:subjects,id',
+            'teacher_id' => 'required|exists:users,id',
+            'class_name' => 'required|string|max:80',
+        ]);
+
+        $exists = TeachingAssignment::where($validated)->where('id', '!=', $assignment->id)->exists();
+        if ($exists) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Penugasan ini sudah ada.']);
+            }
+            return back()->with('error', 'Penugasan ini sudah ada.');
+        }
+
+        $assignment->update($validated);
+
+        AuditService::log('teaching.update', 'TeachingAssignment', $assignment->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Penugasan berhasil diperbarui.']);
+        }
+
+        return redirect()->route('admin.teaching.index')->with('success', 'Penugasan berhasil diperbarui.');
+    }
+
+    public function teachingDestroy(Request $request, TeachingAssignment $assignment)
+    {
+        AuditService::log('teaching.delete', 'TeachingAssignment', $assignment->id);
         $assignment->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Penugasan berhasil dihapus.']);
+        }
+
         return back()->with('success', 'Penugasan berhasil dihapus.');
     }
 
@@ -411,11 +788,13 @@ class AdminController extends Controller
             'is_primary' => $validated['is_primary'] ?? false,
         ]);
 
+        AuditService::log('parent-student.create', 'ParentStudent', $validated['student_id']);
         return back()->with('success', 'Hubungan orang tua–siswa berhasil ditambahkan.');
     }
 
     public function parentStudentDestroy(Request $request)
     {
+        AuditService::log('parent-student.delete', 'ParentStudent', $request->student_id);
         \DB::table('parent_student')
             ->where('parent_id', $request->parent_id)
             ->where('student_id', $request->student_id)
@@ -439,10 +818,20 @@ class AdminController extends Controller
         if ($to = $request->query('to')) {
             $query->whereDate('created_at', '<=', $to);
         }
+        if ($role = $request->query('role')) {
+            $query->whereHas('user', fn($q) => $q->where('role', $role));
+        }
 
         $logs = $query->latest()->paginate(20)->withQueryString();
         $users = User::orderBy('name')->get();
 
-        return view('admin.audit', compact('logs', 'users'));
+        $tabCounts = [
+            'all' => AuditLog::count(),
+            'admin' => AuditLog::whereHas('user', fn($q) => $q->where('role', 'admin'))->count(),
+            'guru' => AuditLog::whereHas('user', fn($q) => $q->whereIn('role', ['teacher', 'homeroom', 'principal']))->count(),
+            'parent' => AuditLog::whereHas('user', fn($q) => $q->where('role', 'parent'))->count(),
+        ];
+
+        return view('admin.audit', compact('logs', 'users', 'tabCounts'));
     }
 }

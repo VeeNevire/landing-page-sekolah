@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/users/create', [AdminController::class, 'usersCreate'])->name('users.create');
     Route::post('/users', [AdminController::class, 'usersStore'])->name('users.store');
     Route::get('/users/{user}/edit', [AdminController::class, 'usersEdit'])->name('users.edit');
+    Route::get('/users/{user}/data', [AdminController::class, 'userData'])->name('users.data');
     Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('users.update');
     Route::patch('/users/{user}/toggle', [AdminController::class, 'usersToggle'])->name('users.toggle');
     Route::post('/users/{user}/reset-password', [AdminController::class, 'usersResetPassword'])->name('users.reset-password');
@@ -62,15 +63,19 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/students/import', [AdminController::class, 'studentImportForm'])->name('students.import');
     Route::post('/students/import', [AdminController::class, 'studentImport'])->name('students.import.store');
     Route::get('/students/{student}/edit', [AdminController::class, 'studentsEdit'])->name('students.edit');
+    Route::get('/students/{student}/data', [AdminController::class, 'studentData'])->name('students.data');
     Route::put('/students/{student}', [AdminController::class, 'studentsUpdate'])->name('students.update');
     Route::delete('/students/{student}', [AdminController::class, 'studentsDestroy'])->name('students.destroy');
+    Route::get('/parents/list', [AdminController::class, 'parentsList'])->name('parents.list');
 
     Route::get('/subjects', [AdminController::class, 'subjects'])->name('subjects.index');
+    Route::get('/subjects/{subject}/data', [AdminController::class, 'subjectData'])->name('subjects.data');
     Route::post('/subjects', [AdminController::class, 'subjectsStore'])->name('subjects.store');
     Route::put('/subjects/{subject}', [AdminController::class, 'subjectsUpdate'])->name('subjects.update');
     Route::delete('/subjects/{subject}', [AdminController::class, 'subjectsDestroy'])->name('subjects.destroy');
 
     Route::get('/periods', [AdminController::class, 'periods'])->name('periods.index');
+    Route::get('/periods/{period}/data', [AdminController::class, 'periodData'])->name('periods.data');
     Route::post('/periods', [AdminController::class, 'periodsStore'])->name('periods.store');
     Route::put('/periods/{period}', [AdminController::class, 'periodsUpdate'])->name('periods.update');
     Route::delete('/periods/{period}', [AdminController::class, 'periodsDestroy'])->name('periods.destroy');
@@ -78,7 +83,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     Route::get('/teaching', [AdminController::class, 'teaching'])->name('teaching.index');
     Route::get('/teaching/create', [AdminController::class, 'teachingCreate'])->name('teaching.create');
+    Route::get('/teaching/{assignment}/data', [AdminController::class, 'teachingData'])->name('teaching.data');
     Route::post('/teaching', [AdminController::class, 'teachingStore'])->name('teaching.store');
+    Route::put('/teaching/{assignment}', [AdminController::class, 'teachingUpdate'])->name('teaching.update');
     Route::delete('/teaching/{assignment}', [AdminController::class, 'teachingDestroy'])->name('teaching.destroy');
 
     Route::get('/parent-student', [AdminController::class, 'parentStudent'])->name('parent-student.index');
