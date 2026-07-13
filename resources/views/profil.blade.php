@@ -13,8 +13,10 @@
 <section class="section">
   <div class="container profile-highlight">
     <div class="principal-card reveal">
-      <div class="principal-photo">CN</div>
-      <h3 style="margin-bottom:4px">Dr. Ananta Pradipta, M.Pd.</h3><span style="color:var(--muted)">Kepala Sekolah</span>
+      <div class="principal-photo">
+        <img src="{{ asset('img/kepsek.jpg') }}" alt="Kepala Sekolah">
+      </div>
+      <h3 style="margin-bottom:4px">Dr. Rehan Maulana, M.Pd.</h3><span style="color:var(--muted)">Kepala Sekolah</span>
     </div>
     <div class="reveal"><span class="kicker">Sambutan kepala sekolah</span>
       <h2 class="section-title">Mendampingi setiap siswa menemukan versi terbaik dirinya.</h2>
