@@ -1,55 +1,59 @@
-# Website & Portal SMA/SMK Cakrawala Nusantara
+# Website & Portal SMK MADYA DEPOK
 
 Sistem informasi sekolah berbasis Laravel dengan website publik, portal orang tua, dan portal guru.
 
 ## Fitur
 
 ### Website Publik
-- Beranda, profil sekolah, program akademik (SMA & SMK), ekstrakurikuler
-- Informasi PPDB dengan formulir minat
-- Halaman kontak & FAQ
-- Login portal terintegrasi di navbar
+
+-   Beranda, profil sekolah, program akademik (SMA & SMK), ekstrakurikuler
+-   Informasi PPDB dengan formulir minat
+-   Halaman kontak & FAQ
+-   Login portal terintegrasi di navbar
 
 ### Portal Orang Tua (`/portal/*`)
-- Dashboard perkembangan akademik
-- Laporan nilai (PDF & CSV)
-- Rekap kehadiran
-- Jadwal pelajaran
-- Tagihan & pembayaran
-- Profil siswa
-- Pesan & notifikasi
+
+-   Dashboard perkembangan akademik
+-   Laporan nilai (PDF & CSV)
+-   Rekap kehadiran
+-   Jadwal pelajaran
+-   Tagihan & pembayaran
+-   Profil siswa
+-   Pesan & notifikasi
 
 ### Portal Guru (`/guru/*`)
-- Dashboard dengan KPI
-- Kelas saya
-- Input & publikasi nilai
-- Absensi harian
-- Jadwal mengajar
-- Catatan siswa
-- Materi & lampiran (URL-based)
+
+-   Dashboard dengan KPI
+-   Kelas saya
+-   Input & publikasi nilai
+-   Absensi harian
+-   Jadwal mengajar
+-   Catatan siswa
+-   Materi & lampiran (URL-based)
 
 ### Sistem
-- Autentikasi berbasis role (`parent`, `teacher`, `homeroom`, `admin`, `principal`)
-- Sidebar aktif indicator
-- Dark mode toggle
-- Custom scrollbar sesuai tema
-- Responsive mobile (hamburger menu)
-- Contextual login page (guru/orang tua)
+
+-   Autentikasi berbasis role (`parent`, `teacher`, `homeroom`, `admin`, `principal`)
+-   Sidebar aktif indicator
+-   Dark mode toggle
+-   Custom scrollbar sesuai tema
+-   Responsive mobile (hamburger menu)
+-   Contextual login page (guru/orang tua)
 
 ## Tech Stack
 
-- **Backend:** Laravel 13, PHP 8.3+
-- **Database:** MySQL 8
-- **Frontend:** Blade templates, custom CSS (CSS Variables), vanilla JS
-- **Auth:** Laravel Breeze
-- **Libraries:** Chart.js (grafik dashboard)
+-   **Backend:** Laravel 13, PHP 8.3+
+-   **Database:** MySQL 8
+-   **Frontend:** Blade templates, custom CSS (CSS Variables), vanilla JS
+-   **Auth:** Laravel Breeze
+-   **Libraries:** Chart.js (grafik dashboard)
 
 ## Persyaratan
 
-- PHP 8.3+
-- Composer
-- MySQL 8.0+
-- Node.js & npm (untuk Vite, opsional)
+-   PHP 8.3+
+-   Composer
+-   MySQL 8.0+
+-   Node.js & npm (untuk Vite, opsional)
 
 ## Instalasi
 
@@ -84,12 +88,12 @@ Buka `http://localhost:8000`
 
 ## Akun Demo
 
-| Role | Email | Password |
-|------|-------|----------|
-| Orang Tua | `orangtua@demo.sch.id` | `Demo123!` |
-| Guru | `guru@demo.sch.id` | `Demo123!` |
-| Wali Kelas (XI RPL 1) | `rina@cakrawala.sch.id` | `Demo123!` |
-| Wali Kelas (X TKJ 2) | `dimas@cakrawala.sch.id` | `Demo123!` |
+| Role                  | Email                    | Password   |
+| --------------------- | ------------------------ | ---------- |
+| Orang Tua             | `orangtua@demo.sch.id`   | `Demo123!` |
+| Guru                  | `guru@demo.sch.id`       | `Demo123!` |
+| Wali Kelas (XI RPL 1) | `rina@cakrawala.sch.id`  | `Demo123!` |
+| Wali Kelas (X TKJ 2)  | `dimas@cakrawala.sch.id` | `Demo123!` |
 
 ## Struktur Folder
 

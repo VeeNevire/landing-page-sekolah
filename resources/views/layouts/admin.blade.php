@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Portal Admin SMA/SMK Cakrawala Nusantara">
+  <meta name="description" content="Portal Admin SMK MADYA DEPOK ">
   <title>@yield('title') | Portal Admin</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
@@ -19,7 +19,7 @@
     <aside class="portal-sidebar admin-sidebar" id="adminSidebar">
       <a class="brand" href="{{ route('admin.dashboard') }}">
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="" width="28" height="28"></span>
-        <span class="brand-text">Portal Admin<small>CAKRAWALA NUSANTARA</small></span>
+        <span class="brand-text">Portal Admin<small>CAKRAWALA </small></span>
       </a>
       <div class="portal-user-card">
         <div class="portal-user-avatar">{{ substr(auth()->user()->name, 0, 1) }}</div>
@@ -100,10 +100,10 @@
           @class(['active'=> request()->routeIs('admin.penugasan.*')])>
           <span class="portal-menu-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 3h5v5"/>
-              <path d="M8 3H3v5"/>
-              <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/>
-              <path d="m15 9 6-6"/>
+              <path d="M16 3h5v5" />
+              <path d="M8 3H3v5" />
+              <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" />
+              <path d="m15 9 6-6" />
             </svg>
           </span>
           <span class="portal-menu-label">Guru Mapel</span>
@@ -112,8 +112,8 @@
           @class(['active'=> request()->routeIs('admin.jadwal.*')])>
           <span class="portal-menu-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
             </svg>
           </span>
           <span class="portal-menu-label">Jadwal Mengajar</span>
