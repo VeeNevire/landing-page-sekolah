@@ -17,7 +17,7 @@ Route::get('/akademik', [HomeController::class, 'akademik'])->name('akademik');
 Route::get('/ppdb', [HomeController::class, 'ppdb'])->name('ppdb');
 Route::get('/kontak', [HomeController::class, 'kontak'])->name('kontak');
 
-Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:parent'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/laporan', [ReportController::class, 'index'])->name('laporan');
     Route::get('/laporan/csv', [ReportController::class, 'exportCsv'])->name('laporan.csv');

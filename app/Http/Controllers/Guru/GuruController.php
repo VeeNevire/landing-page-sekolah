@@ -76,39 +76,40 @@ class GuruController extends Controller
         foreach ($classNames as $class) {
             $students = Student::where('class_name', $class)->where('status', 'active')->get();
             $subjects = $teachingAssignments->where('class_name', $class)
-                ->map(fn($a) => ['id' => $a->subject->id, 'name' => $a->subject->name, 'code' => $a->subject->code])
+                ->map(fn($a) => $a->subject ? ['id' => $a->subject->id, 'name' => $a->subject->name, 'code' => $a->subject->code] : null)
+                ->filter()
                 ->unique('id')->values()->all();
 
-            $subjectAverages = [];
-            foreach ($subjects as $subject) {
-                $scores = \App\Models\AssessmentScore::whereHas('assessment.teachingAssignment', function ($q) use ($class, $subject, $activePeriod) {
-                    $q->where('class_name', $class)->where('subject_id', $subject['id'])->where('period_id', $activePeriod?->id);
-                })->pluck('score')->filter()->toArray();
-                $subjectAverages[$subject['id']] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
+                $subjectAverages = [];
+                foreach ($subjects as $subject) {
+                    $scores = \App\Models\AssessmentScore::whereHas('assessment.teachingAssignment', function ($q) use ($class, $subject, $activePeriod) {
+                        $q->where('class_name', $class)->where('subject_id', $subject['id'])->where('period_id', $activePeriod?->id);
+                    })->pluck('score')->filter()->toArray();
+                    $subjectAverages[$subject['id']] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
+                }
+
+                $studentIds = $students->pluck('id');
+                $attendance = \App\Models\Attendance::whereIn('student_id', $studentIds)
+                    ->selectRaw('status, count(*) as total')
+                    ->groupBy('status')->pluck('total', 'status')->toArray();
+                $totalDays = array_sum($attendance);
+                $attendanceRate = $totalDays > 0 ? round(($attendance['present'] ?? 0) / $totalDays * 100, 1) : 0;
+
+                $classList[] = [
+                    'name' => $class,
+                    'student_count' => $students->count(),
+                    'students' => $students,
+                    'subjects' => $subjects,
+                    'subject_averages' => $subjectAverages,
+                    'attendance_rate' => $attendanceRate,
+                    'attendance' => $attendance,
+                    'total_attendance_days' => $totalDays,
+                ];
             }
 
-            $studentIds = $students->pluck('id');
-            $attendance = \App\Models\Attendance::whereIn('student_id', $studentIds)
-                ->selectRaw('status, count(*) as total')
-                ->groupBy('status')->pluck('total', 'status')->toArray();
-            $totalDays = array_sum($attendance);
-            $attendanceRate = $totalDays > 0 ? round(($attendance['present'] ?? 0) / $totalDays * 100, 1) : 0;
-
-            $classList[] = [
-                'name' => $class,
-                'student_count' => $students->count(),
-                'students' => $students,
-                'subjects' => $subjects,
-                'subject_averages' => $subjectAverages,
-                'attendance_rate' => $attendanceRate,
-                'attendance' => $attendance,
-                'total_attendance_days' => $totalDays,
-            ];
-        }
-
-        return view('guru.kelas', [
-            'classList' => $classList,
-        ]);
+            return view('guru.kelas', [
+                'classList' => $classList,
+            ]);
     }
 
     public function kelasData(Request $request, $className)
@@ -132,6 +133,7 @@ class GuruController extends Controller
 
         $subjectGrades = [];
         foreach ($assignments as $a) {
+            if (!$a->subject) continue;
             $scores = \App\Models\AssessmentScore::whereHas('assessment', fn($q) => $q->where('teaching_assignment_id', $a->id))
                 ->pluck('score')->filter()->toArray();
             $avg = $scores ? round(array_sum($scores) / count($scores), 1) : null;
@@ -143,7 +145,7 @@ class GuruController extends Controller
             ];
         }
 
-        $studentIds = $studentIds ?? $students->pluck('id');
+        $studentIds = $students->pluck('id');
         $attendance = \App\Models\Attendance::whereIn('student_id', $studentIds)
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')->pluck('total', 'status')->toArray();
