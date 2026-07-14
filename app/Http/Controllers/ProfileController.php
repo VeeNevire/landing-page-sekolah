@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -42,19 +43,32 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
+        $user = Auth::user();
 
-        $user = $request->user();
+        AuditService::log('auth.logout', 'User', auth()->id(), auth()->id());
 
-        Auth::logout();
+        // Revoke Google OAuth token jika user login via Google
+        if ($user && $user->google_id) {
+            try {
+                $token = $user->google_token ?? null;
+                if ($token) {
+                    // Revoke Google access token
+                    $client = new \GuzzleHttp\Client();
+                    $client->post('https://oauth2.googleapis.com/revoke', [
+                        'form_params' => ['token' => $token]
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Silent fail jika revoke gagal
+            }
+        }
 
-        $user->delete();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
+
         $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+        return redirect('/');
     }
 }

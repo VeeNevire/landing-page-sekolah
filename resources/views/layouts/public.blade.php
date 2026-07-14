@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="description" content="@yield('meta_description', 'Website resmi SMK MADYA DEPOK ')">
   <title>@yield('title', config('app.name'))</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
@@ -72,7 +73,7 @@
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
           </svg>
         </button>
-        <a class="btn btn-primary" href="{{ route('ppdb') }}">Daftar Sekarang</a>
+        <a class="btn btn-primary" href="{{ route('ppdb.start') }}">Daftar Sekarang</a>
         <button class="icon-btn menu-btn" id="menuBtn">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="6" x2="20" y2="6" />

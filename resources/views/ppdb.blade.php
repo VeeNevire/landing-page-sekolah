@@ -8,7 +8,7 @@
     <div class="breadcrumb">Beranda / PPDB</div>
     <h1>Penerimaan Peserta Didik Baru</h1>
     <p class="lead">Informasi jalur pendaftaran, persyaratan, jadwal, biaya, dan formulir minat calon siswa tahun ajaran 2026/2027.</p>
-    <div class="hero-actions"><a class="btn btn-primary" href="#form-ppdb">Isi Formulir Minat</a><a class="btn btn-outline" href="#jadwal">Lihat Jadwal</a></div>
+    <div class="hero-actions"><a class="btn btn-primary" href="{{ route('ppdb.start') }}">Daftar Sekarang</a><a class="btn btn-outline" href="#jadwal">Lihat Jadwal</a></div>
   </div>
 </section>
 <section class="section">
@@ -130,32 +130,14 @@
       <h2 class="section-title">Mulai langkah pertama bersama kami.</h2>
       <p class="section-desc">Tim PPDB akan menghubungi calon siswa untuk memberikan informasi program dan jadwal kunjungan sekolah.</p>
     </div>
-    <form class="card form-card" data-demo-form>
-      <div class="form-grid">
-        <div class="field"><label>Nama calon siswa</label><input required placeholder="Nama lengkap"></div>
-        <div class="field"><label>Asal sekolah</label><input required placeholder="Nama SMP/MTs"></div>
-        <div class="field"><label>Nomor WhatsApp orang tua</label><input required type="tel" placeholder="08xxxxxxxxxx"></div>
-        <div class="field"><label>Email</label><input type="email" placeholder="nama@email.com"></div>
-        <div class="field"><label>Pilihan jenjang</label><select required>
-            <option value="">Pilih jenjang</option>
-            <option>SMA</option>
-            <option>SMK</option>
-          </select></div>
-        <div class="field"><label>Program diminati</label><select required>
-            <option value="">Pilih program</option>
-            <option>SMA Sains & Teknologi</option>
-            <option>SMA Sosial & Humaniora</option>
-            <option>RPL</option>
-            <option>DKV</option>
-            <option>Akuntansi</option>
-            <option>Bisnis Digital</option>
-          </select></div>
-        <div class="field full"><label>Pesan</label><textarea placeholder="Pertanyaan atau informasi tambahan"></textarea></div>
-        <div class="field full"><button class="btn btn-primary" type="submit">Kirim Formulir</button>
-          <div class="notice"></div>
-        </div>
-      </div>
-    </form>
+    <div class="card form-card" style="text-align:center;padding:2rem">
+      <h3 style="margin-bottom:1rem">Daftar Online</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Mulai pendaftaran dengan login Google. Isi data siswa dan orang tua secara online.</p>
+      <a href="{{ route('ppdb.start') }}" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        Daftar Sekarang
+      </a>
+    </div>
   </div>
 </section>
 @endsection

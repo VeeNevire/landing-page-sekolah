@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\PenugasanController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\ReportController;
 use App\Http\Controllers\Portal\StudentController;
@@ -16,6 +17,26 @@ Route::get('/profil', [HomeController::class, 'profil'])->name('profil');
 Route::get('/akademik', [HomeController::class, 'akademik'])->name('akademik');
 Route::get('/ppdb', [HomeController::class, 'ppdb'])->name('ppdb');
 Route::get('/kontak', [HomeController::class, 'kontak'])->name('kontak');
+
+Route::prefix('ppdb')->name('ppdb.')->group(function () {
+    Route::get('/daftar', [PPDBController::class, 'start'])->name('start');
+    Route::get('/auth/google', [PPDBController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [PPDBController::class, 'handleGoogleCallback']);
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/form', [PPDBController::class, 'showForm'])->name('form');
+        Route::post('/form/step-1', [PPDBController::class, 'saveStep1'])->name('form.step1');
+        Route::post('/form/step-2', [PPDBController::class, 'saveStep2'])->name('form.step2');
+        Route::get('/upload', [PPDBController::class, 'uploadPage'])->name('upload');
+        Route::post('/upload', [PPDBController::class, 'uploadStore'])->name('upload.store');
+        Route::delete('/upload/{document}', [PPDBController::class, 'uploadDestroy'])->name('upload.destroy');
+        Route::post('/submit', [PPDBController::class, 'finalSubmit'])->name('submit');
+        Route::get('/status', [PPDBController::class, 'status'])->name('status');
+        Route::get('/payment', [PPDBController::class, 'payment'])->name('payment');
+        Route::post('/pay', [PPDBController::class, 'payProcess'])->name('pay');
+        Route::get('/sukses', [PPDBController::class, 'success'])->name('success');
+    });
+});
 
 Route::middleware(['auth', 'verified', 'role:parent'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -105,6 +126,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::delete('/parent-student', [AdminController::class, 'parentStudentDestroy'])->name('parent-student.destroy');
 
     Route::get('/audit', [AdminController::class, 'audit'])->name('audit.index');
+
+    Route::get('/applicants', [AdminController::class, 'applicants'])->name('applicants.index');
+    Route::get('/applicants/{applicant}/data', [AdminController::class, 'applicantData'])->name('applicants.data');
+    Route::patch('/applicants/{applicant}/status', [AdminController::class, 'applicantStatus'])->name('applicants.status');
+    Route::post('/applicants/bulk-status', [AdminController::class, 'applicantsBulkStatus'])->name('applicants.bulk-status');
+    Route::delete('/applicants/{applicant}', [AdminController::class, 'applicantDestroy'])->name('applicants.destroy');
 });
 
 Route::middleware('auth')->group(function () {

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'full_name', 'email', 'password', 'role', 'is_active', 'last_login_at'])]
+#[Fillable(['name', 'full_name', 'email', 'password', 'role', 'is_active', 'last_login_at', 'google_id', 'avatar'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -50,5 +50,10 @@ class User extends Authenticatable
     public function mapels()
     {
         return $this->hasMany(GuruMapel::class, 'guru_id');
+    }
+
+    public function applicant()
+    {
+        return $this->hasOne(Applicant::class);
     }
 }

@@ -110,7 +110,7 @@ body.dark .portal-demo-box{background:#312710;border-color:#604d1f;color:#ffe5a6
   transition:all .2s ease;display:flex;align-items:center;gap:10px
 }
 .portal-sidebar-footer a:hover{background:rgba(255,255,255,.06);color:white}
-.portal-main{min-width:0}
+.portal-main{min-width:0;overflow:hidden}
 .portal-topbar{
   min-height:72px;background:color-mix(in srgb,var(--card) 94%,transparent);
   border-bottom:1px solid var(--line);
@@ -143,7 +143,7 @@ body.dark .portal-demo-box{background:#312710;border-color:#604d1f;color:#ffe5a6
   color:white;font-weight:900;background:linear-gradient(145deg,var(--primary),var(--primary-2))
 }
 .student-switcher select{padding:5px 30px 5px 6px;border:0;background:transparent;font-weight:800;box-shadow:none}
-.portal-content{padding:34px clamp(18px,3vw,40px) 60px}
+.portal-content{padding:34px clamp(18px,3vw,40px) 60px;overflow-x:hidden}
 .portal-heading{
   display:flex;align-items:flex-end;justify-content:space-between;gap:22px;margin-bottom:27px
 }

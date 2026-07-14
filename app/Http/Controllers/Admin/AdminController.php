@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
+use App\Models\Applicant;
 use App\Models\Attendance;
 use App\Models\AuditLog;
 use App\Models\Student;
@@ -13,8 +14,12 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
+use App\Mail\ParentAccountMail;
 use App\Services\AuditService;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -210,7 +215,28 @@ class AdminController extends Controller
             'inactive' => Student::where('status', 'inactive')->count(),
         ];
 
-        return view('admin.students', compact('students', 'classNames', 'teachers', 'tabCounts'));
+        $applicantQuery = Applicant::with('user');
+        if ($applicantStatus = $request->query('status')) {
+            $applicantQuery->where('status', $applicantStatus);
+        }
+        if ($applicantSearch = $request->query('search')) {
+            $applicantQuery->where(function ($q) use ($applicantSearch) {
+                $q->where('full_name', 'like', "%{$applicantSearch}%")
+                  ->orWhere('asal_sekolah', 'like', "%{$applicantSearch}%");
+            });
+        }
+        $applicants = $applicantQuery->latest()->paginate(15, ['*'], 'applicants_page')->withQueryString();
+
+        $applicantStatusCounts = [
+            'all' => Applicant::count(),
+            'draft' => Applicant::where('status', 'draft')->count(),
+            'submitted' => Applicant::where('status', 'submitted')->count(),
+            'verified' => Applicant::where('status', 'verified')->count(),
+            'paid' => Applicant::where('status', 'paid')->count(),
+            'rejected' => Applicant::where('status', 'rejected')->count(),
+        ];
+
+        return view('admin.students', compact('students', 'classNames', 'teachers', 'tabCounts', 'applicants', 'applicantStatusCounts'));
     }
 
     public function studentsCreate()
@@ -855,5 +881,125 @@ class AdminController extends Controller
         ];
 
         return view('admin.audit', compact('logs', 'users', 'tabCounts'));
+    }
+
+    public function applicants(Request $request)
+    {
+        $query = Applicant::with('user');
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                  ->orWhere('asal_sekolah', 'like', "%{$search}%");
+            });
+        }
+
+        $applicants = $query->latest()->paginate(20)->withQueryString();
+
+        $statusCounts = [
+            'all' => Applicant::count(),
+            'draft' => Applicant::where('status', 'draft')->count(),
+            'submitted' => Applicant::where('status', 'submitted')->count(),
+            'verified' => Applicant::where('status', 'verified')->count(),
+            'paid' => Applicant::where('status', 'paid')->count(),
+            'rejected' => Applicant::where('status', 'rejected')->count(),
+        ];
+
+        return view('admin.applicants', compact('applicants', 'statusCounts'));
+    }
+
+    public function applicantData(Applicant $applicant)
+    {
+        return response()->json($applicant->load('documents'));
+    }
+
+    public function applicantStatus(Request $request, Applicant $applicant)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:draft,submitted,verified,paid,rejected',
+            'admin_note' => 'nullable|string|max:500',
+        ]);
+
+        $applicant->update($validated);
+
+        AuditService::log('applicant.status_update', 'Applicant', $applicant->id);
+
+        return response()->json(['success' => true, 'message' => 'Status pendaftar berhasil diperbarui.']);
+    }
+
+    public function applicantsBulkStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|string',
+            'status' => 'required|in:draft,submitted,verified,accepted,rejected',
+        ]);
+
+        $ids = explode(',', $validated['ids']);
+        $applicants = Applicant::whereIn('id', $ids)->get();
+
+        foreach ($applicants as $applicant) {
+            $applicant->update(['status' => $validated['status']]);
+
+            if ($validated['status'] === 'accepted') {
+                $student = Student::create([
+                    'nisn' => $applicant->nisn ?? ('PPDB-' . str_pad($applicant->id, 5, '0', STR_PAD_LEFT)),
+                    'full_name' => $applicant->full_name,
+                    'birth_date' => $applicant->birth_date,
+                    'class_name' => $applicant->jenjang === 'SMK' ? 'X ' . ($applicant->program_diminati ?? 'Baru') : 'X ' . ($applicant->program_diminati ?? 'Baru'),
+                    'program_name' => $applicant->program_diminati ?? ($applicant->jenjang ?? ''),
+                    'status' => 'active',
+                ]);
+
+                foreach (['ayah', 'ibu'] as $parentType) {
+                    $email = $applicant->{$parentType . '_email'};
+                    $name = $applicant->{$parentType . '_name'};
+                    if ($email && $name) {
+                        $parent = User::where('email', $email)->first();
+
+                        if (!$parent) {
+                            $password = (string) random_int(10000000, 99999999);
+                            $parent = User::create([
+                                'name' => $name,
+                                'full_name' => $name,
+                                'email' => $email,
+                                'password' => Hash::make($password),
+                                'role' => 'parent',
+                            ]);
+
+                            Mail::to($email)->send(new ParentAccountMail(
+                                parentName: $name,
+                                parentEmail: $email,
+                                password: $password,
+                                studentName: $applicant->full_name,
+                            ));
+                        }
+
+                        $student->parents()->syncWithoutDetaching([$parent->id => ['relationship' => $parentType === 'ayah' ? 'Ayah' : 'Ibu', 'is_primary' => $parentType === 'ayah']]);
+                    }
+                }
+
+                AuditService::log('applicant.bulk-accept', 'Applicant', $applicant->id);
+            } else {
+                AuditService::log('applicant.bulk-status', 'Applicant', $applicant->id);
+            }
+        }
+
+        return back()->with('success', count($applicants) . ' pendaftar berhasil diperbarui ke status ' . $validated['status'] . '.');
+    }
+
+    public function applicantDestroy(Applicant $applicant)
+    {
+        foreach ($applicant->documents as $doc) {
+            Storage::disk('public')->delete($doc->file_path);
+        }
+
+        AuditService::log('applicant.deleted', 'Applicant', $applicant->id);
+
+        $applicant->delete();
+
+        return response()->json(['success' => true, 'message' => 'Pendaftar berhasil dihapus.']);
     }
 }

@@ -42,6 +42,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('guru.dashboard', absolute: false));
         }
 
+        if ($role === 'applicant') {
+            return redirect()->intended(route('ppdb.form', absolute: false));
+        }
+
         return redirect()->intended(route('portal.dashboard', absolute: false));
     }
 
@@ -50,7 +54,26 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        
         AuditService::log('auth.logout', 'User', auth()->id(), auth()->id());
+        
+        // Revoke Google OAuth token jika user login via Google
+        if ($user && $user->google_id) {
+            try {
+                $token = $user->google_token ?? null;
+                if ($token) {
+                    // Revoke Google access token
+                    $client = new \GuzzleHttp\Client();
+                    $client->post('https://oauth2.googleapis.com/revoke', [
+                        'form_params' => ['token' => $token]
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Silent fail jika revoke gagal
+            }
+        }
+        
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
