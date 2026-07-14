@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
 @endpush
 
-@section('title', config('app.name' ,'SMK MADYA DEPOK'))
+@section('title', config('SMK MADYA DEPOK'))
 @section('meta_description', 'Website resmi SMK MADYA DEPOK — sekolah unggul, terampil, dan berkarakter.')
 
 @section('content')
