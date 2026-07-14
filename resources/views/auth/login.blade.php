@@ -62,26 +62,6 @@ $isGuru = $roleParam === 'guru';
         <h2>Masuk ke {{ $isAdmin ? 'portal admin' : ($isGuru ? 'portal guru' : 'portal') }}</h2>
         <p class="section-desc">{{ $isAdmin ? 'Gunakan akun administrator yang terdaftar.' : ($isGuru ? 'Gunakan akun guru yang terdaftar pada administrasi sekolah.' : 'Gunakan akun orang tua yang terdaftar pada administrasi sekolah.') }}</p>
 
-        @if ($isAdmin)
-        <div class="portal-demo-box">
-          <strong>Akun demonstrasi</strong>
-          <code>Email: admin@demo.sch.id</code>
-          <code>Kata sandi: Demo123!</code>
-        </div>
-        @elseif ($isGuru)
-        <div class="portal-demo-box">
-          <strong>Akun demonstrasi</strong>
-          <code>Email: guru@demo.sch.id</code>
-          <code>Kata sandi: Demo123!</code>
-        </div>
-        @else
-        <div class="portal-demo-box">
-          <strong>Akun demonstrasi</strong>
-          <code>Email: orangtua@demo.sch.id</code>
-          <code>Kata sandi: Demo123!</code>
-        </div>
-        @endif
-
         @if ($errors->any())
         <div class="portal-error">{{ $errors->first() }}</div>
         @endif
@@ -92,13 +72,13 @@ $isGuru = $roleParam === 'guru';
 
         <div class="field" style="margin-top:17px">
           <label for="email">{{ $isAdmin ? 'Email admin' : ($isGuru ? 'Email guru' : 'Email orang tua') }}</label>
-          <input id="email" name="email" type="email" required value="{{ old('email', $isAdmin ? 'admin@demo.sch.id' : ($isGuru ? 'guru@demo.sch.id' : 'orangtua@demo.sch.id')) }}" placeholder="nama@email.com" autofocus autocomplete="username">
+          <input id="email" name="email" type="email" required value="{{ old('email') }}" placeholder="nama@email.com" autofocus autocomplete="username">
         </div>
 
         <div class="field" style="margin-top:15px">
           <label for="password">Kata sandi</label>
           <div style="display:flex;gap:8px">
-            <input id="password" name="password" type="password" required value="Demo123!" placeholder="Kata sandi" autocomplete="current-password">
+            <input id="password" name="password" type="password" required placeholder="Kata sandi" autocomplete="current-password">
             <button class="btn btn-outline" type="button" data-toggle-password="password">Tampilkan</button>
           </div>
         </div>
