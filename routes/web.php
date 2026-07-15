@@ -31,6 +31,7 @@ Route::prefix('ppdb')->name('ppdb.')->group(function () {
         Route::get('/upload', [PPDBController::class, 'uploadPage'])->name('upload');
         Route::post('/upload', [PPDBController::class, 'uploadStore'])->name('upload.store');
         Route::delete('/upload/{document}', [PPDBController::class, 'uploadDestroy'])->name('upload.destroy');
+        Route::get('/document/{document}/preview', [PPDBController::class, 'previewDocument'])->name('document.preview');
         Route::post('/submit', [PPDBController::class, 'finalSubmit'])->name('submit');
         Route::get('/status', [PPDBController::class, 'status'])->name('status');
         Route::get('/payment', [PPDBController::class, 'payment'])->name('payment');

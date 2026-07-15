@@ -291,7 +291,7 @@ class PPDBController extends Controller
                         'id' => $document->id,
                         'document_type' => $document->document_type,
                         'file_name' => $document->file_name,
-                        'file_path' => Storage::disk('public')->url($document->file_path),
+                        'file_path' => route('ppdb.document.preview', ['document' => $document->id]),
                         'file_size' => $document->file_size,
                         'uploaded_at' => $document->uploaded_at->format('d M Y H:i'),
                     ]
@@ -337,6 +337,46 @@ class PPDBController extends Controller
         }
 
         return back()->with('success', 'Dokumen berhasil dihapus.');
+    }
+
+    public function previewDocument(ApplicantDocument $document)
+    {
+        $user = Auth::user();
+        
+        $isOwner = $user->role === 'applicant' && 
+                   $user->applicant && 
+                   $document->applicant_id === $user->applicant->id;
+        
+        $isAdmin = in_array($user->role, ['admin', 'principal']);
+        
+        if (!$isOwner && !$isAdmin) {
+            abort(403, 'Anda tidak memiliki akses untuk melihat dokumen ini.');
+        }
+        
+        $filePath = storage_path('app/public/' . $document->file_path);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File tidak ditemukan. Mungkin sudah dihapus atau belum diupload.');
+        }
+        
+        $mimeType = mime_content_type($filePath);
+        $fileName = $document->file_name;
+        
+        \Log::info('Document accessed', [
+            'document_id' => $document->id,
+            'document_type' => $document->document_type,
+            'applicant_id' => $document->applicant_id,
+            'accessed_by_user_id' => $user->id,
+            'accessed_by_role' => $user->role,
+            'ip' => request()->ip(),
+        ]);
+        
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+            'Cache-Control' => 'private, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function finalSubmit(Request $request)

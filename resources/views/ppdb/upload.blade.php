@@ -359,7 +359,7 @@
             <p style="font-weight:600;color:#059669">✓ Sudah diupload</p>
             <span class="file-meta" id="filename_{{ $type }}">{{ $documents[$type]->file_name }}</span>
             <div class="doc-actions" onclick="event.stopPropagation()">
-              <button onclick="previewDocument('{{ Storage::disk('public')->url($documents[$type]->file_path) }}', '{{ $documents[$type]->file_name }}')" class="btn btn-outline btn-sm">
+              <button onclick="previewDocument('{{ route('ppdb.document.preview', ['document' => $documents[$type]->id]) }}', '{{ $documents[$type]->file_name }}')" class="btn btn-outline btn-sm">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 Lihat
               </button>
@@ -394,7 +394,7 @@
             <p style="font-weight:600;color:#059669">✓ Sudah diupload</p>
             <span class="file-meta" id="filename_sertifikat">{{ $documents['sertifikat']->file_name }}</span>
             <div class="doc-actions" onclick="event.stopPropagation()">
-              <button onclick="previewDocument('{{ Storage::disk('public')->url($documents['sertifikat']->file_path) }}', '{{ $documents['sertifikat']->file_name }}')" class="btn btn-outline btn-sm">
+              <button onclick="previewDocument('{{ route('ppdb.document.preview', ['document' => $documents['sertifikat']->id]) }}', '{{ $documents['sertifikat']->file_name }}')" class="btn btn-outline btn-sm">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 Lihat
               </button>
