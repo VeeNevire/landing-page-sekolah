@@ -20,6 +20,37 @@ class PPDBController extends Controller
 {
     public function start()
     {
+        if (Auth::check()) {
+            $user = Auth::user();
+            
+            if ($user->role !== 'applicant') {
+                Auth::logout();
+                request()->session()->invalidate();
+                request()->session()->regenerateToken();
+                return view('ppdb.start');
+            }
+            
+            $applicant = $user->applicant;
+            
+            if (!$applicant) {
+                return redirect()->route('ppdb.form', ['step' => 1]);
+            }
+            
+            return match($applicant->status) {
+                'paid' => redirect()->route('ppdb.success'),
+                'rejected' => redirect()->route('ppdb.status'),
+                'verified' => redirect()->route('ppdb.payment'),
+                'submitted' => redirect()->route('ppdb.status'),
+                default => match($applicant->completion_step) {
+                    'completed' => redirect()->route('ppdb.status'),
+                    'documents' => redirect()->route('ppdb.upload'),
+                    'parent_data' => redirect()->route('ppdb.form', ['step' => 3]),
+                    'student_data' => redirect()->route('ppdb.form', ['step' => 2]),
+                    default => redirect()->route('ppdb.form', ['step' => 1]),
+                },
+            };
+        }
+        
         return view('ppdb.start');
     }
 
