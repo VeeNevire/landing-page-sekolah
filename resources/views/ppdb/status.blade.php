@@ -111,9 +111,13 @@
 
             @if($applicant->status === 'paid')
                 <div class="text-center">
-                    <a href="{{ route('beranda') }}" class="inline-block px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-600 hover:to-indigo-700 transition">
-                        Kembali ke Beranda
-                    </a>
+                    <form action="{{ route('logout') }}" method="POST" class="inline-block">
+                        @csrf
+                        <input type="hidden" name="redirect_to" value="{{ route('beranda') }}">
+                        <button type="submit" class="inline-block px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-600 hover:to-indigo-700 transition cursor-pointer">
+                            Kembali ke Beranda
+                        </button>
+                    </form>
                 </div>
             @endif
         </div>

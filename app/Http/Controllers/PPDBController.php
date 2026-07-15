@@ -93,6 +93,43 @@ class PPDBController extends Controller
         };
     }
 
+    public function manualRegisterStore(Request $request)
+    {
+        $request->validate([
+            'full_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', 'min:8'],
+        ], [
+            'full_name.required' => 'Nama lengkap wajib diisi',
+            'email.required' => 'Email wajib diisi',
+            'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah terdaftar',
+            'password.required' => 'Password wajib diisi',
+            'password.min' => 'Password minimal 8 karakter',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
+        ]);
+
+        $user = User::create([
+            'name' => $request->full_name,
+            'full_name' => $request->full_name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'applicant',
+            'google_id' => null,
+            'avatar' => null,
+        ]);
+
+        Applicant::create([
+            'user_id' => $user->id,
+            'full_name' => $user->full_name,
+        ]);
+
+        Auth::login($user);
+
+        return redirect()->route('ppdb.form', ['step' => 1])
+            ->with('success', 'Registrasi berhasil! Silakan lengkapi data pendaftaran.');
+    }
+
     public function showForm(Request $request)
     {
         $applicant = Auth::user()->applicant;
@@ -183,38 +220,71 @@ class PPDBController extends Controller
 
     public function uploadStore(Request $request)
     {
-        $request->validate([
-            'document_type' => 'required|in:ijazah,rapor,kk,akta,foto,sertifikat',
-            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-        ]);
+        try {
+            $request->validate([
+                'document_type' => 'required|in:ijazah,rapor,kk,akta,foto,sertifikat',
+                'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            ]);
 
-        $applicant = Auth::user()->applicant;
-        $file = $request->file('file');
-        $type = $request->document_type;
+            $applicant = Auth::user()->applicant;
+            $file = $request->file('file');
+            $type = $request->document_type;
 
-        $existing = ApplicantDocument::where('applicant_id', $applicant->id)
-            ->where('document_type', $type)
-            ->first();
+            $existing = ApplicantDocument::where('applicant_id', $applicant->id)
+                ->where('document_type', $type)
+                ->first();
 
-        if ($existing) {
-            Storage::disk('public')->delete($existing->file_path);
-            $existing->delete();
+            if ($existing) {
+                Storage::disk('public')->delete($existing->file_path);
+                $existing->delete();
+            }
+
+            $path = $file->store("ppdb-documents/{$applicant->id}", 'public');
+
+            $document = ApplicantDocument::create([
+                'applicant_id' => $applicant->id,
+                'document_type' => $type,
+                'file_path' => $path,
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'uploaded_at' => now(),
+            ]);
+
+            $applicant->update(['completion_step' => 'documents']);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Dokumen berhasil diupload.',
+                    'document' => [
+                        'id' => $document->id,
+                        'document_type' => $document->document_type,
+                        'file_name' => $document->file_name,
+                        'file_path' => Storage::disk('public')->url($document->file_path),
+                        'file_size' => $document->file_size,
+                        'uploaded_at' => $document->uploaded_at->format('d M Y H:i'),
+                    ]
+                ]);
+            }
+
+            return back()->with('success', 'Dokumen berhasil diupload.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => implode(' ', $e->validator->errors()->all()),
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat upload: ' . $e->getMessage(),
+                ], 500);
+            }
+            return back()->with('error', 'Terjadi kesalahan saat upload.');
         }
-
-        $path = $file->store("ppdb-documents/{$applicant->id}", 'public');
-
-        ApplicantDocument::create([
-            'applicant_id' => $applicant->id,
-            'document_type' => $type,
-            'file_path' => $path,
-            'file_name' => $file->getClientOriginalName(),
-            'file_size' => $file->getSize(),
-            'uploaded_at' => now(),
-        ]);
-
-        $applicant->update(['completion_step' => 'documents']);
-
-        return back()->with('success', 'Dokumen berhasil diupload.');
     }
 
     public function uploadDestroy(ApplicantDocument $document)
@@ -223,8 +293,17 @@ class PPDBController extends Controller
             abort(403);
         }
 
+        $documentType = $document->document_type;
         Storage::disk('public')->delete($document->file_path);
         $document->delete();
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil dihapus.',
+                'document_type' => $documentType,
+            ]);
+        }
 
         return back()->with('success', 'Dokumen berhasil dihapus.');
     }

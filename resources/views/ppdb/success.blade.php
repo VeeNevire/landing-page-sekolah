@@ -61,8 +61,16 @@
     </div>
 
     <div style="margin-top:2rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
-      <a href="{{ route('beranda') }}" class="btn btn-outline">Kembali ke Beranda</a>
-      <a href="{{ route('ppdb.start') }}" class="btn btn-primary">Daftarkan Siswa Lain</a>
+      <form method="POST" action="{{ route('logout') }}" style="display:inline">
+        @csrf
+        <input type="hidden" name="redirect_to" value="{{ route('beranda') }}">
+        <button type="submit" class="btn btn-outline" style="cursor:pointer">Kembali ke Beranda</button>
+      </form>
+      <form method="POST" action="{{ route('logout') }}" style="display:inline">
+        @csrf
+        <input type="hidden" name="redirect_to" value="{{ route('ppdb.start') }}">
+        <button type="submit" class="btn btn-primary" style="cursor:pointer">Daftarkan Siswa Lain</button>
+      </form>
     </div>
   </div>
 </section>

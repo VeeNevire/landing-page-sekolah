@@ -20,8 +20,9 @@ Route::get('/kontak', [HomeController::class, 'kontak'])->name('kontak');
 
 Route::prefix('ppdb')->name('ppdb.')->group(function () {
     Route::get('/daftar', [PPDBController::class, 'start'])->name('start');
-    Route::get('/auth/google', [PPDBController::class, 'redirectToGoogle'])->name('auth.google');
-    Route::get('/auth/google/callback', [PPDBController::class, 'handleGoogleCallback']);
+    // Route::get('/auth/google', [PPDBController::class, 'redirectToGoogle'])->name('auth.google');
+    // Route::get('/auth/google/callback', [PPDBController::class, 'handleGoogleCallback']);
+    Route::post('/register', [PPDBController::class, 'manualRegisterStore'])->name('manual.register');
 
     Route::middleware('auth')->group(function () {
         Route::get('/form', [PPDBController::class, 'showForm'])->name('form');

@@ -2,12 +2,62 @@
 
 @section('title', 'Daftar PPDB Online | SMK MADYA DEPOK')
 
+@push('styles')
+<style>
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #e0e0e0;
+  justify-content: center;
+}
+.auth-tab {
+  flex: 0 0 auto;
+  padding: 1rem 2.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all .2s;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+.auth-tab:hover {
+  color: var(--text);
+  background: rgba(59, 130, 246, 0.05);
+}
+.auth-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease-out;
+}
+.tab-content.active {
+  display: block;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
+@endpush
+
 @section('content')
 <section class="page-hero">
   <div class="container">
     <div class="breadcrumb">Beranda / PPDB / Daftar</div>
-    <h1>Daftar PPDB Online</h1>
-    <p class="lead">Mulai pendaftaran dengan akun Google. Pastikan email Google aktif untuk memantau status pendaftaran.</p>
+    <h1>PPDB Online</h1>
+    <p class="lead">Masuk ke akun Anda atau daftar baru untuk melanjutkan pendaftaran PPDB.</p>
   </div>
 </section>
 
@@ -19,26 +69,167 @@
     </div>
     @endif
 
-    <div style="text-align:center;padding:2rem 0">
-      <span class="kicker">Langkah 1 dari 3</span>
-      <h2>Login dengan Google</h2>
-      <p style="color:var(--muted);margin-top:.5rem">Kami menggunakan Google untuk verifikasi identitas. Data pribadi Anda aman.</p>
+    @if (session('success'))
+    <div style="background:#f0fdf4;color:#15803d;padding:1rem;border-radius:8px;margin-bottom:1.5rem;text-align:center">
+      {{ session('success') }}
+    </div>
+    @endif
 
-      <a href="{{ route('ppdb.auth.google') }}"
-         style="display:inline-flex;align-items:center;gap:12px;padding:14px 32px;border:2px solid #e0e0e0;border-radius:40px;background:#fff;color:#444;font-size:1.1rem;font-weight:600;margin-top:2rem;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.06)">
-        <svg width="22" height="22" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
-        Daftar dengan Google
-      </a>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Masuk</button>
+      <button class="auth-tab" onclick="switchTab('register')">Daftar Baru</button>
+    </div>
 
-      <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);font-size:.9rem;color:var(--muted)">
-        <p>Sudah punya akun? <a href="{{ route('login') }}" class="text-link">Masuk ke portal</a></p>
+    <div id="login-content" class="tab-content active">
+      <div style="text-align:center;margin-bottom:2rem">
+        <span class="kicker">Sudah Punya Akun</span>
+        <h2>Masuk ke Akun PPDB</h2>
+        <p style="color:var(--muted);margin-top:.5rem">Lanjutkan proses pendaftaran Anda</p>
       </div>
+
+      <form method="POST" action="{{ route('login') }}" style="background:#fff;padding:2rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)">
+        @csrf
+        <input type="hidden" name="role" value="applicant">
+
+        <div style="margin-bottom:1.5rem">
+          <label for="login_email" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Email</label>
+          <input 
+            type="email" 
+            id="login_email" 
+            name="email" 
+            value="{{ old('email') }}"
+            required
+            autofocus
+            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
+            onfocus="this.style.borderColor='#3b82f6'"
+            onblur="this.style.borderColor='#e0e0e0'"
+            placeholder="contoh@email.com">
+          @error('email')
+          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div style="margin-bottom:2rem">
+          <label for="login_password" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Password</label>
+          <input 
+            type="password" 
+            id="login_password" 
+            name="password" 
+            required
+            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
+            onfocus="this.style.borderColor='#3b82f6'"
+            onblur="this.style.borderColor='#e0e0e0'"
+            placeholder="Masukkan password Anda">
+          @error('password')
+          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <button 
+          type="submit"
+          style="width:100%;padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;transition:background .2s"
+          onmouseover="this.style.background='#2563eb'"
+          onmouseout="this.style.background='#3b82f6'">
+          Masuk Sekarang
+        </button>
+
+        <div style="margin-top:1.5rem;text-align:center;font-size:.9rem;color:var(--muted)">
+          <p>Belum punya akun? <a href="javascript:void(0)" onclick="switchTab('register')" class="text-link">Daftar di sini</a></p>
+        </div>
+      </form>
+    </div>
+
+    <div id="register-content" class="tab-content">
+      <div style="text-align:center;margin-bottom:2rem">
+        <span class="kicker">Langkah 1 dari 3</span>
+        <h2>Registrasi Akun PPDB</h2>
+        <p style="color:var(--muted);margin-top:.5rem">Isi formulir di bawah untuk membuat akun pendaftaran</p>
+      </div>
+
+      <form method="POST" action="{{ route('ppdb.manual.register') }}" style="background:#fff;padding:2rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)">
+        @csrf
+
+        <div style="margin-bottom:1.5rem">
+          <label for="full_name" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Nama Lengkap</label>
+          <input 
+            type="text" 
+            id="full_name" 
+            name="full_name" 
+            value="{{ old('full_name') }}"
+            required 
+            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
+            onfocus="this.style.borderColor='#3b82f6'"
+            onblur="this.style.borderColor='#e0e0e0'"
+            placeholder="Masukkan nama lengkap">
+          @error('full_name')
+          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div style="margin-bottom:1.5rem">
+          <label for="email" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            value="{{ old('email') }}"
+            required
+            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
+            onfocus="this.style.borderColor='#3b82f6'"
+            onblur="this.style.borderColor='#e0e0e0'"
+            placeholder="contoh@email.com">
+          @error('email')
+          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div style="margin-bottom:1.5rem">
+          <label for="password" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required
+            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
+            onfocus="this.style.borderColor='#3b82f6'"
+            onblur="this.style.borderColor='#e0e0e0'"
+            placeholder="Minimal 8 karakter">
+          @error('password')
+          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div style="margin-bottom:2rem">
+          <label for="password_confirmation" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Konfirmasi Password</label>
+          <input 
+            type="password" 
+            id="password_confirmation" 
+            name="password_confirmation" 
+            required
+            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
+            onfocus="this.style.borderColor='#3b82f6'"
+            onblur="this.style.borderColor='#e0e0e0'"
+            placeholder="Ulangi password">
+        </div>
+
+        <button 
+          type="submit"
+          style="width:100%;padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;transition:background .2s"
+          onmouseover="this.style.background='#2563eb'"
+          onmouseout="this.style.background='#3b82f6'">
+          Daftar Sekarang
+        </button>
+
+        <div style="margin-top:1.5rem;text-align:center;font-size:.9rem;color:var(--muted)">
+          <p>Sudah punya akun? <a href="javascript:void(0)" onclick="switchTab('login')" class="text-link">Masuk di sini</a></p>
+        </div>
+      </form>
     </div>
 
     <div class="grid grid-3" style="margin-top:2rem;gap:1rem">
       <div class="card" style="text-align:center;padding:1.5rem">
-        <h4 style="margin-bottom:.3rem">1. Login Google</h4>
-        <p style="font-size:.85rem;color:var(--muted)">Verifikasi dengan akun Google</p>
+        <h4 style="margin-bottom:.3rem">1. Registrasi</h4>
+        <p style="font-size:.85rem;color:var(--muted)">Buat akun pendaftaran</p>
       </div>
       <div class="card" style="text-align:center;padding:1.5rem">
         <h4 style="margin-bottom:.3rem">2. Isi Formulir</h4>
@@ -51,4 +242,32 @@
     </div>
   </div>
 </section>
+
+<script>
+function switchTab(tab) {
+  const loginTab = document.querySelector('.auth-tab:first-child');
+  const registerTab = document.querySelector('.auth-tab:last-child');
+  const loginContent = document.getElementById('login-content');
+  const registerContent = document.getElementById('register-content');
+  
+  if (tab === 'login') {
+    loginTab.classList.add('active');
+    registerTab.classList.remove('active');
+    loginContent.classList.add('active');
+    registerContent.classList.remove('active');
+    setTimeout(() => document.getElementById('login_email')?.focus(), 100);
+  } else {
+    registerTab.classList.add('active');
+    loginTab.classList.remove('active');
+    registerContent.classList.add('active');
+    loginContent.classList.remove('active');
+    setTimeout(() => document.getElementById('full_name')?.focus(), 100);
+  }
+}
+
+// Auto switch to register tab if there are validation errors for registration
+@if($errors->has('full_name') || $errors->has('password_confirmation'))
+  switchTab('register');
+@endif
+</script>
 @endsection

@@ -43,7 +43,25 @@ class AuthenticatedSessionController extends Controller
         }
 
         if ($role === 'applicant') {
-            return redirect()->intended(route('ppdb.form', absolute: false));
+            $applicant = $user->applicant;
+            
+            if (!$applicant) {
+                return redirect()->route('ppdb.form', ['step' => 1]);
+            }
+            
+            return match($applicant->status) {
+                'paid' => redirect()->route('ppdb.success'),
+                'rejected' => redirect()->route('ppdb.status'),
+                'verified' => redirect()->route('ppdb.payment'),
+                'submitted' => redirect()->route('ppdb.status'),
+                default => match($applicant->completion_step) {
+                    'completed' => redirect()->route('ppdb.status'),
+                    'documents' => redirect()->route('ppdb.upload'),
+                    'parent_data' => redirect()->route('ppdb.form', ['step' => 3]),
+                    'student_data' => redirect()->route('ppdb.form', ['step' => 2]),
+                    default => redirect()->route('ppdb.form', ['step' => 1]),
+                },
+            };
         }
 
         return redirect()->intended(route('portal.dashboard', absolute: false));
@@ -80,6 +98,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        $redirectTo = $request->input('redirect_to', '/');
+
+        return redirect($redirectTo);
     }
 }
