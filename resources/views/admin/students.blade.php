@@ -861,7 +861,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         }
         html += '</div>';
         if (isUploaded) {
-          html += '<a href="/storage/' + doc.file_path + '" target="_blank" class="doc-card-action" title="Lihat dokumen">';
+          html += '<a href="/ppdb/document/' + doc.id + '/preview" target="_blank" class="doc-card-action" title="Lihat dokumen">';
           html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>';
         }
         html += '</div>';
@@ -871,7 +871,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         html += '<div class="doc-card-item uploaded">';
         html += '<div class="doc-card-icon">' + getDocIcon('sertifikat') + '</div>';
         html += '<div class="doc-card-info"><strong>Sertifikat Prestasi</strong><span class="doc-card-name">' + sertifikat.file_name + '</span><span class="doc-card-size">' + formatBytes(sertifikat.file_size) + '</span></div>';
-        html += '<a href="/storage/' + sertifikat.file_path + '" target="_blank" class="doc-card-action" title="Lihat dokumen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>';
+        html += '<a href="/ppdb/document/' + sertifikat.id + '/preview" target="_blank" class="doc-card-action" title="Lihat dokumen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>';
         html += '</div>';
       }
       html += '</div></div>';
