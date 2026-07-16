@@ -189,13 +189,13 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
 
         <div id="passwordFields">
           <div class="field" style="margin-top:14px">
-            <label for="modal_password">Password <span style="color:#ef4444">*</span></label>
+            <label for="modal_password">Password <span style="color:#ef4444" id="pwdRequiredMark">*</span></label>
             <input id="modal_password" name="password" type="password" placeholder="Minimal 6 karakter">
             <small class="field-error" style="color:#ef4444;display:none"></small>
           </div>
 
           <div class="field" style="margin-top:14px">
-            <label for="modal_password_confirmation">Konfirmasi Password <span style="color:#ef4444">*</span></label>
+            <label for="modal_password_confirmation">Konfirmasi Password <span style="color:#ef4444" id="pwdConfirmRequiredMark">*</span></label>
             <input id="modal_password_confirmation" name="password_confirmation" type="password" placeholder="Ulangi password">
           </div>
         </div>
@@ -229,6 +229,11 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
     document.getElementById('formUserId').value = '';
     document.getElementById('userForm').action = '{{ route("admin.users.store") }}';
     document.getElementById('passwordFields').style.display = 'block';
+    document.getElementById('pwdRequiredMark').style.display = 'inline';
+    document.getElementById('pwdConfirmRequiredMark').style.display = 'inline';
+    document.getElementById('modal_password').placeholder = 'Minimal 6 karakter';
+    document.getElementById('modal_password').setAttribute('required', '');
+    document.getElementById('modal_password_confirmation').setAttribute('required', '');
     document.getElementById('modal_name').value = '';
     document.getElementById('modal_full_name').value = '';
     document.getElementById('modal_email').value = '';
@@ -246,9 +251,14 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
     document.getElementById('formMethod').value = 'PUT';
     document.getElementById('formUserId').value = userId;
     document.getElementById('userForm').action = '/admin/users/' + userId;
-    document.getElementById('passwordFields').style.display = 'none';
+    document.getElementById('passwordFields').style.display = 'block';
+    document.getElementById('pwdRequiredMark').style.display = 'none';
+    document.getElementById('pwdConfirmRequiredMark').style.display = 'none';
+    document.getElementById('modal_password').placeholder = 'Kosongkan jika tidak diganti';
     document.getElementById('modal_password').removeAttribute('required');
     document.getElementById('modal_password_confirmation').removeAttribute('required');
+    document.getElementById('modal_password').value = '';
+    document.getElementById('modal_password_confirmation').value = '';
 
     fetch('/admin/users/' + userId + '/data', {
         headers: {
@@ -299,9 +309,10 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
     const formData = new FormData(form);
     const isEdit = document.getElementById('formUserId').value !== '';
 
-    if (!isEdit) {
-      formData.set('password', document.getElementById('modal_password').value);
-      formData.set('password_confirmation', document.getElementById('modal_password_confirmation').value);
+    const pwd = document.getElementById('modal_password').value;
+    if (isEdit && !pwd) {
+      formData.delete('password');
+      formData.delete('password_confirmation');
     }
 
     fetch(form.action, {

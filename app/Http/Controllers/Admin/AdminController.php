@@ -125,14 +125,21 @@ class AdminController extends Controller
             'full_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:parent,teacher,homeroom,admin,principal',
+            'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(6)],
         ]);
 
-        $user->update([
+        $data = [
             'name' => $validated['name'],
             'full_name' => $validated['full_name'] ?? null,
             'email' => $validated['email'],
             'role' => $validated['role'],
-        ]);
+        ];
+
+        if ($validated['password']) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($data);
 
         AuditService::log('user.update', 'User', $user->id);
 
