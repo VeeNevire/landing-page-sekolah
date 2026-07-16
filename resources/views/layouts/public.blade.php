@@ -17,6 +17,7 @@
 </head>
 
 <body>
+  @if(!request()->routeIs('ppdb.form') && !request()->routeIs('ppdb.upload') && !request()->routeIs('ppdb.status') && !request()->routeIs('ppdb.payment') && !request()->routeIs('ppdb.success'))
   <header class="navbar">
     <div class="container nav-inner">
       <a class="brand" href="{{ route('beranda') }}">
@@ -94,8 +95,9 @@
       </div>
     </div>
   </header>
+  @endif
 
-  <main>
+  <main class="@if(request()->routeIs('ppdb.form') || request()->routeIs('ppdb.upload') || request()->routeIs('ppdb.status') || request()->routeIs('ppdb.payment') || request()->routeIs('ppdb.success')) no-nav @endif">
     @yield('content')
   </main>
 

@@ -16,6 +16,8 @@ class StudentAcceptedMail extends Mailable
         public string $studentName,
         public string $className,
         public string $programName,
+        public string $nis,
+        public string $password,
     ) {}
 
     public function envelope(): Envelope

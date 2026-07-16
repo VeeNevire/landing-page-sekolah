@@ -79,8 +79,8 @@ $isStudent = $roleParam === 'student';
         @endif
 
         <div class="field" style="margin-top:17px">
-          <label for="email">{{ $isAdmin ? 'Email admin' : ($isGuru ? 'Email guru' : ($isStudent ? 'Email siswa' : 'Email orang tua')) }}</label>
-          <input id="email" name="email" type="email" required value="{{ old('email') }}" placeholder="nama@email.com" autofocus autocomplete="username">
+          <label for="email">{{ $isAdmin ? 'Email admin' : ($isGuru ? 'Email guru' : ($isStudent ? 'NIS / Email' : 'Email orang tua')) }}</label>
+          <input id="email" name="email" type="text" required value="{{ old('email') }}" placeholder="{{ $isStudent ? 'NIS atau email' : 'nama@email.com' }}" autofocus autocomplete="username">
         </div>
 
         <div class="field" style="margin-top:15px">

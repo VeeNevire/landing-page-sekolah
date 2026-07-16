@@ -482,6 +482,15 @@ class PPDBController extends Controller
 
             Auth::user()->update(['role' => 'student']);
 
+            $year = now()->format('Y');
+            $lastNis = Student::where('nis', 'like', $year.'%')->max('nis');
+            $nextNumber = $lastNis ? intval(substr($lastNis, -4)) + 1 : 1;
+            $nis = $year . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $student->update(['nis' => $nis]);
+
+            $newPassword = (string) random_int(100000, 999999);
+            Auth::user()->update(['password' => Hash::make($newPassword)]);
+
             foreach (['ayah', 'ibu'] as $parentType) {
                 $email = $applicant->{$parentType . '_email'};
                 $name = $applicant->{$parentType . '_name'};
@@ -514,6 +523,8 @@ class PPDBController extends Controller
                 studentName: $applicant->full_name,
                 className: '',
                 programName: $applicant->program_diminati ?? '',
+                nis: $nis,
+                password: $newPassword,
             ));
         }
 

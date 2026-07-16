@@ -41,6 +41,12 @@
                 <tr>
                   <td style="font-size:.95rem;font-weight:600;color:#1e293b;padding-bottom:14px">{{ $studentName }}</td>
                 </tr>
+                <tr>
+                  <td style="font-size:.85rem;color:#64748b;padding-bottom:4px">NIS (Nomor Induk Siswa)</td>
+                </tr>
+                <tr>
+                  <td style="font-size:.95rem;font-weight:600;color:#1e293b;padding-bottom:14px;letter-spacing:1px">{{ $nis }}</td>
+                </tr>
                 @if($className)
                 <tr>
                   <td style="font-size:.85rem;color:#64748b;padding-bottom:4px">Kelas</td>
@@ -54,9 +60,15 @@
                   <td style="font-size:.85rem;color:#64748b;padding-bottom:4px">Program Studi</td>
                 </tr>
                 <tr>
-                  <td style="font-size:.95rem;font-weight:600;color:#1e293b">{{ $programName }}</td>
+                  <td style="font-size:.95rem;font-weight:600;color:#1e293b;padding-bottom:14px">{{ $programName }}</td>
                 </tr>
                 @endif
+                <tr>
+                  <td style="font-size:.85rem;color:#64748b;padding-bottom:4px">Password Akun Portal</td>
+                </tr>
+                <tr>
+                  <td style="font-size:.95rem;font-weight:600;color:#1e293b;padding-bottom:14px;letter-spacing:2px">{{ $password }}</td>
+                </tr>
               </table>
 
               <p style="color:#475569;line-height:1.7;margin:0 0 16px;text-align:center;font-size:.9rem">

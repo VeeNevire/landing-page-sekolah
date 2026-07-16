@@ -134,6 +134,9 @@ body.dark .navbar {
 main {
     padding-top: 100px;
 }
+main.no-nav {
+    padding-top: 0;
+}
 .nav-inner {
     height: 66px;
     display: flex;
