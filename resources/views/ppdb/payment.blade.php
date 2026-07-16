@@ -1,148 +1,164 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pembayaran PPDB</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-</head>
-<body class="bg-gradient-to-br from-green-50 to-emerald-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-3xl">
-        <div class="bg-white rounded-2xl shadow-xl p-8">
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-800">Pembayaran PPDB</h1>
-                    <p class="text-gray-600 mt-1">Selesaikan pembayaran untuk menyelesaikan pendaftaran</p>
-                </div>
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-medium transition">
-                        Logout
-                    </button>
-                </form>
-            </div>
+@extends('layouts.public')
 
-            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 mb-6">
-                <div class="flex items-start">
-                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mr-4">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <polyline stroke-linecap="round" stroke-linejoin="round" points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-semibold text-gray-800 mb-2">Selamat! Anda Diterima</h2>
-                        <p class="text-gray-700">Pendaftaran Anda telah diverifikasi dan diterima oleh sekolah. Silakan lakukan pembayaran untuk menyelesaikan proses pendaftaran.</p>
-                    </div>
-                </div>
-            </div>
+@section('title', 'Pembayaran PPDB | SMK MADYA DEPOK')
 
-            <div class="border border-gray-200 rounded-xl p-6 mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Ringkasan Pendaftar</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <p class="text-sm text-gray-600">Nama Lengkap</p>
-                        <p class="font-semibold text-gray-800">{{ $applicant->full_name }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Asal Sekolah</p>
-                        <p class="font-semibold text-gray-800">{{ $applicant->asal_sekolah ?? '-' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Jenjang</p>
-                        <p class="font-semibold text-gray-800">{{ $applicant->jenjang ?? '-' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Program Diminati</p>
-                        <p class="font-semibold text-gray-800">{{ $applicant->program_diminati ?? '-' }}</p>
-                    </div>
-                </div>
-            </div>
+@section('content')
+<form id="ppdbLogoutForm" method="POST" action="{{ route('logout') }}" style="display:none">
+  @csrf
+  <input type="hidden" name="redirect_to" value="/">
+</form>
 
-            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-6 mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pembayaran</h3>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-700">Bank</span>
-                        <span class="font-semibold">BCA</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-700">No. Rekening</span>
-                        <span class="font-semibold">1234567890</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-700">Atas Nama</span>
-                        <span class="font-semibold">SMK MADYA DEPOK</span>
-                    </div>
-                    <div class="border-t border-amber-200 my-3"></div>
-                    <div class="flex justify-between">
-                        <span class="text-lg font-bold text-gray-800">Nominal</span>
-                        <span class="text-2xl font-bold text-green-600">Rp 250.000</span>
-                    </div>
-                </div>
-            </div>
+<section style="background:var(--bg);padding:1.5rem 0 4rem">
+  <div class="container" style="max-width:640px">
 
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                <p class="text-sm text-blue-800">
-                    <strong>Catatan:</strong> Setelah melakukan transfer, klik tombol "Sudah Bayar" di bawah. Akun siswa dan portal orang tua akan otomatis dibuat dan dikirim ke email masing-masing.
-                </p>
-            </div>
-
-            <form id="paymentForm" action="{{ route('ppdb.pay') }}" method="POST">
-                @csrf
-                <div class="text-center">
-                    <button type="button" onclick="confirmPayment()" class="w-full px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-lg font-semibold rounded-lg shadow-lg hover:from-green-600 hover:to-emerald-700 transition transform hover:scale-105">
-                        Sudah Bayar
-                    </button>
-                </div>
-            </form>
-
-            <div class="text-center mt-6">
-                <a href="{{ route('ppdb.status') }}" class="text-gray-600 hover:text-gray-800 underline">
-                    Kembali ke Status
-                </a>
-            </div>
-        </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem">
+      <div>
+        <div style="font-size:.85rem;color:var(--muted);margin-bottom:.25rem">Beranda / PPDB / Pembayaran</div>
+        <h1 style="font-size:clamp(1.8rem,4vw,2.5rem);font-family:Calistoga,Georgia,serif;font-weight:400;margin:0;color:var(--ink)">Pembayaran PPDB</h1>
+        <p style="font-size:.9rem;color:var(--muted);margin:.25rem 0 0">Selesaikan pembayaran untuk menyelesaikan pendaftaran</p>
+      </div>
+      <form action="{{ route('logout') }}" method="POST">
+        @csrf
+        <button type="submit" style="display:inline-flex;align-items:center;gap:6px;padding:0.5rem 1rem;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:.82rem;font-weight:700;cursor:pointer;transition:0.2s;font-family:inherit" onmouseover="this.style.borderColor='var(--primary-2)'" onmouseout="this.style.borderColor='var(--line)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Keluar
+        </button>
+      </form>
     </div>
 
-    <script>
-        function confirmPayment() {
-            Swal.fire({
-                title: 'Konfirmasi Pembayaran',
-                html: `
-                    <div class="text-left">
-                        <p class="mb-2">Apakah Anda sudah melakukan pembayaran?</p>
-                        <p class="text-sm text-gray-600">Setelah konfirmasi, akun siswa dan portal orang tua akan otomatis dibuat.</p>
-                    </div>
-                `,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Ya, Sudah Bayar',
-                cancelButtonText: 'Belum',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Mengirim Konfirmasi...',
-                        html: 'Mohon tunggu sebentar',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
+    <div class="ppdb-card" style="padding:2rem">
 
-                    setTimeout(() => {
-                        document.getElementById('paymentForm').submit();
-                    }, 1500);
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:1rem">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div>
+        <h3 style="font-size:1.05rem;font-weight:400;font-family:Calistoga,Georgia,serif;margin:0 0 .25rem;color:var(--ink)">Selamat! Anda Diterima</h3>
+        <p style="font-size:.85rem;color:var(--muted);margin:0;line-height:1.6">Pendaftaran Anda telah diverifikasi dan diterima oleh sekolah. Silakan lakukan pembayaran untuk menyelesaikan proses pendaftaran.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1.25rem">
+      <h3 style="font-size:1rem;font-weight:400;font-family:Calistoga,Georgia,serif;margin:0 0 1rem;color:var(--ink)">Ringkasan Pendaftar</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div>
+          <p style="font-size:.78rem;color:var(--muted);margin:0 0 .15rem;font-weight:600">Nama Lengkap</p>
+          <p style="font-size:.9rem;font-weight:700;color:var(--ink);margin:0">{{ $applicant->full_name }}</p>
+        </div>
+        <div>
+          <p style="font-size:.78rem;color:var(--muted);margin:0 0 .15rem;font-weight:600">Asal Sekolah</p>
+          <p style="font-size:.9rem;font-weight:700;color:var(--ink);margin:0">{{ $applicant->asal_sekolah ?? '-' }}</p>
+        </div>
+        <div>
+          <p style="font-size:.78rem;color:var(--muted);margin:0 0 .15rem;font-weight:600">Jenjang</p>
+          <p style="font-size:.9rem;font-weight:700;color:var(--ink);margin:0">{{ $applicant->jenjang ?? '-' }}</p>
+        </div>
+        <div>
+          <p style="font-size:.78rem;color:var(--muted);margin:0 0 .15rem;font-weight:600">Program Diminati</p>
+          <p style="font-size:.9rem;font-weight:700;color:var(--ink);margin:0">{{ $applicant->program_diminati ?? '-' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--card);border:1.5px solid var(--accent);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1.25rem">
+      <h3 style="font-size:1rem;font-weight:400;font-family:Calistoga,Georgia,serif;margin:0 0 1rem;color:var(--ink)">Informasi Pembayaran</h3>
+      <div style="display:grid;gap:.5rem">
+        <div style="display:flex;justify-content:space-between;font-size:.9rem">
+          <span style="color:var(--muted)">Bank</span>
+          <span style="font-weight:700;color:var(--ink)">BCA</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.9rem">
+          <span style="color:var(--muted)">No. Rekening</span>
+          <span style="font-weight:700;color:var(--ink)">1234567890</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.9rem">
+          <span style="color:var(--muted)">Atas Nama</span>
+          <span style="font-weight:700;color:var(--ink)">SMK MADYA DEPOK</span>
+        </div>
+        <div style="border-top:1px solid var(--line);margin:.5rem 0"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:1rem;font-weight:800;color:var(--ink)">Nominal</span>
+          <span style="font-size:1.4rem;font-weight:900;color:var(--success)">Rp 250.000</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:color-mix(in srgb, var(--primary) 6%, var(--card));border:1px solid color-mix(in srgb, var(--primary) 16%, var(--line));border-radius:var(--radius-sm);padding:1rem 1.25rem;margin-bottom:1.5rem">
+      <p style="font-size:.85rem;color:var(--primary);margin:0;line-height:1.6">
+        <strong>Catatan:</strong> Setelah melakukan transfer, klik tombol "Sudah Bayar" di bawah. Akun siswa dan portal orang tua akan otomatis dibuat dan dikirim ke email masing-masing.
+      </p>
+    </div>
+
+    <form id="paymentForm" action="{{ route('ppdb.pay') }}" method="POST">
+      @csrf
+      <button type="button" onclick="confirmPayment()" style="width:100%;padding:0.9rem;border-radius:12px;border:none;font-size:1rem;font-weight:800;cursor:pointer;transition:opacity .2s;background:var(--success);color:white;font-family:inherit" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+        Sudah Bayar
+      </button>
+    </form>
+
+    <div style="text-align:center;margin-top:1rem">
+      <a href="{{ route('ppdb.status') }}" style="font-size:.85rem;font-weight:600;color:var(--muted);text-decoration:underline">
+        Kembali ke Status
+      </a>
+    </div>
+    </div>
+
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmPayment() {
+  Swal.fire({
+    title: 'Konfirmasi Pembayaran',
+    html: '<div style="text-align:left"><p style="margin-bottom:8px">Apakah Anda sudah melakukan pembayaran?</p><p style="font-size:.85rem;color:#666">Setelah konfirmasi, akun siswa dan portal orang tua akan otomatis dibuat.</p></div>',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#1f8f62',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Ya, Sudah Bayar',
+    cancelButtonText: 'Belum',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: 'Mengirim Konfirmasi...',
+        html: 'Mohon tunggu sebentar',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+      setTimeout(() => { document.getElementById('paymentForm').submit(); }, 1500);
+    }
+  });
+}
+</script>
+
+<script>
+document.querySelectorAll('.nav-links a, .nav-dropdown-menu a, .nav-dropdown-trigger').forEach(el => {
+  el.addEventListener('click', function(e) {
+    if (this.closest('.nav-dropdown-trigger')) {
+      e.stopPropagation();
+      return;
+    }
+    e.preventDefault();
+    const href = this.getAttribute('href');
+    if (!href || href === '#') return;
+    Swal.fire({
+      title: 'Keluar dari pembayaran?',
+      text: 'Progres Anda akan tetap tersimpan.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#0b3b75',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Ya, keluar',
+      cancelButtonText: 'Tetap di sini',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        document.getElementById('ppdbLogoutForm').submit();
+      }
+    });
+  });
+});
+</script>
+@endsection

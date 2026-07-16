@@ -14,7 +14,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['role' => \App\Http\Middleware\CheckRole::class]);
         $middleware->redirectGuestsTo('/login');
-        $middleware->redirectUsersTo('/portal/dashboard');
+        $middleware->redirectUsersTo(function ($request) {
+            $role = $request->user()?->role;
+            return match($role) {
+                'admin' => '/admin/dashboard',
+                'student' => '/siswa/dashboard',
+                'teacher', 'homeroom', 'principal' => '/guru/dashboard',
+                'applicant' => '/ppdb/status',
+                default => '/portal/dashboard',
+            };
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

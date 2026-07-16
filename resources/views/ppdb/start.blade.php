@@ -4,270 +4,212 @@
 
 @push('styles')
 <style>
-.auth-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 2rem;
-  border-bottom: 2px solid #e0e0e0;
-  justify-content: center;
-}
-.auth-tab {
-  flex: 0 0 auto;
-  padding: 1rem 2.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
+.auth-tab-segmented {
   color: var(--muted);
-  transition: all .2s;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
 }
-.auth-tab:hover {
-  color: var(--text);
-  background: rgba(59, 130, 246, 0.05);
+.auth-tab-segmented.active {
+  background: var(--primary);
+  color: white;
 }
-.auth-tab.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
+.ppdb-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  font-family: inherit;
 }
-.tab-content {
-  display: none;
-  animation: fadeIn 0.3s ease-out;
+.ppdb-input:focus {
+  border-color: var(--primary-2);
+  box-shadow: 0 0 0 3px rgba(20, 87, 166, 0.1);
 }
-.tab-content.active {
-  display: block;
+.ppdb-input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
 }
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  transition: 0.2s ease;
 }
 </style>
 @endpush
 
 @section('content')
-<section class="page-hero">
-  <div class="container">
-    <div class="breadcrumb">Beranda / PPDB / Daftar</div>
-    <h1>PPDB Online</h1>
-    <p class="lead">Masuk ke akun Anda atau daftar baru untuk melanjutkan pendaftaran PPDB.</p>
-  </div>
-</section>
+<form id="ppdbLogoutForm" method="POST" action="{{ route('logout') }}" style="display:none">
+  @csrf
+  <input type="hidden" name="redirect_to" value="/">
+</form>
 
-<section class="section">
-  <div class="container" style="max-width:560px">
+<section style="min-height:calc(100vh - 100px);background:var(--bg);padding:2rem 0 4rem">
+  <div class="container" style="max-width:580px">
+
+    <div class="text-sm" style="color:var(--muted);margin-bottom:.35rem">Beranda / PPDB / Daftar</div>
+    <h1 style="font-size:clamp(2rem,4.5vw,3rem);font-family:Calistoga,Georgia,serif;font-weight:400;margin:0 0 .35rem;color:var(--ink)">PPDB Online</h1>
+    <p style="font-size:1rem;color:var(--muted);margin:0 0 2rem">Masuk ke akun Anda atau daftar baru untuk melanjutkan pendaftaran PPDB.</p>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:2rem">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="step-dot" style="background:var(--primary);color:white">1</div>
+        <span style="font-size:.78rem;font-weight:700;color:var(--primary);white-space:nowrap">Registrasi</span>
+      </div>
+      <div style="flex:1;height:1px;background:var(--line);max-width:48px"></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="step-dot" style="background:var(--line);color:var(--muted)">2</div>
+        <span style="font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap">Isi Formulir</span>
+      </div>
+      <div style="flex:1;height:1px;background:var(--line);max-width:48px"></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="step-dot" style="background:var(--line);color:var(--muted)">3</div>
+        <span style="font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap">Konfirmasi</span>
+      </div>
+    </div>
+
     @if (session('error'))
-    <div style="background:#fef2f2;color:#b91c1c;padding:1rem;border-radius:8px;margin-bottom:1.5rem;text-align:center">
-      {{ session('error') }}
-    </div>
+    <div style="background:#fef2f2;color:#b91c1c;padding:12px 16px;border-radius:12px;font-weight:600;font-size:.9rem;margin-bottom:1.5rem;text-align:center">{{ session('error') }}</div>
     @endif
-
     @if (session('success'))
-    <div style="background:#f0fdf4;color:#15803d;padding:1rem;border-radius:8px;margin-bottom:1.5rem;text-align:center">
-      {{ session('success') }}
-    </div>
+    <div style="background:#f0fdf4;color:#15803d;padding:12px 16px;border-radius:12px;font-weight:600;font-size:.9rem;margin-bottom:1.5rem;text-align:center">{{ session('success') }}</div>
     @endif
 
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchTab('login')">Masuk</button>
-      <button class="auth-tab" onclick="switchTab('register')">Daftar Baru</button>
-    </div>
-
-    <div id="login-content" class="tab-content active">
-      <div style="text-align:center;margin-bottom:2rem">
-        <span class="kicker">Sudah Punya Akun</span>
-        <h2>Masuk ke Akun PPDB</h2>
-        <p style="color:var(--muted);margin-top:.5rem">Lanjutkan proses pendaftaran Anda</p>
+    <div class="ppdb-card" style="padding:2rem 2rem 1.75rem">
+      <div style="display:inline-flex;border-radius:999px;overflow:hidden;border:1px solid var(--line);background:var(--bg);margin-bottom:2rem">
+        <button class="auth-tab-segmented active" onclick="switchTab('login')" style="padding:0.6rem 1.75rem;font-size:.9rem;font-weight:700;border:none">Masuk</button>
+        <button class="auth-tab-segmented" onclick="switchTab('register')" style="padding:0.6rem 1.75rem;font-size:.9rem;font-weight:700;border:none">Daftar Baru</button>
       </div>
 
-      <form method="POST" action="{{ route('login') }}" style="background:#fff;padding:2rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)">
-        @csrf
-        <input type="hidden" name="role" value="applicant">
+      <div id="login-content" class="tab-content active">
+        <h2 style="font-size:1.5rem;font-family:Calistoga,Georgia,serif;font-weight:400;margin:0 0 .25rem;color:var(--ink)">Masuk ke Akun PPDB</h2>
+        <p style="font-size:.9rem;color:var(--muted);margin:0 0 1.5rem">Lanjutkan proses pendaftaran Anda</p>
 
-        <div style="margin-bottom:1.5rem">
-          <label for="login_email" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Email</label>
-          <input 
-            type="email" 
-            id="login_email" 
-            name="email" 
-            value="{{ old('email') }}"
-            required
-            autofocus
-            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
-            onfocus="this.style.borderColor='#3b82f6'"
-            onblur="this.style.borderColor='#e0e0e0'"
-            placeholder="contoh@email.com">
-          @error('email')
-          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
-          @enderror
-        </div>
+        <form method="POST" action="{{ route('login') }}">
+          @csrf
+          <input type="hidden" name="role" value="applicant">
 
-        <div style="margin-bottom:2rem">
-          <label for="login_password" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Password</label>
-          <input 
-            type="password" 
-            id="login_password" 
-            name="password" 
-            required
-            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
-            onfocus="this.style.borderColor='#3b82f6'"
-            onblur="this.style.borderColor='#e0e0e0'"
-            placeholder="Masukkan password Anda">
-          @error('password')
-          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
-          @enderror
-        </div>
+          <div class="field" style="margin-bottom:1.25rem">
+            <label for="login_email" style="font-size:.85rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)">Email</label>
+            <input type="email" id="login_email" name="email" value="{{ old('email') }}" required autofocus placeholder="contoh@email.com" class="ppdb-input">
+            @error('email')<p style="color:var(--danger);font-size:.8rem;margin-top:.35rem">{{ $message }}</p>@enderror
+          </div>
 
-        <button 
-          type="submit"
-          style="width:100%;padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;transition:background .2s"
-          onmouseover="this.style.background='#2563eb'"
-          onmouseout="this.style.background='#3b82f6'">
-          Masuk Sekarang
-        </button>
+          <div class="field" style="margin-bottom:1.5rem">
+            <label for="login_password" style="font-size:.85rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)">Password</label>
+            <input type="password" id="login_password" name="password" required placeholder="Masukkan password Anda" class="ppdb-input">
+            @error('password')<p style="color:var(--danger);font-size:.8rem;margin-top:.35rem">{{ $message }}</p>@enderror
+          </div>
 
-        <div style="margin-top:1.5rem;text-align:center;font-size:.9rem;color:var(--muted)">
-          <p>Belum punya akun? <a href="javascript:void(0)" onclick="switchTab('register')" class="text-link">Daftar di sini</a></p>
-        </div>
-      </form>
-    </div>
+          <button type="submit" style="width:100%;padding:0.8rem;border-radius:12px;border:none;font-size:.95rem;font-weight:800;cursor:pointer;transition:opacity .2s;background:var(--primary);color:white" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+            Masuk Sekarang
+          </button>
 
-    <div id="register-content" class="tab-content">
-      <div style="text-align:center;margin-bottom:2rem">
-        <span class="kicker">Langkah 1 dari 3</span>
-        <h2>Registrasi Akun PPDB</h2>
-        <p style="color:var(--muted);margin-top:.5rem">Isi formulir di bawah untuk membuat akun pendaftaran</p>
+          <p style="text-align:center;font-size:.85rem;color:var(--muted);margin-top:1.25rem">
+            Belum punya akun? <a href="javascript:void(0)" onclick="switchTab('register')" style="font-weight:700;color:var(--primary-2)">Daftar di sini</a>
+          </p>
+        </form>
       </div>
 
-      <form method="POST" action="{{ route('ppdb.manual.register') }}" style="background:#fff;padding:2rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)">
-        @csrf
+      <div id="register-content" class="tab-content">
+        <h2 style="font-size:1.5rem;font-family:Calistoga,Georgia,serif;font-weight:400;margin:0 0 .25rem;color:var(--ink)">Registrasi Akun PPDB</h2>
+        <p style="font-size:.9rem;color:var(--muted);margin:0 0 1.5rem">Isi formulir di bawah untuk membuat akun pendaftaran</p>
 
-        <div style="margin-bottom:1.5rem">
-          <label for="full_name" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Nama Lengkap</label>
-          <input 
-            type="text" 
-            id="full_name" 
-            name="full_name" 
-            value="{{ old('full_name') }}"
-            required 
-            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
-            onfocus="this.style.borderColor='#3b82f6'"
-            onblur="this.style.borderColor='#e0e0e0'"
-            placeholder="Masukkan nama lengkap">
-          @error('full_name')
-          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
-          @enderror
-        </div>
+        <form method="POST" action="{{ route('ppdb.manual.register') }}">
+          @csrf
 
-        <div style="margin-bottom:1.5rem">
-          <label for="email" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Email</label>
-          <input 
-            type="email" 
-            id="email" 
-            name="email" 
-            value="{{ old('email') }}"
-            required
-            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
-            onfocus="this.style.borderColor='#3b82f6'"
-            onblur="this.style.borderColor='#e0e0e0'"
-            placeholder="contoh@email.com">
-          @error('email')
-          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
-          @enderror
-        </div>
+          <div class="field" style="margin-bottom:1.25rem">
+            <label for="full_name" style="font-size:.85rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)">Nama Lengkap</label>
+            <input type="text" id="full_name" name="full_name" value="{{ old('full_name') }}" required placeholder="Masukkan nama lengkap" class="ppdb-input">
+            @error('full_name')<p style="color:var(--danger);font-size:.8rem;margin-top:.35rem">{{ $message }}</p>@enderror
+          </div>
 
-        <div style="margin-bottom:1.5rem">
-          <label for="password" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Password</label>
-          <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            required
-            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
-            onfocus="this.style.borderColor='#3b82f6'"
-            onblur="this.style.borderColor='#e0e0e0'"
-            placeholder="Minimal 8 karakter">
-          @error('password')
-          <p style="color:#dc2626;font-size:.875rem;margin-top:.5rem">{{ $message }}</p>
-          @enderror
-        </div>
+          <div class="field" style="margin-bottom:1.25rem">
+            <label for="email" style="font-size:.85rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)">Email</label>
+            <input type="email" id="email" name="email" value="{{ old('email') }}" required placeholder="contoh@email.com" class="ppdb-input">
+            @error('email')<p style="color:var(--danger);font-size:.8rem;margin-top:.35rem">{{ $message }}</p>@enderror
+          </div>
 
-        <div style="margin-bottom:2rem">
-          <label for="password_confirmation" style="display:block;font-weight:600;margin-bottom:.5rem;color:#333">Konfirmasi Password</label>
-          <input 
-            type="password" 
-            id="password_confirmation" 
-            name="password_confirmation" 
-            required
-            style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:1rem;transition:border-color .2s"
-            onfocus="this.style.borderColor='#3b82f6'"
-            onblur="this.style.borderColor='#e0e0e0'"
-            placeholder="Ulangi password">
-        </div>
+          <div class="field" style="margin-bottom:1.25rem">
+            <label for="password" style="font-size:.85rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Minimal 8 karakter" class="ppdb-input">
+            @error('password')<p style="color:var(--danger);font-size:.8rem;margin-top:.35rem">{{ $message }}</p>@enderror
+          </div>
 
-        <button 
-          type="submit"
-          style="width:100%;padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;transition:background .2s"
-          onmouseover="this.style.background='#2563eb'"
-          onmouseout="this.style.background='#3b82f6'">
-          Daftar Sekarang
-        </button>
+          <div class="field" style="margin-bottom:1.5rem">
+            <label for="password_confirmation" style="font-size:.85rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)">Konfirmasi Password</label>
+            <input type="password" id="password_confirmation" name="password_confirmation" required placeholder="Ulangi password" class="ppdb-input">
+          </div>
 
-        <div style="margin-top:1.5rem;text-align:center;font-size:.9rem;color:var(--muted)">
-          <p>Sudah punya akun? <a href="javascript:void(0)" onclick="switchTab('login')" class="text-link">Masuk di sini</a></p>
-        </div>
-      </form>
-    </div>
+          <button type="submit" style="width:100%;padding:0.8rem;border-radius:12px;border:none;font-size:.95rem;font-weight:800;cursor:pointer;transition:opacity .2s;background:var(--primary);color:white" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+            Daftar Sekarang
+          </button>
 
-    <div class="grid grid-3" style="margin-top:2rem;gap:1rem">
-      <div class="card" style="text-align:center;padding:1.5rem">
-        <h4 style="margin-bottom:.3rem">1. Registrasi</h4>
-        <p style="font-size:.85rem;color:var(--muted)">Buat akun pendaftaran</p>
-      </div>
-      <div class="card" style="text-align:center;padding:1.5rem">
-        <h4 style="margin-bottom:.3rem">2. Isi Formulir</h4>
-        <p style="font-size:.85rem;color:var(--muted)">Data siswa & orang tua</p>
-      </div>
-      <div class="card" style="text-align:center;padding:1.5rem">
-        <h4 style="margin-bottom:.3rem">3. Konfirmasi</h4>
-        <p style="font-size:.85rem;color:var(--muted)">Pantau status pendaftaran</p>
+          <p style="text-align:center;font-size:.85rem;color:var(--muted);margin-top:1.25rem">
+            Sudah punya akun? <a href="javascript:void(0)" onclick="switchTab('login')" style="font-weight:700;color:var(--primary-2)">Masuk di sini</a>
+          </p>
+        </form>
       </div>
     </div>
+
   </div>
 </section>
 
 <script>
 function switchTab(tab) {
-  const loginTab = document.querySelector('.auth-tab:first-child');
-  const registerTab = document.querySelector('.auth-tab:last-child');
-  const loginContent = document.getElementById('login-content');
-  const registerContent = document.getElementById('register-content');
-  
+  const tabs = document.querySelectorAll('.auth-tab-segmented');
+  const loginEl = document.getElementById('login-content');
+  const registerEl = document.getElementById('register-content');
+  tabs.forEach(t => t.classList.remove('active'));
+  loginEl?.classList.remove('active');
+  registerEl?.classList.remove('active');
   if (tab === 'login') {
-    loginTab.classList.add('active');
-    registerTab.classList.remove('active');
-    loginContent.classList.add('active');
-    registerContent.classList.remove('active');
-    setTimeout(() => document.getElementById('login_email')?.focus(), 100);
+    tabs[0].classList.add('active');
+    loginEl?.classList.add('active');
   } else {
-    registerTab.classList.add('active');
-    loginTab.classList.remove('active');
-    registerContent.classList.add('active');
-    loginContent.classList.remove('active');
-    setTimeout(() => document.getElementById('full_name')?.focus(), 100);
+    tabs[1].classList.add('active');
+    registerEl?.classList.add('active');
   }
 }
-
-// Auto switch to register tab if there are validation errors for registration
 @if($errors->has('full_name') || $errors->has('password_confirmation'))
   switchTab('register');
 @endif
+
+document.querySelectorAll('.nav-links a, .nav-dropdown-menu a, .nav-dropdown-trigger').forEach(el => {
+  el.addEventListener('click', function(e) {
+    if (this.closest('.nav-dropdown-trigger')) {
+      e.stopPropagation();
+      return;
+    }
+    e.preventDefault();
+    const href = this.getAttribute('href');
+    if (!href || href === '#') return;
+    Swal.fire({
+      title: 'Keluar dari PPDB?',
+      text: 'Progres Anda akan tetap tersimpan.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#0b3b75',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Ya, keluar',
+      cancelButtonText: 'Tetap di sini',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        document.getElementById('ppdbLogoutForm').submit();
+      }
+    });
+  });
+});
 </script>
 @endsection

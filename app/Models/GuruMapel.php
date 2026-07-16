@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class GuruMapel extends Model
 {
     protected $table = 'guru_mapel';
-    protected $fillable = ['semester_id', 'mapel_id', 'guru_id'];
+    protected $fillable = ['semester_id', 'mapel_id', 'guru_id', 'class_name'];
 
     public function semester()
     {

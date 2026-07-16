@@ -26,6 +26,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function studentProfile()
+    {
+        return $this->hasOne(Student::class, 'user_id');
+    }
+
     public function students()
     {
         return $this->belongsToMany(Student::class, 'parent_student', 'parent_id', 'student_id')

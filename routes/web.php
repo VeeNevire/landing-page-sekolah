@@ -9,6 +9,7 @@ use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\ReportController;
 use App\Http\Controllers\Portal\StudentController;
 use App\Http\Controllers\Guru\GuruController;
+use App\Http\Controllers\Siswa\SiswaController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +50,15 @@ Route::middleware(['auth', 'verified', 'role:parent'])->prefix('portal')->name('
     Route::get('/tagihan', [StudentController::class, 'tagihan'])->name('tagihan');
     Route::get('/profil', [StudentController::class, 'profil'])->name('profil');
     Route::get('/notifikasi', [StudentController::class, 'notifikasi'])->name('notifikasi');
+});
+
+Route::middleware(['auth', 'verified', 'role:student'])->prefix('siswa')->name('siswa.')->group(function () {
+    Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('dashboard');
+    Route::get('/nilai', [SiswaController::class, 'nilai'])->name('nilai');
+    Route::get('/kehadiran', [SiswaController::class, 'kehadiran'])->name('kehadiran');
+    Route::get('/jadwal', [SiswaController::class, 'jadwal'])->name('jadwal');
+    Route::get('/materi', [SiswaController::class, 'materi'])->name('materi');
+    Route::get('/profil', [SiswaController::class, 'profil'])->name('profil');
 });
 
 Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin,principal'])->prefix('guru')->name('guru.')->group(function () {

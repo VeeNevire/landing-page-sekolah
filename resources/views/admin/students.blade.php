@@ -280,8 +280,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     <input type="text" name="search" class="search-input" placeholder="Cari nama atau asal sekolah..." value="{{ request('search') }}">
     <button class="btn btn-outline btn-sm" type="submit">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/>
-        <path d="m21 21-4.35-4.35"/>
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
       </svg>
     </button>
   </form>
@@ -301,29 +301,29 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         </tr>
       </thead>
       <tbody>
-      @forelse ($applicants as $a)
-      <tr data-applicant-id="{{ $a->id }}">
-        <td class="table-cell-index">{{ $loop->iteration + ($applicants->currentPage() - 1) * $applicants->perPage() }}</td>
-        <td class="table-cell-name">
-          <strong>{{ $a->full_name }}</strong>
-          @if($a->user)
+        @forelse ($applicants as $a)
+        <tr data-applicant-id="{{ $a->id }}">
+          <td class="table-cell-index">{{ $loop->iteration + ($applicants->currentPage() - 1) * $applicants->perPage() }}</td>
+          <td class="table-cell-name">
+            <strong>{{ $a->full_name }}</strong>
+            @if($a->user)
             <span class="email">{{ $a->user->email }}</span>
-          @endif
-        </td>
-        <td>{{ $a->asal_sekolah ?: '-' }}</td>
-        <td class="table-cell-program">{{ $a->program_diminati ?: '-' }}</td>
-        <td>
-          <div class="applicant-progress">
-            <div class="progress-bar-wrap">
-              <div class="progress-bar-fill {{ $a->completion_step === 'completed' ? 'completed' : '' }}" 
-                   style="width: {{ $applicantStepPercent[$a->completion_step] }}%"></div>
+            @endif
+          </td>
+          <td>{{ $a->asal_sekolah ?: '-' }}</td>
+          <td class="table-cell-program">{{ $a->program_diminati ?: '-' }}</td>
+          <td>
+            <div class="applicant-progress">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill {{ $a->completion_step === 'completed' ? 'completed' : '' }}"
+                  style="width: {{ $applicantStepPercent[$a->completion_step] }}%"></div>
+              </div>
+              <span class="progress-label">{{ $applicantStepLabels[$a->completion_step] }}</span>
             </div>
-            <span class="progress-label">{{ $applicantStepLabels[$a->completion_step] }}</span>
-          </div>
-        </td>
-        <td>
-          <div class="action-buttons">
-            @if($a->status === 'submitted')
+          </td>
+          <td>
+            <div class="action-buttons">
+              @if($a->status === 'submitted')
               <button class="action-btn action-btn-primary" onclick="verifyApplicant({{ $a->id }}, '{{ $a->full_name }}')" title="Validasi Data">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -336,46 +336,46 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
-            @endif
+              @endif
 
-            @if($a->status === 'verified')
+              @if($a->status === 'verified')
               <button class="action-btn action-btn-danger" onclick="cancelApplicant({{ $a->id }}, '{{ $a->full_name }}')" title="Batalkan">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="4" y1="12" x2="20" y2="12" />
                 </svg>
               </button>
-            @endif
+              @endif
 
-            <button class="action-btn" onclick="showDetail({{ $a->id }})" title="Lihat Detail">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-          </div>
-        </td>
-      </tr>
-      @empty
-      <tr>
-        <td colspan="6" style="padding:0;">
-          <div class="empty-state">
-            <div class="empty-state-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
+              <button class="action-btn" onclick="showDetail({{ $a->id }})" title="Lihat Detail">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
             </div>
-            <h3>Belum Ada Pendaftar</h3>
-            <p>Belum ada pendaftar PPDB yang sesuai dengan filter ini.</p>
-          </div>
-        </td>
-      </tr>
-      @endforelse
-    </tbody>
-  </table>
+          </td>
+        </tr>
+        @empty
+        <tr>
+          <td colspan="6" style="padding:0;">
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <h3>Belum Ada Pendaftar</h3>
+              <p>Belum ada pendaftar PPDB yang sesuai dengan filter ini.</p>
+            </div>
+          </td>
+        </tr>
+        @endforelse
+      </tbody>
+    </table>
   </div>
   <div style="padding:16px">{{ $applicants->links() }}</div>
 </section>
@@ -389,8 +389,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       </div>
       <button class="btn btn-outline btn-sm" onclick="closeDetail()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
     </div>
@@ -809,37 +809,83 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
     const modalStatusBar = document.getElementById('modalStatusBar');
-    
+
     modalBody.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Memuat data...</div>';
     modalStatusBar.innerHTML = '';
     modalFooter.style.display = 'none';
     document.getElementById('detailModal').classList.add('open');
-    
+
     fetch('/admin/applicants/' + id + '/data').then(r => r.json()).then(d => {
       currentApplicantId = id;
-      
+
       const completionPercent = STEP_PERCENT[d.completion_step];
       const completionLabel = STEP_LABELS[d.completion_step];
-      
+
       let statusBarHtml = '<span class="status-badge ' + d.status + '">' + STATUS_LABELS[d.status] + '</span>';
       statusBarHtml += '<div class="applicant-progress" style="flex:1;max-width:300px;">';
       statusBarHtml += '<div class="progress-bar-wrap"><div class="progress-bar-fill ' + (d.completion_step === 'completed' ? 'completed' : '') + '" style="width:' + completionPercent + '%"></div></div>';
       statusBarHtml += '<span class="progress-label">' + completionLabel + '</span></div>';
       modalStatusBar.innerHTML = statusBarHtml;
 
-      const sections = [
-        { title: 'Data Pribadi', icon: '📋', fields: [['full_name','Nama Lengkap'],['nickname','Nama Panggilan'],['birth_place','Tempat Lahir'],['birth_date','Tanggal Lahir'],['gender','Jenis Kelamin'],['religion','Agama'],['address','Alamat'],['phone','No. HP']] },
-        { title: 'Data Akademik', icon: '🎓', fields: [['asal_sekolah','Asal Sekolah'],['nisn','NISN'],['jenjang','Jenjang'],['program_diminati','Program Diminati']] },
-        { title: 'Data Orang Tua', icon: '👨‍👩‍👧', fields: [['ayah_name','Nama Ayah'],['ayah_occupation','Pekerjaan Ayah'],['ayah_phone','HP Ayah'],['ayah_email','Email Ayah'],['ibu_name','Nama Ibu'],['ibu_occupation','Pekerjaan Ibu'],['ibu_phone','HP Ibu'],['ibu_email','Email Ibu']] }
+      const sections = [{
+          title: 'Data Pribadi',
+          icon: '📋',
+          fields: [
+            ['full_name', 'Nama Lengkap'],
+            ['nickname', 'Nama Panggilan'],
+            ['birth_place', 'Tempat Lahir'],
+            ['birth_date', 'Tanggal Lahir'],
+            ['gender', 'Jenis Kelamin'],
+            ['religion', 'Agama'],
+            ['address', 'Alamat'],
+            ['phone', 'No. HP']
+          ]
+        },
+        {
+          title: 'Data Akademik',
+          icon: '🎓',
+          fields: [
+            ['asal_sekolah', 'Asal Sekolah'],
+            ['nisn', 'NISN'],
+            ['jenjang', 'Jenjang'],
+            ['program_diminati', 'Program Diminati']
+          ]
+        },
+        {
+          title: 'Data Orang Tua',
+          icon: '👨‍👩‍👧',
+          fields: [
+            ['ayah_name', 'Nama Ayah'],
+            ['ayah_occupation', 'Pekerjaan Ayah'],
+            ['ayah_phone', 'HP Ayah'],
+            ['ayah_email', 'Email Ayah'],
+            ['ibu_name', 'Nama Ibu'],
+            ['ibu_occupation', 'Pekerjaan Ibu'],
+            ['ibu_phone', 'HP Ibu'],
+            ['ibu_email', 'Email Ibu']
+          ]
+        }
       ];
       if (d.wali_name || d.wali_occupation || d.wali_phone || d.wali_email) {
-        sections.push({ title: 'Data Wali', icon: '👤', fields: [['wali_name','Nama Wali'],['wali_occupation','Pekerjaan Wali'],['wali_phone','HP Wali'],['wali_email','Email Wali']] });
+        sections.push({
+          title: 'Data Wali',
+          icon: '👤',
+          fields: [
+            ['wali_name', 'Nama Wali'],
+            ['wali_occupation', 'Pekerjaan Wali'],
+            ['wali_phone', 'HP Wali'],
+            ['wali_email', 'Email Wali']
+          ]
+        });
       }
 
       let html = '<div class="detail-grid">';
       sections.forEach(s => {
         html += '<div class="detail-section"><h4 class="detail-section-title" data-icon="' + s.icon + '">' + s.title + '</h4>';
-        s.fields.forEach(([k,l]) => { const v = d[k]; html += '<div class="detail-row"><div class="detail-label">' + l + '</div><div class="detail-value' + (!v ? ' empty' : '') + '">' + (v || 'Tidak diisi') + '</div></div>'; });
+        s.fields.forEach(([k, l]) => {
+          const v = d[k];
+          html += '<div class="detail-row"><div class="detail-label">' + l + '</div><div class="detail-value' + (!v ? ' empty' : '') + '">' + (v || 'Tidak diisi') + '</div></div>';
+        });
         html += '</div>';
       });
 
@@ -847,7 +893,22 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       html += '<div class="detail-section">';
       html += '<h4 class="detail-section-title" data-icon="📁">Dokumen</h4>';
       html += '<div class="doc-grid">';
-      const docTypes = [{key:'ijazah',label:'Ijazah / STTB'},{key:'rapor',label:'Rapor Semester 1-5'},{key:'kk',label:'Kartu Keluarga'},{key:'akta',label:'Akta Kelahiran'},{key:'foto',label:'Pas Foto 3x4'}];
+      const docTypes = [{
+        key: 'ijazah',
+        label: 'Ijazah / STTB'
+      }, {
+        key: 'rapor',
+        label: 'Rapor Semester 1-5'
+      }, {
+        key: 'kk',
+        label: 'Kartu Keluarga'
+      }, {
+        key: 'akta',
+        label: 'Akta Kelahiran'
+      }, {
+        key: 'foto',
+        label: 'Pas Foto 3x4'
+      }];
       docTypes.forEach(dt => {
         const doc = d.documents?.find(doc => doc.document_type === dt.key);
         const isUploaded = !!doc;
@@ -997,20 +1058,30 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         formData.append('_method', 'DELETE');
 
         fetch('/admin/applicants/' + id, {
-          method: 'POST',
-          body: formData,
-          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-        .then(r => r.json())
-        .then(j => {
-          if (j.success) {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: j.message, showConfirmButton: false, timer: 3000 })
-            .then(() => location.reload());
-          } else {
-            Swal.fire('Gagal', j.message || 'Terjadi kesalahan.', 'error');
-          }
-        })
-        .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            }
+          })
+          .then(r => r.json())
+          .then(j => {
+            if (j.success) {
+              Swal.fire({
+                  toast: true,
+                  position: 'top-end',
+                  icon: 'success',
+                  title: j.message,
+                  showConfirmButton: false,
+                  timer: 3000
+                })
+                .then(() => location.reload());
+            } else {
+              Swal.fire('Gagal', j.message || 'Terjadi kesalahan.', 'error');
+            }
+          })
+          .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
       }
     });
   }
@@ -1023,30 +1094,30 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     if (note) formData.append('admin_note', note);
 
     fetch('/admin/applicants/' + id + '/status', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json'
-      }
-    })
-    .then(r => r.json())
-    .then(j => {
-      if (j.success) {
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: j.message,
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true
-        }).then(() => location.reload());
-      } else {
-        Swal.fire('Gagal', j.message || 'Terjadi kesalahan.', 'error');
-      }
-    })
-    .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(j => {
+        if (j.success) {
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: j.message,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          }).then(() => location.reload());
+        } else {
+          Swal.fire('Gagal', j.message || 'Terjadi kesalahan.', 'error');
+        }
+      })
+      .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
   }
 
   @endif

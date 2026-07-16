@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Penugasan Guru Mapel')
+@section('title', 'Mapel Guru')
 
 @section('content')
 <div class="portal-heading">
   <div>
-    <span class="kicker">Manajemen penugasan</span>
-    <h1>Penugasan Guru Mapel</h1>
-    <p>Atur guru yang mengajar mata pelajaran per semester.</p>
+    <span class="kicker">Manajemen pengajaran</span>
+    <h1>Mapel Guru</h1>
+    <p>Atur mata pelajaran, guru pengajar, dan kelas.</p>
   </div>
 </div>
 
@@ -41,6 +41,7 @@
           <th>No</th>
           <th>Mata Pelajaran</th>
           <th>Guru</th>
+          <th>Kelas</th>
           <th>Aksi</th>
         </tr>
       </thead>
@@ -50,6 +51,7 @@
           <td style="text-align:center">{{ $index + 1 }}</td>
           <td><strong>{{ $assignment->subject->code }}</strong> — {{ $assignment->subject->name }}</td>
           <td style="font-size:.88rem">{{ $assignment->teacher->full_name ?? $assignment->teacher->name }}</td>
+          <td>{{ $assignment->class_name ?? '-' }}</td>
           <td>
             <button type="button" class="btn btn-outline" title="Hapus penugasan" style="min-height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" onclick="confirmDelete({{ $assignment->id }}, '{{ addslashes($assignment->subject->name) }}', '{{ addslashes($assignment->teacher->full_name ?? $assignment->teacher->name) }}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
@@ -57,14 +59,14 @@
           </td>
         </tr>
         @empty
-        <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--muted)">Belum ada penugasan di semester ini.</td></tr>
+        <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Belum ada penugasan di semester ini.</td></tr>
         @endforelse
       </tbody>
     </table>
   </div>
 </section>
 
-<section class="portal-panel" style="margin-top:20px;max-width:600px">
+<section class="portal-panel" style="margin-top:20px;max-width:800px">
   <div style="padding:24px">
     <h3 style="margin:0 0 16px">Tambah Penugasan Baru</h3>
     <form method="POST" action="{{ route('admin.penugasan.store') }}" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
@@ -87,6 +89,16 @@
           <option value="">-- Pilih Guru --</option>
           @foreach ($teachers as $teacher)
             <option value="{{ $teacher->id }}">{{ $teacher->full_name ?: $teacher->name }} ({{ $teacher->role }})</option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="field" style="flex:1;min-width:140px;margin:0">
+        <label style="font-size:.82rem;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Kelas</label>
+        <select name="class_name" style="min-height:42px">
+          <option value="">-- Pilih Kelas --</option>
+          @foreach ($classes as $class)
+            <option value="{{ $class }}">{{ $class }}</option>
           @endforeach
         </select>
       </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
 use App\Models\GuruMapel;
 use App\Models\Subject;
+use App\Models\TeachingAssignment;
 use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
@@ -19,14 +20,20 @@ class PenugasanController extends Controller
 
         $assignments = GuruMapel::where('semester_id', $semesterId)
             ->with(['subject', 'teacher', 'semester'])
+            ->orderBy('class_name')
             ->orderBy('mapel_id')
             ->get();
 
         $periods = AcademicPeriod::orderByDesc('academic_year')->get();
         $subjects = Subject::orderBy('code')->get();
         $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
+        $classes = TeachingAssignment::where('period_id', $semesterId)
+            ->select('class_name')
+            ->distinct()
+            ->orderBy('class_name')
+            ->pluck('class_name');
 
-        return view('admin.penugasan', compact('assignments', 'periods', 'subjects', 'teachers', 'semesterId'));
+        return view('admin.penugasan', compact('assignments', 'periods', 'subjects', 'teachers', 'semesterId', 'classes'));
     }
 
     public function store(Request $request)
@@ -35,9 +42,16 @@ class PenugasanController extends Controller
             'semester_id' => 'required|exists:academic_periods,id',
             'mapel_id' => 'required|exists:subjects,id',
             'guru_id' => 'required|exists:users,id',
+            'class_name' => 'nullable|string|max:80',
         ]);
 
-        $exists = GuruMapel::where($validated)->exists();
+        $exists = GuruMapel::where([
+            'semester_id' => $validated['semester_id'],
+            'mapel_id' => $validated['mapel_id'],
+            'guru_id' => $validated['guru_id'],
+            'class_name' => $validated['class_name'] ?? null,
+        ])->exists();
+
         if ($exists) {
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Penugasan ini sudah ada.']);

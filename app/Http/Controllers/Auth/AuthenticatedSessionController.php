@@ -35,11 +35,15 @@ class AuthenticatedSessionController extends Controller
         AuditService::log('auth.login', 'User', $user->id, $user->id);
 
         if ($role === 'admin') {
-            return redirect()->intended(route('admin.dashboard', absolute: false));
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($role === 'student') {
+            return redirect()->route('siswa.dashboard');
         }
 
         if (in_array($role, ['teacher', 'homeroom', 'principal'])) {
-            return redirect()->intended(route('guru.dashboard', absolute: false));
+            return redirect()->route('guru.dashboard');
         }
 
         if ($role === 'applicant') {
@@ -64,7 +68,7 @@ class AuthenticatedSessionController extends Controller
             };
         }
 
-        return redirect()->intended(route('portal.dashboard', absolute: false));
+        return redirect()->route('portal.dashboard');
     }
 
     /**

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Student extends Model
 {
     protected $fillable = [
+        'user_id',
         'nisn',
         'full_name',
         'birth_date',
@@ -21,6 +22,11 @@ class Student extends Model
         return [
             'birth_date' => 'date',
         ];
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function homeroomTeacher()

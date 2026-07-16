@@ -520,8 +520,9 @@ class AdminController extends Controller
             'kkm' => $validated['kkm'],
         ]);
 
-        if (!empty($validated['guru_ids'])) {
-            $subject->gurus()->sync($validated['guru_ids']);
+        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        if (!empty($validated['guru_ids']) && $activePeriod) {
+            $subject->gurus()->syncWithPivotValues($validated['guru_ids'], ['semester_id' => $activePeriod->id]);
         }
 
         AuditService::log('subject.create', 'Subject', $subject->id);
@@ -549,7 +550,8 @@ class AdminController extends Controller
             'kkm' => $validated['kkm'],
         ]);
 
-        $subject->gurus()->sync($validated['guru_ids'] ?? []);
+        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $subject->gurus()->syncWithPivotValues($validated['guru_ids'] ?? [], ['semester_id' => $activePeriod?->id]);
 
         AuditService::log('subject.update', 'Subject', $subject->id);
 
@@ -945,6 +947,7 @@ class AdminController extends Controller
 
             if ($validated['status'] === 'accepted') {
                 $student = Student::create([
+                    'user_id' => $applicant->user_id,
                     'nisn' => $applicant->nisn ?? ('PPDB-' . str_pad($applicant->id, 5, '0', STR_PAD_LEFT)),
                     'full_name' => $applicant->full_name,
                     'birth_date' => $applicant->birth_date,
@@ -952,6 +955,10 @@ class AdminController extends Controller
                     'program_name' => $applicant->program_diminati ?? ($applicant->jenjang ?? ''),
                     'status' => 'active',
                 ]);
+
+                if ($applicant->user_id) {
+                    $applicant->user->update(['role' => 'student']);
+                }
 
                 foreach (['ayah', 'ibu'] as $parentType) {
                     $email = $applicant->{$parentType . '_email'};

@@ -28,4 +28,18 @@ class Subject extends Model
     {
         return $this->hasMany(GuruMapel::class, 'mapel_id');
     }
+
+    public function gurus()
+    {
+        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        return $this->belongsToMany(User::class, 'guru_mapel', 'mapel_id', 'guru_id')
+            ->withPivot('semester_id', 'class_name')
+            ->wherePivot('semester_id', $activePeriod?->id);
+    }
+
+    public function allGurus()
+    {
+        return $this->belongsToMany(User::class, 'guru_mapel', 'mapel_id', 'guru_id')
+            ->withPivot('semester_id', 'class_name');
+    }
 }

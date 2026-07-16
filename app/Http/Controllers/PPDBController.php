@@ -172,7 +172,16 @@ class PPDBController extends Controller
             ]);
         }
 
-        $currentStep = (int) ($request->query('step') ?? 1);
+        $requestedStep = (int) ($request->query('step') ?? 1);
+
+        $maxAllowed = match($applicant->completion_step) {
+            'completed', 'documents' => 3,
+            'parent_data' => 2,
+            'student_data' => 2,
+            default => 1,
+        };
+
+        $currentStep = min($requestedStep, $maxAllowed);
 
         return view('ppdb.form', compact('applicant', 'currentStep'));
     }
@@ -234,6 +243,14 @@ class PPDBController extends Controller
                 'full_name' => Auth::user()->full_name ?? Auth::user()->name,
                 'completion_step' => 'not_started',
             ]);
+        }
+
+        if (!in_array($applicant->completion_step, ['parent_data', 'documents', 'completed'])) {
+            $next = match($applicant->completion_step) {
+                'student_data' => 2,
+                default => 1,
+            };
+            return redirect()->route('ppdb.form', ['step' => $next]);
         }
 
         $documents = $applicant->documents->keyBy('document_type');
@@ -454,13 +471,16 @@ class PPDBController extends Controller
 
         if (!$existingStudent) {
             $student = Student::create([
+                'user_id' => Auth::id(),
                 'nisn' => $applicant->nisn ?? ('PPDB-' . str_pad($applicant->id, 5, '0', STR_PAD_LEFT)),
                 'full_name' => $applicant->full_name,
                 'birth_date' => $applicant->birth_date,
-                'class_name' => '',
-                'program_name' => '',
+                'class_name' => 'X ' . ($applicant->program_diminati ?? 'Baru'),
+                'program_name' => $applicant->program_diminati ?? '',
                 'status' => 'active',
             ]);
+
+            Auth::user()->update(['role' => 'student']);
 
             foreach (['ayah', 'ibu'] as $parentType) {
                 $email = $applicant->{$parentType . '_email'};

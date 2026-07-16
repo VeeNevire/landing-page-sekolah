@@ -3,6 +3,11 @@
 @section('title', 'Pendaftaran Berhasil | SMK MADYA DEPOK')
 
 @section('content')
+<form id="ppdbLogoutForm" method="POST" action="{{ route('logout') }}" style="display:none">
+  @csrf
+  <input type="hidden" name="redirect_to" value="/">
+</form>
+
 <section class="page-hero">
   <div class="container" style="display:flex;justify-content:space-between;align-items:center">
     <div>
@@ -75,3 +80,34 @@
   </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+document.querySelectorAll('.nav-links a, .nav-dropdown-menu a, .nav-dropdown-trigger').forEach(el => {
+  el.addEventListener('click', function(e) {
+    if (this.closest('.nav-dropdown-trigger')) {
+      e.stopPropagation();
+      return;
+    }
+    e.preventDefault();
+    const href = this.getAttribute('href');
+    if (!href || href === '#') return;
+    Swal.fire({
+      title: 'Keluar dari PPDB?',
+      text: 'Progres Anda akan tetap tersimpan.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#0b3b75',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Ya, keluar',
+      cancelButtonText: 'Tetap di sini',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        document.getElementById('ppdbLogoutForm').submit();
+      }
+    });
+  });
+});
+</script>
+@endpush

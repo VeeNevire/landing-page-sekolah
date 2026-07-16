@@ -8,6 +8,10 @@
   <meta name="description" content="@yield('meta_description', 'Website resmi SMK MADYA DEPOK ')">
   <title>@yield('title', config('app.name'))</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  @vite('resources/css/app.css')
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
   @stack('styles')
 </head>
@@ -17,7 +21,7 @@
     <div class="container nav-inner">
       <a class="brand" href="{{ route('beranda') }}">
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="Logo"></span>
-        <span class="brand-text">SMK MADYA DEPOK<small>UNGGUL • TERAMPIL • BERKARAKTER</small></span>
+        <span class="brand-text">SMK MADYA <span>Depok</span></span>
       </a>
       <nav class="nav-links" id="navLinks">
         <a href="{{ route('beranda') }}" @class(['active'=> request()->routeIs('beranda')])>Beranda</a>
@@ -32,6 +36,12 @@
             </svg>
           </button>
           <div class="nav-dropdown-menu">
+            <a href="{{ route('login') }}?role=student">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" />
+              </svg>
+              Portal Siswa
+            </a>
             <a href="{{ route('login') }}">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -73,7 +83,7 @@
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
           </svg>
         </button>
-        <a class="btn btn-primary" href="{{ route('ppdb.start') }}">Daftar Sekarang</a>
+        <a class="btn-cta" href="{{ route('ppdb.start') }}">Daftar Sekarang</a>
         <button class="icon-btn menu-btn" id="menuBtn">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="6" x2="20" y2="6" />
@@ -129,7 +139,6 @@
       </div>
       <div class="footer-bottom">
         <span>&copy; {{ date('Y') }} SMK MADYA DEPOK .</span>
-        <span>Template website sekolah — data dapat disesuaikan.</span>
       </div>
     </div>
   </footer>
@@ -140,6 +149,7 @@
     </svg>
   </button>
 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="{{ asset('js/script.js') }}"></script>
   @stack('scripts')
 </body>
