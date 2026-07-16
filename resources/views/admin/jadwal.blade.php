@@ -23,15 +23,6 @@
         @endforeach
       </select>
     </div>
-    <div class="field" style="flex:1;min-width:160px;margin:0">
-      <label style="font-size:.82rem;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Kelas</label>
-      <select name="class_name" onchange="this.form.submit()" style="min-height:42px">
-        <option value="">Semua Kelas</option>
-        @foreach ($classes as $class)
-          <option value="{{ $class }}" {{ $selectedClass == $class ? 'selected' : '' }}>{{ $class }}</option>
-        @endforeach
-      </select>
-    </div>
     <div style="align-self:end">
       <button type="button" class="btn btn-primary" onclick="openAddModal()" style="min-height:42px;display:inline-flex;align-items:center;gap:6px">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -86,7 +77,7 @@ const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
 
 function openAddModal() {
   Swal.fire({
-    title: 'Tambah Jadwal' + ('{{ $selectedClass }}' ? ' — {{ $selectedClass }}' : ''),
+    title: 'Tambah Jadwal',
     html: `
       <form id="jadwalForm" style="text-align:left">
         @csrf

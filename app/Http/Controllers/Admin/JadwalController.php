@@ -25,10 +25,8 @@ class JadwalController extends Controller
     {
         $activePeriod = AcademicPeriod::where('is_active', true)->first();
         $semesterId = $request->query('semester_id', $activePeriod?->id);
-        $selectedClass = $request->query('class_name', '');
 
         $guruMapels = GuruMapel::where('semester_id', $semesterId)
-            ->when($selectedClass, fn($q) => $q->where('class_name', $selectedClass))
             ->with(['subject', 'teacher', 'jadwals'])
             ->get();
 
@@ -56,19 +54,12 @@ class JadwalController extends Controller
         }
 
         $periods = AcademicPeriod::orderByDesc('academic_year')->get();
-        $classes = GuruMapel::where('semester_id', $semesterId)
-            ->select('class_name')
-            ->distinct()
-            ->orderBy('class_name')
-            ->pluck('class_name')
-            ->filter();
-
         $subjects = $guruMapels->map(fn($gm) => [
             'guru_mapel_id' => $gm->id,
             'label' => $gm->subject->code . ' — ' . $gm->subject->name . ' (' . ($gm->teacher->full_name ?? $gm->teacher->name) . ')',
         ])->values();
 
-        return view('admin.jadwal', compact('grid', 'periods', 'subjects', 'semesterId', 'classes', 'selectedClass'));
+        return view('admin.jadwal', compact('grid', 'periods', 'subjects', 'semesterId'));
     }
 
     public function store(Request $request)
