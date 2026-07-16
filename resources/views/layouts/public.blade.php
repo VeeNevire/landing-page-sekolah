@@ -134,7 +134,7 @@
           <address>
             Jl. Raya Leuwinanggung No.111, Leuwinanggung, Kec. Tapos, Kota Depok, Jawa Barat 16456<br>
             <a href="tel:+62215550198">(021) 555-0198</a><br>
-            <a href="mailto:info@cakrawala.sch.id">info@cakrawala.sch.id</a><br>
+            <a href="mailto:info@smadev.sch.id">info@smadev.sch.id</a><br>
             WhatsApp: <a href="https://wa.me/6281234567890">+62 812-3456-7890</a>
           </address>
         </div>

@@ -30,7 +30,12 @@ body {
     background: var(--bg);
     line-height: 1.65;
 }
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: Calistoga, Georgia, serif;
     font-weight: 400;
 }
@@ -123,7 +128,8 @@ button {
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(18, 44, 82, 0.06), 0 1px 4px rgba(18, 44, 82, 0.04);
+    box-shadow: 0 4px 24px rgba(18, 44, 82, 0.06),
+        0 1px 4px rgba(18, 44, 82, 0.04);
     border: 1px solid color-mix(in srgb, var(--line) 40%, transparent);
     transition: box-shadow 0.3s ease, background 0.3s ease;
 }
@@ -171,7 +177,6 @@ main.no-nav {
 .brand-text {
     line-height: 1.05;
     font-size: 1.05rem;
-    color: var(--ink);
 }
 .brand-text span {
     color: var(--primary-2);
@@ -292,8 +297,14 @@ main.no-nav {
     animation: dropdownFade 0.2s ease-out;
 }
 @keyframes dropdownFade {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 .nav-dropdown:hover .nav-dropdown-menu,
 .nav-dropdown-menu.show {
@@ -869,10 +880,18 @@ body.dark .nav-dropdown-menu a:hover {
     overflow: hidden;
     position: relative;
 }
-.gallery div:nth-child(1) { background: linear-gradient(135deg, #1457a6, #0b3b75); }
-.gallery div:nth-child(2) { background: linear-gradient(135deg, #1f6dc4, #1457a6); }
-.gallery div:nth-child(3) { background: linear-gradient(135deg, #4682d0, #1f6dc4); }
-.gallery div:nth-child(4) { background: linear-gradient(135deg, #e09e2f, #c4841a); }
+.gallery div:nth-child(1) {
+    background: linear-gradient(135deg, #1457a6, #0b3b75);
+}
+.gallery div:nth-child(2) {
+    background: linear-gradient(135deg, #1f6dc4, #1457a6);
+}
+.gallery div:nth-child(3) {
+    background: linear-gradient(135deg, #4682d0, #1f6dc4);
+}
+.gallery div:nth-child(4) {
+    background: linear-gradient(135deg, #e09e2f, #c4841a);
+}
 .gallery div::after {
     content: attr(data-label);
     position: absolute;

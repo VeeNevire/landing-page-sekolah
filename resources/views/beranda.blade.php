@@ -24,7 +24,7 @@
     </div>
     <div class="visual reveal">
       <div class="visual-card visual-main">
-        <div class="visual-label"><small>Selamat datang di</small><strong>Kampus Cakrawala</strong></div>
+        <div class="visual-label"><small>Selamat datang di</small><strong>SMK Madya Depok</strong></div>
         <div class="school-illustration">
           <div class="school-building">
             <div class="block left"></div>
@@ -342,7 +342,7 @@
   <div class="container">
     <div class="cta reveal">
       <div>
-        <h2>Siap menjadi bagian dari Cakrawala?</h2>
+        <h2>Siap menjadi bagian dari SMK Madya Depok?</h2>
         <p>Temukan program terbaik, jadwal penerimaan, persyaratan, serta alur pendaftaran peserta didik baru.</p>
       </div><a class="btn btn-accent" href="{{ route('ppdb') }}">Lihat Informasi PPDB <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px">
           <path d="M5 12h14" />
