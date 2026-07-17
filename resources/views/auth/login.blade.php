@@ -20,6 +20,10 @@ $isStudent = $roleParam === 'student';
 <body>
   <div class="portal-login-page">
     <section class="portal-login-brand">
+      <div class="portal-login-shapes">
+        <div class="portal-login-shape portal-login-shape-1"></div>
+        <div class="portal-login-shape portal-login-shape-2"></div>
+      </div>
       <a class="brand" href="{{ route('beranda') }}">
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="" width="28" height="28"></span>
         <span class="brand-text">InvestaSchool<small>UNGGUL • TERAMPIL • BERKARAKTER</small></span>
@@ -91,7 +95,7 @@ $isStudent = $roleParam === 'student';
           </div>
         </div>
 
-        <button class="btn btn-primary" type="submit" style="width:100%;margin-top:20px">Masuk ke {{ $isAdmin ? 'Portal Admin' : ($isGuru ? 'Portal Guru' : ($isStudent ? 'Portal Siswa' : 'Dashboard')) }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px">
+        <button class="btn btn-primary" type="submit">Masuk ke {{ $isAdmin ? 'Portal Admin' : ($isGuru ? 'Portal Guru' : ($isStudent ? 'Portal Siswa' : 'Dashboard')) }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px">
             <path d="M5 12h14" />
             <path d="m12 5 7 7-7 7" />
           </svg></button>

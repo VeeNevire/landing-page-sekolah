@@ -33,10 +33,13 @@ window.addEventListener('scroll', () => {
 backTop?.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
 
 const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if(entry.isIntersecting) entry.target.classList.add('visible');
+  entries.forEach((entry, i) => {
+    if(entry.isIntersecting){
+      setTimeout(() => entry.target.classList.add('visible'), entry.target.dataset.delay || 0);
+      observer.unobserve(entry.target);
+    }
   });
-},{threshold:.12});
+},{threshold:.08, rootMargin:'0px 0px -40px 0px'});
 $$('.reveal').forEach(el => observer.observe(el));
 
 function animateCounter(el){
