@@ -204,7 +204,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       <div class="wizard-step active" id="step1Indicator"><span class="wizard-step-dot">1</span><span class="wizard-step-label">Data Siswa</span></div>
       <div class="wizard-step" id="step2Indicator"><span class="wizard-step-dot">2</span><span class="wizard-step-label">Orang Tua</span></div>
     </div>
-    <form id="studentForm" onsubmit="submitForm(event)">
+    <form id="studentForm" onsubmit="submitForm(event)" novalidate>
       <input type="hidden" name="_method" id="formMethod" value="POST">
       <input type="hidden" id="formStudentId" value="">
       <div class="wizard-section active" id="step1">
@@ -214,7 +214,14 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
             <div class="field"><label for="m_nisn">NISN <span style="color:#ef4444">*</span></label><input id="m_nisn" name="nisn" type="text" required placeholder="Nomor induk siswa"><small class="field-error" style="color:#ef4444;display:none"></small></div>
             <div class="field"><label for="m_full_name">Nama Lengkap <span style="color:#ef4444">*</span></label><input id="m_full_name" name="full_name" type="text" required placeholder="Nama lengkap siswa"><small class="field-error" style="color:#ef4444;display:none"></small></div>
           </div>
-          <div class="field" style="margin-top:14px"><label for="m_birth_date">Tanggal Lahir</label><input id="m_birth_date" name="birth_date" type="date"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+            <div class="field"><label for="m_student_email">Email Akun <span style="color:#ef4444">*</span></label>
+              <input id="m_student_email" name="student_email" type="email" required placeholder="email@contoh.com" oninput="checkEmailAvailability(this.value)">
+              <small class="field-error" style="color:#ef4444;display:none"></small>
+              <small id="emailStatus" style="display:none;font-size:.78rem;font-weight:600;margin-top:.3rem"></small>
+            </div>
+            <div class="field"><label for="m_birth_date">Tanggal Lahir</label><input id="m_birth_date" name="birth_date" type="date"></div>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
             <div class="field"><label for="m_jurusan_id">Jurusan <span style="color:#ef4444">*</span></label>
               <select id="m_jurusan_id" name="jurusan_id" required onchange="loadKelasByJurusan(this.value)">
@@ -242,6 +249,21 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
                 <option value="graduated">Lulus</option>
                 <option value="inactive">Nonaktif</option>
               </select></div>
+          </div>
+          <div id="resetPasswordSection" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <strong style="font-size:.9rem;color:var(--ink)">Akun Siswa</strong>
+                <p id="studentAccountEmail" style="margin:4px 0 0;font-size:.82rem;color:var(--muted)"></p>
+              </div>
+              <button type="button" class="btn btn-outline" onclick="confirmResetPassword()" style="min-height:36px;padding:0 14px;font-size:.82rem;color:#d97706;border-color:#d97706;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Reset Password
+              </button>
+            </div>
           </div>
         </div>
         <div class="admin-modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button type="button" class="btn btn-primary" onclick="goToStep2()">Selanjutnya</button></div>
@@ -551,15 +573,17 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     document.getElementById('modalSubmitBtn').textContent = 'Simpan';
     document.getElementById('formMethod').value = 'POST';
     document.getElementById('formStudentId').value = '';
-    document.getElementById('studentForm').action = '{{ route("admin.students.store") }}';
+    document.getElementById('studentForm').action = '{{ route(name: "admin.students.store") }}';
     document.getElementById('m_nisn').value = '';
     document.getElementById('m_full_name').value = '';
+    document.getElementById('m_student_email').value = '';
     document.getElementById('m_birth_date').value = '';
     document.getElementById('m_jurusan_id').value = '';
     document.getElementById('m_kelas_id').innerHTML = '<option value="">Pilih Jurusan dulu</option>';
     document.getElementById('m_homeroom_teacher_id').value = '';
     document.getElementById('m_homeroom_teacher_text').value = '';
     document.getElementById('m_status').value = getDefaultStatus();
+    document.getElementById('resetPasswordSection').style.display = 'none';
     setParentAction('none');
     document.getElementById('currentParentsSection').style.display = 'none';
     existingParents = [];
@@ -586,12 +610,24 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         document.getElementById('studentForm').action = '/admin/students/' + d.id;
         document.getElementById('m_nisn').value = d.nisn;
         document.getElementById('m_full_name').value = d.full_name;
+        document.getElementById('m_student_email').value = d.student_email || '';
         document.getElementById('m_birth_date').value = d.birth_date || '';
         document.getElementById('m_jurusan_id').value = d.jurusan_id || '';
         loadKelasByJurusan(d.jurusan_id || '', d.kelas_id || '');
         var wali = d.homeroom_teacher_id || '';
         document.getElementById('m_homeroom_teacher_id').value = wali;
         document.getElementById('m_status').value = d.status;
+
+        // Reset password section
+        var rpSection = document.getElementById('resetPasswordSection');
+        var rpEmail = document.getElementById('studentAccountEmail');
+        if (d.user_id && d.student_email) {
+          rpSection.style.display = 'block';
+          rpEmail.textContent = 'Email: ' + d.student_email;
+          rpSection.dataset.studentId = d.id;
+        } else {
+          rpSection.style.display = 'none';
+        }
         existingParents = d.parents || [];
         if (existingParents.length > 0) {
           document.getElementById('currentParentsSection').style.display = 'block';
@@ -622,8 +658,13 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
   }
 
   function goToStep2() {
-    if (!document.getElementById('m_nisn').value || !document.getElementById('m_full_name').value || !document.getElementById('m_kelas_id').value) {
+    if (!document.getElementById('m_nisn').value || !document.getElementById('m_full_name').value || !document.getElementById('m_student_email').value || !document.getElementById('m_kelas_id').value) {
       Swal.fire('Lengkapi Data', 'Mohon isi semua field yang wajib diisi pada data siswa.', 'warning');
+      return;
+    }
+    const emailStatus = document.getElementById('emailStatus');
+    if (emailStatus.style.display === 'block' && emailStatus.style.color === 'rgb(220, 38, 38)') {
+      Swal.fire('Email Tidak Tersedia', 'Gunakan email lain yang belum terdaftar.', 'warning');
       return;
     }
     currentStep = 2;
@@ -706,10 +747,28 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           'X-CSRF-TOKEN': CSRF_TOKEN
         }
       })
-      .then(r => r.json().then(j => ({
-        ok: r.ok,
-        j
-      })))
+      .then(r => {
+        console.log('Response status:', r.status, r.statusText);
+        console.log('Response headers:', [...r.headers.entries()]);
+        console.log('Response content-type:', r.message || r.headers.get('content-type'));
+        if (!r.ok) {
+          return r.text().then(text => {
+            console.error('Response body (first 500 chars):', text.substring(0, 500));
+            try {
+              return {
+                ok: r.ok,
+                j: JSON.parse(text)
+              };
+            } catch (e) {
+              throw new Error('HTTP ' + r.status + ': ' + text.match(/<title>([^<]+)<\/title>/)?.[1] || 'Server error');
+            }
+          });
+        }
+        return r.json().then(j => ({
+          ok: r.ok,
+          j
+        }));
+      })
       .then(({
         ok,
         j
@@ -726,14 +785,17 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
             timerProgressBar: true
           }).then(() => location.reload());
         } else if (j.errors) {
-          const fields = currentStep === 1 ? ['nisn', 'full_name', 'jurusan_id', 'kelas_id', 'status', 'birth_date', 'homeroom_teacher_id'] : ['parent_id', 'parent_name', 'parent_email', 'parent_password'];
+          const fields = currentStep === 1 ? ['nisn', 'full_name', 'student_email', 'jurusan_id', 'kelas_id', 'status', 'birth_date', 'homeroom_teacher_id'] : ['parent_id', 'parent_name', 'parent_email', 'parent_password'];
           fields.forEach(f => {
             if (j.errors[f]) showFieldError(f, j.errors[f][0]);
           });
         } else {
           Swal.fire('Gagal', j.message || 'Terjadi kesalahan.', 'error');
         }
-      }).catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
+      }).catch((err) => {
+        console.error('Fetch error:', err);
+        Swal.fire('Error', err.message || 'Tidak dapat terhubung ke server.', 'error');
+      });
   }
 
   function confirmDelete(id, name) {
@@ -824,27 +886,30 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     }
 
     fetch('/admin/jurusans/' + jurusanId + '/kelas', {
-      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-    })
-    .then(r => r.json())
-    .then(data => {
-      sel.innerHTML = '<option value="">Pilih Kelas</option>';
-      data.forEach(k => {
-        const s = document.createElement('option');
-        s.value = k.id;
-        s.textContent = k.nama_lengkap;
-        s.dataset.wali = k.homeroom_teacher_id || '';
-        s.dataset.waliNama = k.wali_nama || '';
-        if (selectedKelasId && String(k.id) === String(selectedKelasId)) s.selected = true;
-        sel.appendChild(s);
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        sel.innerHTML = '<option value="">Pilih Kelas</option>';
+        data.forEach(k => {
+          const s = document.createElement('option');
+          s.value = k.id;
+          s.textContent = k.nama_lengkap;
+          s.dataset.wali = k.homeroom_teacher_id || '';
+          s.dataset.waliNama = k.wali_nama || '';
+          if (selectedKelasId && String(k.id) === String(selectedKelasId)) s.selected = true;
+          sel.appendChild(s);
+        });
+        sel.disabled = false;
+        if (selectedKelasId) updateWaliKelas(sel);
+      })
+      .catch(() => {
+        sel.innerHTML = '<option value="">Gagal memuat</option>';
+        sel.disabled = false;
       });
-      sel.disabled = false;
-      if (selectedKelasId) updateWaliKelas(sel);
-    })
-    .catch(() => {
-      sel.innerHTML = '<option value="">Gagal memuat</option>';
-      sel.disabled = false;
-    });
   }
 
   function updateWaliKelas(sel) {
@@ -854,6 +919,95 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     const waliNama = selected ? selected.dataset.waliNama : '';
     document.getElementById('m_homeroom_teacher_id').value = wali || '';
     document.getElementById('m_homeroom_teacher_text').value = waliNama || 'Walas belum ditentukan';
+  }
+
+  let emailCheckTimer;
+
+  function checkEmailAvailability(email) {
+    const status = document.getElementById('emailStatus');
+    const field = document.getElementById('m_student_email');
+
+    if (!email) {
+      status.style.display = 'none';
+      field.style.borderColor = '';
+      return;
+    }
+
+    if (!email.includes('@') || !email.includes('.')) {
+      status.style.display = 'none';
+      field.style.borderColor = '';
+      return;
+    }
+
+    clearTimeout(emailCheckTimer);
+    emailCheckTimer = setTimeout(() => {
+      fetch('/admin/check-email?email=' + encodeURIComponent(email), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.available) {
+          status.style.display = 'block';
+          status.style.color = '#059669';
+          status.textContent = '✓ Email tersedia';
+          field.style.borderColor = '#059669';
+        } else {
+          status.style.display = 'block';
+          status.style.color = '#dc2626';
+          status.textContent = '✗ ' + d.message;
+          field.style.borderColor = '#dc2626';
+        }
+      })
+      .catch(() => {});
+    }, 500);
+  }
+
+  function confirmResetPassword() {
+    const section = document.getElementById('resetPasswordSection');
+    const studentId = section.dataset.studentId;
+    if (!studentId) return;
+
+    Swal.fire({
+      title: 'Reset Password?',
+      text: 'Password baru akan dikirim ke email siswa.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d97706',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Ya, Reset',
+      cancelButtonText: 'Batal',
+    }).then(result => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Memproses...',
+          html: 'Mengirim password baru ke email',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+        fetch('/admin/students/' + studentId + '/reset-password', {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': CSRF_TOKEN
+            }
+          })
+          .then(r => r.json())
+          .then(json => {
+            if (json.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: json.message,
+                timer: 3000
+              });
+            } else {
+              Swal.fire('Gagal', json.message || 'Terjadi kesalahan.', 'error');
+            }
+          })
+          .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
+      }
+    });
   }
 
   function escHtml(s) {
@@ -1194,5 +1348,3 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
   @endif
 </script>
 @endpush
-
-

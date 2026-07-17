@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use App\Mail\ParentAccountMail;
+use App\Mail\StudentAcceptedMail;
 use App\Services\AuditService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -286,6 +287,8 @@ class AdminController extends Controller
             'status' => $student->status,
             'jurusan_id' => $student->jurusan_id,
             'kelas_id' => $student->kelas_id,
+            'user_id' => $student->user_id,
+            'student_email' => $student->user?->email,
             'parents' => $parents,
         ]);
     }
@@ -306,6 +309,21 @@ class AdminController extends Controller
         return response()->json($parents);
     }
 
+    public function checkEmail(Request $request)
+    {
+        $email = $request->query('email');
+        if (!$email) {
+            return response()->json(['available' => true]);
+        }
+
+        $exists = User::where('email', $email)->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'Email ini sudah terdaftar sebagai ' . User::where('email', $email)->value('role') . '.' : 'Email tersedia.',
+        ]);
+    }
+
     public function studentsStore(Request $request)
     {
         $validated = $request->validate([
@@ -318,6 +336,7 @@ class AdminController extends Controller
             'program_name' => 'nullable|string|max:120',
             'homeroom_teacher_id' => 'nullable|exists:users,id',
             'status' => 'required|in:active,graduated,inactive',
+            'student_email' => 'required|email|unique:users,email',
             'parent_action' => 'required|in:existing,new,none',
             'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
             'parent_name' => 'required_if:parent_action,new|nullable|string|max:255',
@@ -325,20 +344,48 @@ class AdminController extends Controller
             'parent_password' => 'required_if:parent_action,new|nullable|min:6',
             'parent_relationship' => 'nullable|string|max:40',
         ]);
-
         $kelas = !empty($validated['kelas_id']) ? Kelas::with('jurusan')->find($validated['kelas_id']) : null;
-
         $student = Student::create([
             'nisn' => $validated['nisn'],
             'full_name' => $validated['full_name'],
             'birth_date' => $validated['birth_date'] ?? null,
             'jurusan_id' => $validated['jurusan_id'] ?? $kelas?->jurusan_id,
             'kelas_id' => $validated['kelas_id'] ?? null,
-            'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap,
-            'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama,
+            'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap ?? ($validated['full_name'] . ' (tanpa kelas)'),
+            'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama ?? '-',
             'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? $kelas?->homeroom_teacher_id,
             'status' => $validated['status'],
         ]);
+        // Generate NIS
+        $year = now()->format('Y');
+        $lastNis = Student::where('nis', 'like', $year . '%')->max('nis');
+        $nextNumber = $lastNis ? intval(substr($lastNis, -4)) + 1 : 1;
+        $nis = $year . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+        // Buat User akun student
+        $password = (string) random_int(10000000, 99999999);
+        $user = User::create([
+            'name' => $validated['full_name'],
+            'full_name' => $validated['full_name'],
+            'email' => $validated['student_email'],
+            'password' => Hash::make($password),
+            'role' => 'student',
+            'is_active' => true,
+        ]);
+
+        $student->update([
+            'user_id' => $user->id,
+            'nis' => $nis,
+        ]);
+
+        // Kirim email kredensial ke siswa
+        Mail::to($user->email)->send(new StudentAcceptedMail(
+            studentName: $validated['full_name'],
+            className: $student->class_name,
+            programName: $student->program_name,
+            nis: $nis,
+            password: $password,
+        ));
 
         if (($validated['parent_action'] ?? 'none') !== 'none') {
             if ($validated['parent_action'] === 'existing') {
@@ -353,6 +400,13 @@ class AdminController extends Controller
                     'is_active' => true,
                 ]);
                 $parentId = $parent->id;
+
+                Mail::to($parent->email)->send(new ParentAccountMail(
+                    parentName: $validated['parent_name'],
+                    parentEmail: $parent->email,
+                    password: $validated['parent_password'],
+                    studentName: $validated['full_name'],
+                ));
             }
 
             DB::table('parent_student')->insert([
@@ -362,14 +416,9 @@ class AdminController extends Controller
                 'is_primary' => true,
             ]);
         }
-
         AuditService::log('student.create', 'Student', $student->id);
 
-        if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Siswa berhasil ditambahkan.']);
-        }
-
-        return redirect()->route('admin.students.index')->with('success', 'Siswa berhasil ditambahkan.');
+        return response()->json(['success' => true, 'message' => 'Siswa berhasil ditambahkan. Kredensial terkirim ke email ' . $validated['student_email'] . '.']);
     }
 
     public function studentsEdit(Student $student)
@@ -390,6 +439,9 @@ class AdminController extends Controller
             'program_name' => 'nullable|string|max:120',
             'homeroom_teacher_id' => 'nullable|exists:users,id',
             'status' => 'required|in:active,graduated,inactive',
+            'class_name' => 'nullable|string|max:80',
+            'program_name' => 'nullable|string|max:120',
+            'student_email' => 'nullable|email|unique:users,email,' . ($student->user_id ?? 'NULL'),
             'parent_action' => 'nullable|in:existing,new,none,disconnect',
             'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
             'parent_name' => 'required_if:parent_action,new|nullable|string|max:255',
@@ -407,11 +459,15 @@ class AdminController extends Controller
             'birth_date' => $validated['birth_date'] ?? null,
             'jurusan_id' => $validated['jurusan_id'] ?? $kelas?->jurusan_id ?? $student->jurusan_id,
             'kelas_id' => $validated['kelas_id'] ?? $student->kelas_id,
-            'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap ?? $student->class_name,
-            'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama ?? $student->program_name,
+            'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap ?? $student->class_name ?? ($validated['full_name'] . ' (tanpa kelas)'),
+            'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama ?? $student->program_name ?? '-',
             'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? $kelas?->homeroom_teacher_id ?? $student->homeroom_teacher_id,
             'status' => $validated['status'],
         ]);
+
+        if (!empty($validated['student_email']) && $student->user) {
+            $student->user->update(['email' => $validated['student_email']]);
+        }
 
         if (!empty($validated['disconnect_parent_id'])) {
             $student->parents()->detach($validated['disconnect_parent_id']);
@@ -444,11 +500,7 @@ class AdminController extends Controller
 
         AuditService::log('student.update', 'Student', $student->id);
 
-        if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Data siswa berhasil diperbarui.']);
-        }
-
-        return redirect()->route('admin.students.index')->with('success', 'Data siswa berhasil diperbarui.');
+        return response()->json(['success' => true, 'message' => 'Data siswa berhasil diperbarui.']);
     }
 
     public function studentsDestroy(Request $request, Student $student)
@@ -456,11 +508,31 @@ class AdminController extends Controller
         AuditService::log('student.delete', 'Student', $student->id);
         $student->delete();
 
-        if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Siswa berhasil dihapus.']);
+        return response()->json(['success' => true, 'message' => 'Siswa berhasil dihapus.']);
+    }
+
+    public function studentResetPassword(Request $request, Student $student)
+    {
+        if (!$student->user) {
+            return response()->json(['success' => false, 'message' => 'Siswa ini tidak memiliki akun pengguna.'], 400);
         }
 
-        return redirect()->route('admin.students.index')->with('success', 'Siswa berhasil dihapus.');
+        $password = (string) random_int(10000000, 99999999);
+        $student->user->update(['password' => Hash::make($password)]);
+
+        Mail::to($student->user->email)->send(new StudentAcceptedMail(
+            studentName: $student->full_name,
+            className: $student->class_name,
+            programName: $student->program_name,
+            nis: $student->nis,
+            password: $password,
+        ));
+
+        AuditService::log('student.reset-password', 'Student', $student->id);
+
+        return response()->json(['success' => true, 'message' => 'Password berhasil direset. Kredensial baru terkirim ke email ' . $student->user->email . '.']);
+
+        return back()->with('success', 'Password berhasil direset. Kredensial baru terkirim ke email.');
     }
 
     public function studentImportForm()

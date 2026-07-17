@@ -102,7 +102,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/students/{student}/data', [AdminController::class, 'studentData'])->name('students.data');
     Route::put('/students/{student}', [AdminController::class, 'studentsUpdate'])->name('students.update');
     Route::delete('/students/{student}', [AdminController::class, 'studentsDestroy'])->name('students.destroy');
+    Route::post('/students/{student}/reset-password', [AdminController::class, 'studentResetPassword'])->name('students.reset-password');
     Route::get('/parents/list', [AdminController::class, 'parentsList'])->name('parents.list');
+    Route::get('/check-email', [AdminController::class, 'checkEmail'])->name('check-email');
     Route::get('/jurusans/{jurusan}/kelas', [AdminController::class, 'kelasByJurusan'])->name('jurusans.kelas');
 
     Route::get('/subjects', [AdminController::class, 'subjects'])->name('subjects.index');
