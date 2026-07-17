@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Form Pendaftaran PPDB | SMK MADYA DEPOK')
+@section('title', 'Form Pendaftaran PPDB | InvestaSchool')
 
 @push('styles')
 <style>
@@ -404,10 +404,15 @@
         reverseButtons: true
       }).then((result) => {
         if (result.isConfirmed) {
-          document.getElementById('ppdbLogoutForm').submit();
+          const form = document.getElementById('ppdbLogoutForm');
+          const input = form.querySelector('input[name="redirect_to"]');
+          if (input) input.value = href;
+          form.submit();
         }
       });
     });
   });
 </script>
 @endpush
+
+

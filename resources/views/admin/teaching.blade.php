@@ -97,7 +97,7 @@
       </tbody>
     </table>
   </div>
-  <div style="padding:16px">{{ $assignments->links() }}</div>
+  <div style="padding:16px">{{ $assignments->links('vendor.pagination.admin') }}</div>
 </section>
 
 {{-- Modal --}}
@@ -342,3 +342,5 @@
 </script>
 @endpush
 @endsection
+
+

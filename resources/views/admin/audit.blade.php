@@ -156,6 +156,8 @@ $actionColors = [
       </tbody>
     </table>
   </div>
-  <div style="padding:16px">{{ $logs->links() }}</div>
+  <div style="padding:16px">{{ $logs->links('vendor.pagination.admin') }}</div>
 </section>
 @endsection
+
+

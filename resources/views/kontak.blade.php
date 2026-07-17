@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Kontak | SMK MADYA DEPOK')
+@section('title', 'Kontak | InvestaSchool')
 
 @section('content')
 <section class="page-hero">
@@ -39,7 +39,7 @@
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
             </svg></div>
           <div><strong>Email</strong>
-            <div style="color:var(--muted)">info@cakrawala.sch.id</div>
+            <div style="color:var(--muted)">info@investaschool.sch.id</div>
           </div>
         </div>
         <div class="contact-item">
@@ -97,3 +97,5 @@
   </div>
 </section>
 @endsection
+
+

@@ -23,7 +23,7 @@ class StudentAcceptedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Selamat! Anda Resmi Diterima - SMK MADYA DEPOK',
+            subject: 'Selamat! Anda Resmi Diterima - InvestaSchool',
         );
     }
 
@@ -39,3 +39,4 @@ class StudentAcceptedMail extends Mailable
         return [];
     }
 }
+

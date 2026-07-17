@@ -4,8 +4,8 @@
 <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
 @endpush
 
-@section('title', config('SMK MADYA DEPOK'))
-@section('meta_description', 'Website resmi SMK MADYA DEPOK — sekolah unggul, terampil, dan berkarakter.')
+@section('title', config('app.name'))
+@section('meta_description', 'Website resmi InvestaSchool — sekolah unggul, terampil, dan berkarakter.')
 
 @section('content')
 <section class="hero">
@@ -24,7 +24,7 @@
     </div>
     <div class="visual reveal">
       <div class="visual-card visual-main">
-        <div class="visual-label"><small>Selamat datang di</small><strong>SMK Madya Depok</strong></div>
+        <div class="visual-label"><small>Selamat datang di</small><strong>InvestaSchool</strong></div>
         <div class="school-illustration">
           <div class="school-building">
             <div class="block left"></div>
@@ -119,7 +119,7 @@
     </div>
     <div class="reveal"><span class="kicker">Tentang sekolah</span>
       <h2 class="section-title">Pendidikan terpadu SMA dan SMK dalam satu ekosistem.</h2>
-      <p class="section-desc">SMK MADYA DEPOK menghubungkan penguasaan ilmu, keterampilan praktis, nilai karakter, dan pengalaman kolaboratif.</p>
+      <p class="section-desc">InvestaSchool menghubungkan penguasaan ilmu, keterampilan praktis, nilai karakter, dan pengalaman kolaboratif.</p>
       <div class="check-list">
         <div class="check-item"><span class="check">✓</span>
           <div><strong>Pembelajaran personal</strong><br><span style="color:var(--muted)">Pendampingan berdasarkan minat, bakat, dan tujuan siswa.</span></div>
@@ -342,7 +342,7 @@
   <div class="container">
     <div class="cta reveal">
       <div>
-        <h2>Siap menjadi bagian dari SMK Madya Depok?</h2>
+        <h2>Siap menjadi bagian dari InvestaSchool?</h2>
         <p>Temukan program terbaik, jadwal penerimaan, persyaratan, serta alur pendaftaran peserta didik baru.</p>
       </div><a class="btn btn-accent" href="{{ route('ppdb') }}">Lihat Informasi PPDB <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px">
           <path d="M5 12h14" />
@@ -352,3 +352,5 @@
   </div>
 </section>
 @endsection
+
+

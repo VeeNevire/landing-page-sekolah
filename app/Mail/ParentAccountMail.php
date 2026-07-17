@@ -22,7 +22,7 @@ class ParentAccountMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Akun Portal Orang Tua - SMK MADYA DEPOK',
+            subject: 'Akun Portal Orang Tua - InvestaSchool',
         );
     }
 
@@ -38,3 +38,4 @@ class ParentAccountMail extends Mailable
         return [];
     }
 }
+

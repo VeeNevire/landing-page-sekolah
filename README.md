@@ -1,4 +1,4 @@
-# Website & Portal SMK MADYA DEPOK
+# Website & Portal InvestaSchool
 
 Sistem informasi sekolah berbasis Laravel dengan website publik, portal orang tua, dan portal guru.
 
@@ -92,8 +92,8 @@ Buka `http://localhost:8000`
 | --------------------- | ------------------------ | ---------- |
 | Orang Tua             | `orangtua@demo.sch.id`   | `Demo123!` |
 | Guru                  | `guru@demo.sch.id`       | `Demo123!` |
-| Wali Kelas (XI RPL 1) | `rina@cakrawala.sch.id`  | `Demo123!` |
-| Wali Kelas (X TKJ 2)  | `dimas@cakrawala.sch.id` | `Demo123!` |
+| Wali Kelas (XI RPL 1) | `rina@InvestaSchool.sch.id`  | `Demo123!` |
+| Wali Kelas (X TKJ 2)  | `dimas@InvestaSchool.sch.id` | `Demo123!` |
 
 ## Struktur Folder
 
@@ -134,3 +134,4 @@ public/
 ## License
 
 MIT
+

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Portal Admin SMK MADYA DEPOK ">
+  <meta name="description" content="Portal Admin InvestaSchool ">
   <title>@yield('title') | Portal Admin</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
@@ -19,7 +19,7 @@
     <aside class="portal-sidebar admin-sidebar" id="adminSidebar">
       <a class="brand" href="{{ route('admin.dashboard') }}">
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="" width="28" height="28"></span>
-        <span class="brand-text">Portal Admin<small>CAKRAWALA </small></span>
+        <span class="brand-text">Portal Admin<small>InvestaSchool </small></span>
       </a>
       <div class="portal-user-card">
         <div class="portal-user-avatar">{{ substr(auth()->user()->name, 0, 1) }}</div>
@@ -71,6 +71,16 @@
             </svg>
           </span>
           <span class="portal-menu-label">Mapel</span>
+        </a>
+        <a href="{{ route('admin.jurusans.index') }}"
+          @class(['active'=> request()->routeIs('admin.jurusans.*')])>
+          <span class="portal-menu-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
+            </svg>
+          </span>
+          <span class="portal-menu-label">Jurusan</span>
         </a>
         <a href="{{ route('admin.periods.index') }}"
           @class(['active'=> request()->routeIs('admin.periods.*')])>
@@ -197,3 +207,6 @@
 </body>
 
 </html>
+
+
+

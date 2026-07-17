@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Pendaftaran Berhasil | SMK MADYA DEPOK')
+@section('title', 'Pendaftaran Berhasil | InvestaSchool')
 
 @section('content')
 <form id="ppdbLogoutForm" method="POST" action="{{ route('logout') }}" style="display:none">
@@ -43,7 +43,7 @@
     <p style="color:var(--muted);margin-top:.75rem;line-height:1.7">
       @if($applicant->status === 'paid')
         Selamat, <strong>{{ $applicant->full_name }}</strong>!
-        Pembayaran Anda telah berhasil. Anda kini resmi terdaftar sebagai siswa di SMK MADYA DEPOK.
+        Pembayaran Anda telah berhasil. Anda kini resmi terdaftar sebagai siswa di InvestaSchool.
       @else
         Terima kasih, <strong>{{ $applicant->full_name }}</strong>.
         Data pendaftaran Anda telah kami terima dan akan diproses oleh tim PPDB.
@@ -104,10 +104,16 @@ document.querySelectorAll('.nav-links a, .nav-dropdown-menu a, .nav-dropdown-tri
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        document.getElementById('ppdbLogoutForm').submit();
+        const form = document.getElementById('ppdbLogoutForm');
+        const input = form.querySelector('input[name="redirect_to"]');
+        if (input) input.value = href;
+        form.submit();
       }
     });
   });
 });
 </script>
 @endpush
+
+
+

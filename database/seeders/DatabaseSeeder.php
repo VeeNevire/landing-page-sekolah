@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminUserSeeder::class,
+            JurusanSeeder::class,
         ]);
 
         // ── Users ──────────────────────────────────────────────
@@ -38,7 +39,7 @@ class DatabaseSeeder extends Seeder
         $walasRpl = User::factory()->create([
             'name' => 'Rina Kusumawati',
             'full_name' => 'Ibu Rina Kusumawati, S.Kom.',
-            'email' => 'rina@cakrawala.sch.id',
+            'email' => 'rina@investaschool.sch.id',
             'password' => bcrypt('Demo123!'),
             'role' => 'homeroom',
         ]);
@@ -46,7 +47,7 @@ class DatabaseSeeder extends Seeder
         $walasSains = User::factory()->create([
             'name' => 'Dimas Arya',
             'full_name' => 'Bapak Dimas Arya, S.Pd.',
-            'email' => 'dimas@cakrawala.sch.id',
+            'email' => 'dimas@investaschool.sch.id',
             'password' => bcrypt('Demo123!'),
             'role' => 'homeroom',
         ]);
@@ -505,3 +506,4 @@ class DatabaseSeeder extends Seeder
         }
     }
 }
+

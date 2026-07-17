@@ -15,3 +15,4 @@ class sekolah extends Seeder
         //
     }
 }
+

@@ -4,8 +4,8 @@
 
 @php
 $currentRole = request('role', '');
-$roleColors = ['admin' => '#4338ca', 'teacher' => '#0369a1', 'homeroom' => '#0d9488', 'parent' => '#b45309', 'principal' => '#7c3aed'];
-$roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'parent' => 'Orang Tua', 'principal' => 'Kepsek'];
+$roleColors = ['admin' => '#4338ca', 'teacher' => '#0369a1', 'homeroom' => '#0d9488', 'parent' => '#b45309', 'principal' => '#7c3aed', 'student' => '#059669'];
+$roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'parent' => 'Orang Tua', 'principal' => 'Kepsek', 'student' => 'Murid'];
 @endphp
 
 @section('content')
@@ -32,6 +32,10 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
   <a href="{{ route('admin.users.index', array_filter(['role' => 'parent', 'search' => request('search')])) }}"
     class="tab-btn {{ $currentRole === 'parent' ? 'active' : '' }}">
     Orang Tua <span class="tab-count">{{ $tabCounts['parent'] }}</span>
+  </a>
+  <a href="{{ route('admin.users.index', array_filter(['role' => 'student', 'search' => request('search')])) }}"
+    class="tab-btn {{ $currentRole === 'student' ? 'active' : '' }}">
+    Murid <span class="tab-count">{{ $tabCounts['student'] }}</span>
   </a>
   <a href="{{ route('admin.users.index', array_filter(['role' => 'teacher,homeroom,principal', 'search' => request('search')])) }}"
     class="tab-btn {{ $currentRole === 'teacher,homeroom,principal' ? 'active' : '' }}">
@@ -138,7 +142,7 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
       </tbody>
     </table>
   </div>
-  <div style="padding:16px">{{ $users->links() }}</div>
+  <div style="padding:16px">{{ $users->links('vendor.pagination.admin') }}</div>
 </section>
 
 {{-- Modal Overlay --}}
@@ -178,13 +182,14 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
 
         <div class="field" style="margin-top:14px">
           <label for="modal_role">Role <span style="color:#ef4444">*</span></label>
-          <select id="modal_role" name="role" required>
-            <option value="parent">Orang Tua</option>
-            <option value="teacher">Guru</option>
-            <option value="homeroom">Wali Kelas</option>
-            <option value="admin">Admin</option>
-            <option value="principal">Kepala Sekolah</option>
-          </select>
+            <select id="modal_role" name="role" required>
+              <option value="student">Murid</option>
+              <option value="parent">Orang Tua</option>
+              <option value="teacher">Guru</option>
+              <option value="homeroom">Wali Kelas</option>
+              <option value="admin">Admin</option>
+              <option value="principal">Kepala Sekolah</option>
+            </select>
         </div>
 
         <div id="passwordFields">
@@ -216,6 +221,7 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
   const CURRENT_ROLE = '{{ $currentRole }}';
 
   function getDefaultRole() {
+    if (CURRENT_ROLE === 'student') return 'student';
     if (CURRENT_ROLE === 'parent') return 'parent';
     if (CURRENT_ROLE === 'admin') return 'admin';
     if (CURRENT_ROLE === 'teacher,homeroom,principal') return 'teacher';
@@ -423,3 +429,5 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
 </script>
 @endpush
 @endsection
+
+

@@ -1,4 +1,44 @@
 /* =========================================================
+   PAGINATION
+   ========================================================= */
+.pagination-wrap{margin-top:0}
+.pagination-mobile{display:flex;gap:8px;justify-content:space-between}
+.pagination-desktop{display:none}
+@media(min-width:640px){
+  .pagination-mobile{display:none}
+  .pagination-desktop{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+}
+.pagination-info p{margin:0;font-size:.85rem;color:var(--muted);white-space:nowrap}
+.pagination-highlight{font-weight:700;color:var(--ink)}
+.pagination-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.pagination-page{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:36px;height:36px;padding:0 10px;
+  border-radius:10px;font-size:.85rem;font-weight:700;
+  border:1.5px solid var(--line);background:var(--card);color:var(--ink);
+  text-decoration:none;transition:all .15s ease;cursor:pointer
+}
+.pagination-page:hover{border-color:var(--primary-2);color:var(--primary-2);transform:translateY(-1px)}
+.pagination-page:active{transform:translateY(0)}
+.pagination-page-active{
+  border-color:#4338ca;background:#4338ca;color:#fff;box-shadow:0 4px 12px rgba(67,56,202,.25)
+}
+.pagination-page-active:hover{border-color:#3730a3;background:#3730a3;color:#fff}
+.pagination-page-disabled{
+  opacity:.4;cursor:not-allowed;pointer-events:none
+}
+.pagination-page-disabled:hover{border-color:var(--line);color:var(--ink);transform:none}
+.pagination-page-dots{border:none;background:none;color:var(--muted);cursor:default;min-width:24px}
+.pagination-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:10px;font-size:.85rem;font-weight:700;
+  border:1.5px solid var(--line);background:var(--card);color:var(--ink);
+  text-decoration:none;transition:all .15s ease
+}
+.pagination-btn-link:hover{border-color:var(--primary-2);color:var(--primary-2)}
+.pagination-btn-disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* =========================================================
    PORTAL ADMIN
    ========================================================= */
 .admin-body{--primary-2:#4338ca;--primary-3:#3730a3;--accent:#f59e0b}
@@ -756,5 +796,392 @@
     
     .detail-value {
         font-size: 1rem;
+    }
+}
+
+/* =========================================================
+   JURUSAN CARDS
+   ========================================================= */
+.jurusan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.jurusan-card {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all .2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.jurusan-card:hover {
+    border-color: var(--primary-2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+
+.jurusan-card.inactive {
+    opacity: .65;
+}
+
+.jurusan-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.jurusan-icon {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--primary-2) 10%, var(--card));
+    color: var(--primary-2);
+    flex-shrink: 0;
+}
+
+.jurusan-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.jurusan-kode {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: .78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--primary-2);
+    background: color-mix(in srgb, var(--primary-2) 10%, var(--card));
+    padding: 4px 10px;
+    border-radius: 8px;
+    line-height: 1.4;
+}
+
+.jurusan-card-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.jurusan-action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.jurusan-action-btn:hover {
+    background: color-mix(in srgb, var(--muted) 10%, var(--card));
+    color: var(--ink);
+}
+
+.jurusan-nama {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+}
+
+.jurusan-deskripsi {
+    margin: 0;
+    font-size: .88rem;
+    color: var(--muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.jurusan-stats {
+    margin-top: auto;
+    padding-top: .75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.jurusan-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.badge-active {
+    background: color-mix(in srgb, #059669 12%, var(--card));
+    color: #059669;
+}
+
+.badge-inactive {
+    background: color-mix(in srgb, #6b7280 12%, var(--card));
+    color: #6b7280;
+}
+
+.jurusan-card-add {
+    border-style: dashed;
+    border-color: var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    cursor: pointer;
+    min-height: 180px;
+    background: transparent;
+    font-family: inherit;
+}
+
+.jurusan-card-add:hover {
+    border-color: var(--primary-2);
+    background: color-mix(in srgb, var(--primary-2) 4%, var(--card));
+    box-shadow: none;
+}
+
+.jurusan-add-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--primary-2) 10%, var(--card));
+    color: var(--primary-2);
+    transition: all .2s ease;
+}
+
+.jurusan-card-add:hover .jurusan-add-icon {
+    background: var(--primary-2);
+    color: white;
+}
+
+.jurusan-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+}
+
+@media (max-width: 640px) {
+    .jurusan-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   DETAIL MODAL (jurusan)
+   ========================================================= */
+.detail-subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 6px;
+    padding: .75rem;
+    background: var(--bg);
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.subject-check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s ease;
+    font-size: .85rem;
+}
+
+.subject-check-item:hover {
+    background: color-mix(in srgb, var(--primary-2) 6%, var(--card));
+}
+
+.subject-check-item input[type="checkbox"] {
+    accent-color: #4338ca;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.subject-check-item span {
+    color: var(--ink);
+    font-weight: 500;
+}
+
+.detail-kelas-item {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card);
+}
+
+.detail-kelas-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1rem;
+    cursor: pointer;
+    transition: background .15s ease;
+    user-select: none;
+}
+
+.detail-kelas-header:hover {
+    background: color-mix(in srgb, var(--primary-2) 4%, var(--card));
+}
+
+.kelas-chevron {
+    transition: transform .2s ease;
+}
+
+.detail-kelas-subjects {
+    padding: .75rem;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+}
+
+.detail-kelas-subjects .detail-subject-grid {
+    max-height: 180px;
+}
+
+.custom-subject-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.cs-delete-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.cs-delete-btn:hover {
+    background: color-mix(in srgb, #ef4444 12%, var(--card));
+}
+
+/* =========================================================
+   KELAS ROWS (inside jurusan modal)
+   ========================================================= */
+.kelas-row {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 2px;
+}
+
+.kelas-row-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+}
+
+.kelas-row-field {
+    min-width: 0;
+}
+
+.kelas-input {
+    width: 100%;
+    padding: .55rem .65rem;
+    border-radius: 8px;
+    font-size: .85rem;
+    outline: none;
+    transition: border-color .2s;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+    font-family: inherit;
+}
+
+.kelas-input:focus {
+    border-color: var(--primary-2);
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, .1);
+}
+
+.kelas-row-preview {
+    flex: 1;
+    min-width: 120px;
+    padding: .55rem .65rem;
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--primary-2);
+    background: color-mix(in srgb, var(--primary-2) 6%, var(--card));
+    border-radius: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kelas-row-remove {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all .15s ease;
+    flex-shrink: 0;
+}
+
+.kelas-row-remove:hover {
+    background: color-mix(in srgb, #ef4444 12%, var(--card));
+}
+
+@media (max-width: 640px) {
+    .kelas-row-inner {
+        flex-wrap: wrap;
+    }
+    .kelas-row-field {
+        flex: 1 !important;
+        min-width: 80px;
+    }
+    .kelas-row-preview {
+        width: 100%;
+        min-width: unset;
+        order: 10;
     }
 }

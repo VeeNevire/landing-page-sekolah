@@ -8,6 +8,9 @@ use App\Models\Applicant;
 use App\Models\Attendance;
 use App\Models\AuditLog;
 use App\Models\Student;
+use App\Models\Jurusan;
+use App\Models\JurusanCustomSubject;
+use App\Models\Kelas;
 use App\Models\Subject;
 use App\Models\TeachingAssignment;
 use App\Models\User;
@@ -60,6 +63,7 @@ class AdminController extends Controller
         $tabCounts = [
             'all' => User::count(),
             'parent' => User::where('role', 'parent')->count(),
+            'student' => User::where('role', 'student')->count(),
             'guru' => User::whereIn('role', ['teacher', 'homeroom', 'principal'])->count(),
             'admin' => User::where('role', 'admin')->count(),
         ];
@@ -79,7 +83,7 @@ class AdminController extends Controller
             'full_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(6)],
-            'role' => 'required|in:parent,teacher,homeroom,admin,principal',
+            'role' => 'required|in:parent,teacher,homeroom,admin,principal,student',
         ]);
 
         $user = User::create([
@@ -124,7 +128,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'full_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:parent,teacher,homeroom,admin,principal',
+            'role' => 'required|in:parent,teacher,homeroom,admin,principal,student',
             'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(6)],
         ]);
 
@@ -135,7 +139,7 @@ class AdminController extends Controller
             'role' => $validated['role'],
         ];
 
-        if ($validated['password']) {
+        if (!empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);
         }
 
@@ -197,9 +201,13 @@ class AdminController extends Controller
 
     public function students(Request $request)
     {
-        $query = Student::query();
-        if ($class = $request->query('class')) {
-            $query->where('class_name', $class);
+        $query = Student::with('homeroomTeacher', 'jurusan', 'kelas');
+
+        if ($jurusanId = $request->query('jurusan_id')) {
+            $query->where('jurusan_id', $jurusanId);
+        }
+        if ($kelasId = $request->query('kelas_id')) {
+            $query->where('kelas_id', $kelasId);
         }
         if ($status = $request->query('status')) {
             $query->where('status', $status);
@@ -211,8 +219,10 @@ class AdminController extends Controller
             });
         }
 
-        $students = $query->with('homeroomTeacher')->latest()->paginate(15)->withQueryString();
-        $classNames = Student::distinct()->pluck('class_name')->sort()->values();
+        $students = $query->latest()->paginate(15)->withQueryString();
+
+        $jurusans = Jurusan::where('is_active', true)->orderBy('nama')->get(['id', 'kode', 'nama']);
+        $kelasList = Kelas::where('is_active', true)->orderBy('tingkat')->orderBy('nama')->get(['id', 'tingkat', 'nama', 'jurusan_id']);
         $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
 
         $tabCounts = [
@@ -243,7 +253,7 @@ class AdminController extends Controller
             'rejected' => Applicant::where('status', 'rejected')->count(),
         ];
 
-        return view('admin.students', compact('students', 'classNames', 'teachers', 'tabCounts', 'applicants', 'applicantStatusCounts'));
+        return view('admin.students', compact('students', 'jurusans', 'kelasList', 'teachers', 'tabCounts', 'applicants', 'applicantStatusCounts'));
     }
 
     public function studentsCreate()
@@ -254,6 +264,7 @@ class AdminController extends Controller
 
     public function studentData(Student $student)
     {
+        $student->load('jurusan', 'kelas');
         $parents = $student->parents()->get()->map(fn($p) => [
             'id' => $p->id,
             'name' => $p->full_name ?: $p->name,
@@ -273,6 +284,8 @@ class AdminController extends Controller
             'program_name' => $student->program_name,
             'homeroom_teacher_id' => $student->homeroom_teacher_id,
             'status' => $student->status,
+            'jurusan_id' => $student->jurusan_id,
+            'kelas_id' => $student->kelas_id,
             'parents' => $parents,
         ]);
     }
@@ -299,8 +312,10 @@ class AdminController extends Controller
             'nisn' => 'required|string|max:20|unique:students,nisn',
             'full_name' => 'required|string|max:150',
             'birth_date' => 'nullable|date',
-            'class_name' => 'required|string|max:80',
-            'program_name' => 'required|string|max:120',
+            'jurusan_id' => 'nullable|exists:jurusans,id',
+            'kelas_id' => 'nullable|exists:kelas,id',
+            'class_name' => 'nullable|string|max:80',
+            'program_name' => 'nullable|string|max:120',
             'homeroom_teacher_id' => 'nullable|exists:users,id',
             'status' => 'required|in:active,graduated,inactive',
             'parent_action' => 'required|in:existing,new,none',
@@ -311,13 +326,17 @@ class AdminController extends Controller
             'parent_relationship' => 'nullable|string|max:40',
         ]);
 
+        $kelas = !empty($validated['kelas_id']) ? Kelas::with('jurusan')->find($validated['kelas_id']) : null;
+
         $student = Student::create([
             'nisn' => $validated['nisn'],
             'full_name' => $validated['full_name'],
             'birth_date' => $validated['birth_date'] ?? null,
-            'class_name' => $validated['class_name'],
-            'program_name' => $validated['program_name'],
-            'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? null,
+            'jurusan_id' => $validated['jurusan_id'] ?? $kelas?->jurusan_id,
+            'kelas_id' => $validated['kelas_id'] ?? null,
+            'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap,
+            'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama,
+            'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? $kelas?->homeroom_teacher_id,
             'status' => $validated['status'],
         ]);
 
@@ -365,8 +384,10 @@ class AdminController extends Controller
             'nisn' => 'required|string|max:20|unique:students,nisn,' . $student->id,
             'full_name' => 'required|string|max:150',
             'birth_date' => 'nullable|date',
-            'class_name' => 'required|string|max:80',
-            'program_name' => 'required|string|max:120',
+            'jurusan_id' => 'nullable|exists:jurusans,id',
+            'kelas_id' => 'nullable|exists:kelas,id',
+            'class_name' => 'nullable|string|max:80',
+            'program_name' => 'nullable|string|max:120',
             'homeroom_teacher_id' => 'nullable|exists:users,id',
             'status' => 'required|in:active,graduated,inactive',
             'parent_action' => 'nullable|in:existing,new,none,disconnect',
@@ -378,13 +399,17 @@ class AdminController extends Controller
             'disconnect_parent_id' => 'nullable|exists:users,id',
         ]);
 
+        $kelas = !empty($validated['kelas_id']) ? Kelas::with('jurusan')->find($validated['kelas_id']) : null;
+
         $student->update([
             'nisn' => $validated['nisn'],
             'full_name' => $validated['full_name'],
             'birth_date' => $validated['birth_date'] ?? null,
-            'class_name' => $validated['class_name'],
-            'program_name' => $validated['program_name'],
-            'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? null,
+            'jurusan_id' => $validated['jurusan_id'] ?? $kelas?->jurusan_id ?? $student->jurusan_id,
+            'kelas_id' => $validated['kelas_id'] ?? $student->kelas_id,
+            'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap ?? $student->class_name,
+            'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama ?? $student->program_name,
+            'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? $kelas?->homeroom_teacher_id ?? $student->homeroom_teacher_id,
             'status' => $validated['status'],
         ]);
 
@@ -581,6 +606,220 @@ class AdminController extends Controller
         }
 
         return back()->with('success', 'Mata pelajaran berhasil dihapus.');
+    }
+
+    public function jurusans(Request $request)
+    {
+        $query = Jurusan::withCount('kelas');
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('kode', 'like', "%{$search}%");
+            });
+        }
+
+        $jurusans = $query->latest()->paginate(12)->withQueryString();
+
+        return view('admin.jurusans', compact('jurusans'));
+    }
+
+    public function jurusanData(Jurusan $jurusan)
+    {
+        return response()->json($jurusan->load('kelas'));
+    }
+
+    public function jurusansStore(Request $request)
+    {
+        $validated = $request->validate([
+            'kode' => 'required|string|max:20|unique:jurusans,kode',
+            'nama' => 'required|string|max:120',
+            'deskripsi' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $jurusan = Jurusan::create($validated);
+
+        if ($kelasData = $request->input('kelas')) {
+            foreach ($kelasData as $item) {
+                if (empty($item['tingkat']) || empty($item['nama'])) continue;
+
+                $jurusan->kelas()->create([
+                    'tingkat' => $item['tingkat'],
+                    'nama' => $item['nama'],
+                    'is_active' => true,
+                ]);
+            }
+        }
+
+        AuditService::log('jurusan.create', 'Jurusan', $jurusan->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Jurusan berhasil ditambahkan.']);
+        }
+
+        return redirect()->route('admin.jurusans.index')->with('success', 'Jurusan berhasil ditambahkan.');
+    }
+
+    public function jurusansUpdate(Request $request, Jurusan $jurusan)
+    {
+        $validated = $request->validate([
+            'kode' => 'required|string|max:20|unique:jurusans,kode,' . $jurusan->id,
+            'nama' => 'required|string|max:120',
+            'deskripsi' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $jurusan->update($validated);
+
+        if ($kelasData = $request->input('kelas')) {
+            $existingIds = $jurusan->kelas()->pluck('id')->toArray();
+            $submittedIds = [];
+
+            foreach ($kelasData as $item) {
+                if (empty($item['tingkat']) || empty($item['nama'])) continue;
+
+                if (!empty($item['id'])) {
+                    $kelas = $jurusan->kelas()->find($item['id']);
+                    if ($kelas) {
+                        $kelas->update([
+                            'tingkat' => $item['tingkat'],
+                            'nama' => $item['nama'],
+                        ]);
+                        $submittedIds[] = $kelas->id;
+                    }
+                } else {
+                    $kelas = $jurusan->kelas()->create([
+                        'tingkat' => $item['tingkat'],
+                        'nama' => $item['nama'],
+                        'is_active' => true,
+                    ]);
+                    $submittedIds[] = $kelas->id;
+                }
+            }
+
+            $toDelete = array_diff($existingIds, $submittedIds);
+            if (!empty($toDelete)) {
+                $jurusan->kelas()->whereIn('id', $toDelete)->delete();
+            }
+        }
+
+        AuditService::log('jurusan.update', 'Jurusan', $jurusan->id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Jurusan berhasil diperbarui.']);
+        }
+
+        return redirect()->route('admin.jurusans.index')->with('success', 'Jurusan berhasil diperbarui.');
+    }
+
+    public function jurusansDestroy(Request $request, Jurusan $jurusan)
+    {
+        AuditService::log('jurusan.delete', 'Jurusan', $jurusan->id);
+        $jurusan->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Jurusan berhasil dihapus.']);
+        }
+
+        return back()->with('success', 'Jurusan berhasil dihapus.');
+    }
+
+    public function jurusanDetail(Jurusan $jurusan)
+    {
+        $jurusan->load(['kelas' => function ($q) {
+            $q->with(['subjects', 'customSubjects', 'homeroomTeacher']);
+        }, 'subjects', 'customSubjects']);
+
+        $allSubjects = Subject::orderBy('name')->get();
+        $teachers = User::whereIn('role', ['teacher', 'homeroom'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'full_name']);
+
+        if (request()->ajax()) {
+            return response()->json([
+                'jurusan' => $jurusan,
+                'allSubjects' => $allSubjects,
+                'teachers' => $teachers,
+            ]);
+        }
+
+        return view('admin.jurusans-detail', compact('jurusan', 'allSubjects', 'teachers'));
+    }
+
+    public function jurusansSubjectsSave(Request $request, Jurusan $jurusan)
+    {
+        $kelasSubjects = $request->input('kelas_subjects', []);
+        $kelasCustomSubjects = $request->input('kelas_custom_subjects', []);
+        $homeroomTeachers = $request->input('homeroom_teachers', []);
+
+        foreach ($jurusan->kelas as $kelas) {
+            $kId = (string) $kelas->id;
+
+            if (isset($kelasSubjects[$kId])) {
+                $kelas->subjects()->sync($kelasSubjects[$kId] ?? []);
+            }
+            if (isset($kelasCustomSubjects[$kId])) {
+                $kelas->customSubjects()->sync($kelasCustomSubjects[$kId] ?? []);
+            }
+            if (array_key_exists($kId, $homeroomTeachers)) {
+                $kelas->update(['homeroom_teacher_id' => $homeroomTeachers[$kId] ?: null]);
+            }
+        }
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Mata pelajaran berhasil disimpan.']);
+        }
+
+        return back()->with('success', 'Mata pelajaran berhasil disimpan.');
+    }
+
+    public function jurusanCustomSubjectStore(Request $request, Jurusan $jurusan)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string|max:120',
+            'deskripsi' => 'nullable|string',
+        ]);
+
+        $subject = $jurusan->customSubjects()->create($validated);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Mata pelajaran jurusan berhasil ditambahkan.', 'subject' => $subject]);
+        }
+
+        return back()->with('success', 'Mata pelajaran jurusan berhasil ditambahkan.');
+    }
+
+    public function jurusanCustomSubjectDestroy(Request $request, JurusanCustomSubject $customSubject)
+    {
+        $customSubject->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Mata pelajaran jurusan berhasil dihapus.']);
+        }
+
+        return back()->with('success', 'Mata pelajaran jurusan berhasil dihapus.');
+    }
+
+    public function kelasByJurusan(Request $request, Jurusan $jurusan)
+    {
+        $kelas = $jurusan->kelas()
+            ->with('homeroomTeacher')
+            ->where('is_active', true)
+            ->orderBy('tingkat')
+            ->orderBy('nama')
+            ->get(['id', 'tingkat', 'nama', 'homeroom_teacher_id']);
+
+        $romawi = [10 => 'X', 11 => 'XI', 12 => 'XII'];
+
+        $result = $kelas->map(fn($k) => [
+            'id' => $k->id,
+            'nama_lengkap' => ($romawi[$k->tingkat] ?? $k->tingkat) . ' ' . $k->nama,
+            'homeroom_teacher_id' => $k->homeroom_teacher_id,
+            'wali_nama' => $k->homeroomTeacher?->full_name ?: $k->homeroomTeacher?->name ?: null,
+        ]);
+
+        return response()->json($result);
     }
 
     public function periods(Request $request)

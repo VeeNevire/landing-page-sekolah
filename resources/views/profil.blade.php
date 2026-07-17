@@ -1,13 +1,13 @@
 @extends('layouts.public')
 
-@section('title', 'Profil Sekolah | SMK MADYA DEPOK')
+@section('title', 'Profil Sekolah | InvestaSchool')
 
 @section('content')
 <section class="page-hero">
   <div class="container">
     <div class="breadcrumb">Beranda / Profil</div>
     <h1>Profil Sekolah</h1>
-    <p class="lead">Mengenal visi, nilai, sejarah, kepemimpinan, fasilitas, dan budaya SMK MADYA DEPOK .</p>
+    <p class="lead">Mengenal visi, nilai, sejarah, kepemimpinan, fasilitas, dan budaya InvestaSchool .</p>
   </div>
 </section>
 <section class="section">
@@ -20,7 +20,7 @@
     </div>
     <div class="reveal"><span class="kicker">Sambutan kepala sekolah</span>
       <h2 class="section-title">Mendampingi setiap siswa menemukan versi terbaik dirinya.</h2>
-      <p>Selamat datang di SMK MADYA DEPOK . Sekolah kami dibangun atas keyakinan bahwa pendidikan yang baik harus relevan, manusiawi, dan memberi ruang kepada siswa untuk bertumbuh.</p>
+      <p>Selamat datang di InvestaSchool . Sekolah kami dibangun atas keyakinan bahwa pendidikan yang baik harus relevan, manusiawi, dan memberi ruang kepada siswa untuk bertumbuh.</p>
       <p>Kami memadukan pencapaian akademik, keterampilan vokasi, pembentukan karakter, kemampuan digital, dan pengalaman nyata agar lulusan siap melanjutkan pendidikan, bekerja, maupun berwirausaha.</p>
     </div>
   </div>
@@ -146,3 +146,5 @@
   </div>
 </section>
 @endsection
+
+

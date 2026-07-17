@@ -95,16 +95,25 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     <div class="field" style="flex:2;min-width:200px">
       <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau NISN...">
     </div>
-    <div class="field" style="flex:1;min-width:150px">
-      <select name="class">
+    <div class="field" style="flex:1;min-width:140px">
+      <select name="jurusan_id" id="filterJurusan">
+        <option value="">Semua Jurusan</option>
+        @foreach ($jurusans as $j)
+        <option value="{{ $j->id }}" {{ (int) request('jurusan_id') === $j->id ? 'selected' : '' }}>{{ $j->kode }} — {{ $j->nama }}</option>
+        @endforeach
+      </select>
+    </div>
+    <div class="field" style="flex:1;min-width:140px">
+      <select name="kelas_id" id="filterKelas">
         <option value="">Semua Kelas</option>
-        @foreach ($classNames as $class)
-        <option value="{{ $class }}" {{ request('class') === $class ? 'selected' : '' }}>{{ $class }}</option>
+        @foreach ($kelasList as $k)
+        @php $romawi = [10 => 'X', 11 => 'XI', 12 => 'XII']; @endphp
+        <option value="{{ $k->id }}" {{ (int) request('kelas_id') === $k->id ? 'selected' : '' }} data-jurusan="{{ $k->jurusan_id }}">{{ $romawi[$k->tingkat] ?? $k->tingkat }} {{ $k->nama }}</option>
         @endforeach
       </select>
     </div>
     <button class="btn btn-primary" type="submit" style="min-height:42px">Cari</button>
-    @if (request('search') || request('class'))
+    @if (request('search') || request('jurusan_id') || request('kelas_id'))
     <a href="{{ route('admin.students.index', array_merge(['tab' => 'students'], array_filter(['status' => $studentStatus]))) }}" class="btn btn-outline" style="min-height:42px">Reset</a>
     @endif
   </form>
@@ -131,7 +140,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         @php
         $parentNames = $student->parents->map(fn($p) => $p->full_name ?: $p->name)->implode(', ');
         @endphp
-        <tr id="row-{{ $student->id }}" data-id="{{ $student->id }}" data-nisn="{{ $student->nisn }}" data-full_name="{{ $student->full_name }}" data-birth_date="{{ $student->birth_date?->format('Y-m-d') }}" data-class_name="{{ $student->class_name }}" data-program_name="{{ $student->program_name }}" data-homeroom_teacher_id="{{ $student->homeroom_teacher_id }}" data-status="{{ $student->status }}">
+        <tr id="row-{{ $student->id }}" data-id="{{ $student->id }}" data-nisn="{{ $student->nisn }}" data-full_name="{{ $student->full_name }}" data-birth_date="{{ $student->birth_date?->format('Y-m-d') }}" data-jurusan_id="{{ $student->jurusan_id }}" data-kelas_id="{{ $student->kelas_id }}" data-class_name="{{ $student->class_name }}" data-program_name="{{ $student->program_name }}" data-homeroom_teacher_id="{{ $student->homeroom_teacher_id }}" data-status="{{ $student->status }}">
           <td style="text-align:center">{{ $loop->iteration + ($students->currentPage() - 1) * $students->perPage() }}</td>
           <td>
             <div style="display:flex;align-items:center;gap:10px">
@@ -143,8 +152,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
             </div>
           </td>
           <td style="font-family:monospace;font-size:.85rem">{{ $student->nisn }}</td>
-          <td><span style="padding:4px 10px;border-radius:8px;font-weight:700;font-size:.82rem;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2)">{{ $student->class_name }}</span></td>
-          <td style="font-size:.88rem">{{ $student->program_name }}</td>
+          <td><span style="padding:4px 10px;border-radius:8px;font-weight:700;font-size:.82rem;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2)">{{ $student->kelas?->nama_lengkap ?? $student->class_name }}</span></td>
+          <td style="font-size:.88rem">{{ $student->jurusan?->nama ?? $student->program_name }}</td>
           <td style="font-size:.88rem">{{ $student->homeroomTeacher?->full_name ?? '-' }}</td>
           <td style="font-size:.85rem;color:var(--muted)">{{ $parentNames ?: '-' }}</td>
           <td>
@@ -176,7 +185,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       </tbody>
     </table>
   </div>
-  <div style="padding:16px">{{ $students->links() }}</div>
+  <div style="padding:16px">{{ $students->links('vendor.pagination.admin') }}</div>
 </section>
 
 {{-- Wizard Modal --}}
@@ -207,13 +216,27 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           </div>
           <div class="field" style="margin-top:14px"><label for="m_birth_date">Tanggal Lahir</label><input id="m_birth_date" name="birth_date" type="date"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
-            <div class="field"><label for="m_class_name">Kelas <span style="color:#ef4444">*</span></label><input id="m_class_name" name="class_name" type="text" required placeholder="Contoh: XI RPL 1"><small class="field-error" style="color:#ef4444;display:none"></small></div>
-            <div class="field"><label for="m_program_name">Program <span style="color:#ef4444">*</span></label><input id="m_program_name" name="program_name" type="text" required placeholder="Contoh: RPL"><small class="field-error" style="color:#ef4444;display:none"></small></div>
+            <div class="field"><label for="m_jurusan_id">Jurusan <span style="color:#ef4444">*</span></label>
+              <select id="m_jurusan_id" name="jurusan_id" required onchange="loadKelasByJurusan(this.value)">
+                <option value="">Pilih Jurusan</option>
+                @foreach ($jurusans as $j)
+                <option value="{{ $j->id }}">{{ $j->kode }} — {{ $j->nama }}</option>
+                @endforeach
+              </select>
+              <small class="field-error" style="color:#ef4444;display:none"></small>
+            </div>
+            <div class="field"><label for="m_kelas_id">Kelas <span style="color:#ef4444">*</span></label>
+              <select id="m_kelas_id" name="kelas_id" required onchange="updateWaliKelas(this)">
+                <option value="">Pilih Jurusan dulu</option>
+              </select>
+              <small class="field-error" style="color:#ef4444;display:none"></small>
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
-            <div class="field"><label for="m_homeroom_teacher_id">Wali Kelas</label><select id="m_homeroom_teacher_id" name="homeroom_teacher_id">
-                <option value="">-- Pilih --</option>@foreach ($teachers as $t)<option value="{{ $t->id }}">{{ $t->full_name ?: $t->name }}</option>@endforeach
-              </select></div>
+            <input type="hidden" name="homeroom_teacher_id" id="m_homeroom_teacher_id" value="">
+            <div class="field"><label for="m_homeroom_teacher_text">Wali Kelas</label>
+              <input id="m_homeroom_teacher_text" type="text" readonly placeholder="Otomatis dari kelas" style="width:100%;padding:.7rem .9rem;border-radius:.75rem;font-size:.9rem;outline:none;background:color-mix(in srgb,var(--muted) 6%,var(--card));border:1.5px solid var(--line);color:var(--muted);font-family:inherit;cursor:default">
+            </div>
             <div class="field"><label for="m_status">Status <span style="color:#ef4444">*</span></label><select id="m_status" name="status" required>
                 <option value="active">Aktif</option>
                 <option value="graduated">Lulus</option>
@@ -377,7 +400,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       </tbody>
     </table>
   </div>
-  <div style="padding:16px">{{ $applicants->links() }}</div>
+  <div style="padding:16px">{{ $applicants->links('vendor.pagination.admin') }}</div>
 </section>
 
 <div id="detailModal" class="applicant-detail-modal" onclick="if(event.target===this)closeDetail()">
@@ -532,9 +555,10 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     document.getElementById('m_nisn').value = '';
     document.getElementById('m_full_name').value = '';
     document.getElementById('m_birth_date').value = '';
-    document.getElementById('m_class_name').value = '';
-    document.getElementById('m_program_name').value = '';
+    document.getElementById('m_jurusan_id').value = '';
+    document.getElementById('m_kelas_id').innerHTML = '<option value="">Pilih Jurusan dulu</option>';
     document.getElementById('m_homeroom_teacher_id').value = '';
+    document.getElementById('m_homeroom_teacher_text').value = '';
     document.getElementById('m_status').value = getDefaultStatus();
     setParentAction('none');
     document.getElementById('currentParentsSection').style.display = 'none';
@@ -563,9 +587,10 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         document.getElementById('m_nisn').value = d.nisn;
         document.getElementById('m_full_name').value = d.full_name;
         document.getElementById('m_birth_date').value = d.birth_date || '';
-        document.getElementById('m_class_name').value = d.class_name;
-        document.getElementById('m_program_name').value = d.program_name;
-        document.getElementById('m_homeroom_teacher_id').value = d.homeroom_teacher_id || '';
+        document.getElementById('m_jurusan_id').value = d.jurusan_id || '';
+        loadKelasByJurusan(d.jurusan_id || '', d.kelas_id || '');
+        var wali = d.homeroom_teacher_id || '';
+        document.getElementById('m_homeroom_teacher_id').value = wali;
         document.getElementById('m_status').value = d.status;
         existingParents = d.parents || [];
         if (existingParents.length > 0) {
@@ -597,7 +622,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
   }
 
   function goToStep2() {
-    if (!document.getElementById('m_nisn').value || !document.getElementById('m_full_name').value || !document.getElementById('m_class_name').value || !document.getElementById('m_program_name').value) {
+    if (!document.getElementById('m_nisn').value || !document.getElementById('m_full_name').value || !document.getElementById('m_kelas_id').value) {
       Swal.fire('Lengkapi Data', 'Mohon isi semua field yang wajib diisi pada data siswa.', 'warning');
       return;
     }
@@ -701,7 +726,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
             timerProgressBar: true
           }).then(() => location.reload());
         } else if (j.errors) {
-          const fields = currentStep === 1 ? ['nisn', 'full_name', 'class_name', 'program_name', 'status', 'birth_date', 'homeroom_teacher_id'] : ['parent_id', 'parent_name', 'parent_email', 'parent_password'];
+          const fields = currentStep === 1 ? ['nisn', 'full_name', 'jurusan_id', 'kelas_id', 'status', 'birth_date', 'homeroom_teacher_id'] : ['parent_id', 'parent_name', 'parent_email', 'parent_password'];
           fields.forEach(f => {
             if (j.errors[f]) showFieldError(f, j.errors[f][0]);
           });
@@ -783,6 +808,52 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           });
         }
       });
+  }
+
+  function loadKelasByJurusan(jurusanId, selectedKelasId) {
+    const sel = document.getElementById('m_kelas_id');
+    sel.innerHTML = '<option value="">Memuat...</option>';
+    sel.disabled = true;
+    document.getElementById('m_homeroom_teacher_id').value = '';
+    document.getElementById('m_homeroom_teacher_text').value = '';
+
+    if (!jurusanId) {
+      sel.innerHTML = '<option value="">Pilih Jurusan dulu</option>';
+      sel.disabled = false;
+      return;
+    }
+
+    fetch('/admin/jurusans/' + jurusanId + '/kelas', {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      sel.innerHTML = '<option value="">Pilih Kelas</option>';
+      data.forEach(k => {
+        const s = document.createElement('option');
+        s.value = k.id;
+        s.textContent = k.nama_lengkap;
+        s.dataset.wali = k.homeroom_teacher_id || '';
+        s.dataset.waliNama = k.wali_nama || '';
+        if (selectedKelasId && String(k.id) === String(selectedKelasId)) s.selected = true;
+        sel.appendChild(s);
+      });
+      sel.disabled = false;
+      if (selectedKelasId) updateWaliKelas(sel);
+    })
+    .catch(() => {
+      sel.innerHTML = '<option value="">Gagal memuat</option>';
+      sel.disabled = false;
+    });
+  }
+
+  function updateWaliKelas(sel) {
+    if (typeof sel === 'string') sel = document.getElementById('m_kelas_id');
+    const selected = sel.options[sel.selectedIndex];
+    const wali = selected ? selected.dataset.wali : '';
+    const waliNama = selected ? selected.dataset.waliNama : '';
+    document.getElementById('m_homeroom_teacher_id').value = wali || '';
+    document.getElementById('m_homeroom_teacher_text').value = waliNama || 'Walas belum ditentukan';
   }
 
   function escHtml(s) {
@@ -1123,3 +1194,5 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
   @endif
 </script>
 @endpush
+
+

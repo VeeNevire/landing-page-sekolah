@@ -10,7 +10,7 @@ $isStudent = $roleParam === 'student';
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Portal Siswa SMK MADYA DEPOK ">
+  <meta name="description" content="Portal Siswa InvestaSchool ">
   <title>Masuk | {{ $isAdmin ? 'Portal Admin' : ($isGuru ? 'Portal Guru' : ($isStudent ? 'Portal Siswa' : 'Portal Orang Tua')) }}</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
@@ -22,7 +22,7 @@ $isStudent = $roleParam === 'student';
     <section class="portal-login-brand">
       <a class="brand" href="{{ route('beranda') }}">
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="" width="28" height="28"></span>
-        <span class="brand-text">SMK MADYA DEPOK<small>UNGGUL • TERAMPIL • BERKARAKTER</small></span>
+        <span class="brand-text">InvestaSchool<small>UNGGUL • TERAMPIL • BERKARAKTER</small></span>
       </a>
       <div class="portal-login-copy">
         <span class="hero-badge">{{ $isAdmin ? 'Portal Administrator' : ($isGuru ? 'Portal Guru & Wali Kelas' : ($isStudent ? 'Portal Siswa' : 'Portal Perkembangan Siswa')) }}</span>
@@ -52,7 +52,7 @@ $isStudent = $roleParam === 'student';
           @endif
         </div>
       </div>
-      <small style="position:relative;z-index:2;color:#9fb7d5">&copy; {{ date('Y') }} SMK MADYA DEPOK </small>
+      <small style="position:relative;z-index:2;color:#9fb7d5">&copy; {{ date('Y') }} InvestaSchool </small>
     </section>
 
     <section class="portal-login-form-wrap">
@@ -124,3 +124,5 @@ $isStudent = $roleParam === 'student';
 </body>
 
 </html>
+
+

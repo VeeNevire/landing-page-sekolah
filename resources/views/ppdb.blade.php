@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'PPDB | SMK MADYA DEPOK')
+@section('title', 'PPDB | InvestaSchool')
 
 @section('content')
 <section class="page-hero">
@@ -141,3 +141,5 @@
   </div>
 </section>
 @endsection
+
+

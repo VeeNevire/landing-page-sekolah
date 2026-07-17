@@ -138,7 +138,7 @@ $stepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data' => 66, '
   </table>
 </div>
 
-<div style="margin-top:1rem">{{ $applicants->links() }}</div>
+<div style="margin-top:1rem">{{ $applicants->links('vendor.pagination.admin') }}</div>
 
 <div id="detailModal" class="applicant-detail-modal" onclick="if(event.target===this)closeDetail()">
   <div class="modal-content">
@@ -576,3 +576,6 @@ $stepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data' => 66, '
   }
 </script>
 @endsection
+
+
+

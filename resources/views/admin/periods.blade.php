@@ -123,7 +123,7 @@ $currentStatus = request('status', '');
       </tbody>
     </table>
   </div>
-  <div style="padding:16px">{{ $periods->links() }}</div>
+  <div style="padding:16px">{{ $periods->links('vendor.pagination.admin') }}</div>
 </section>
 
 {{-- Modal --}}
@@ -373,3 +373,5 @@ $currentStatus = request('status', '');
 </script>
 @endpush
 @endsection
+
+

@@ -16,6 +16,8 @@ class Student extends Model
         'program_name',
         'homeroom_teacher_id',
         'status',
+        'jurusan_id',
+        'kelas_id',
     ];
 
     protected function casts(): array
@@ -28,6 +30,16 @@ class Student extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function jurusan()
+    {
+        return $this->belongsTo(Jurusan::class);
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
     }
 
     public function homeroomTeacher()

@@ -103,12 +103,23 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::put('/students/{student}', [AdminController::class, 'studentsUpdate'])->name('students.update');
     Route::delete('/students/{student}', [AdminController::class, 'studentsDestroy'])->name('students.destroy');
     Route::get('/parents/list', [AdminController::class, 'parentsList'])->name('parents.list');
+    Route::get('/jurusans/{jurusan}/kelas', [AdminController::class, 'kelasByJurusan'])->name('jurusans.kelas');
 
     Route::get('/subjects', [AdminController::class, 'subjects'])->name('subjects.index');
     Route::get('/subjects/{subject}/data', [AdminController::class, 'subjectData'])->name('subjects.data');
     Route::post('/subjects', [AdminController::class, 'subjectsStore'])->name('subjects.store');
     Route::put('/subjects/{subject}', [AdminController::class, 'subjectsUpdate'])->name('subjects.update');
     Route::delete('/subjects/{subject}', [AdminController::class, 'subjectsDestroy'])->name('subjects.destroy');
+
+    Route::get('/jurusans', [AdminController::class, 'jurusans'])->name('jurusans.index');
+    Route::get('/jurusans/{jurusan}/data', [AdminController::class, 'jurusanData'])->name('jurusans.data');
+    Route::post('/jurusans', [AdminController::class, 'jurusansStore'])->name('jurusans.store');
+    Route::put('/jurusans/{jurusan}', [AdminController::class, 'jurusansUpdate'])->name('jurusans.update');
+    Route::delete('/jurusans/{jurusan}', [AdminController::class, 'jurusansDestroy'])->name('jurusans.destroy');
+    Route::get('/jurusans/{jurusan}/detail', [AdminController::class, 'jurusanDetail'])->name('jurusans.detail');
+    Route::post('/jurusans/{jurusan}/subjects', [AdminController::class, 'jurusansSubjectsSave'])->name('jurusans.subjects.save');
+    Route::post('/jurusans/{jurusan}/custom-subjects', [AdminController::class, 'jurusanCustomSubjectStore'])->name('jurusans.custom-subjects.store');
+    Route::delete('/jurusans/custom-subjects/{customSubject}', [AdminController::class, 'jurusanCustomSubjectDestroy'])->name('jurusans.custom-subjects.destroy');
 
     Route::get('/periods', [AdminController::class, 'periods'])->name('periods.index');
     Route::get('/periods/{period}/data', [AdminController::class, 'periodData'])->name('periods.data');

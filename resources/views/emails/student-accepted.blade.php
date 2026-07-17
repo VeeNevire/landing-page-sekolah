@@ -12,7 +12,7 @@
           <tr>
             <td style="padding:32px 40px 0;text-align:center">
               <img src="https://cdn-icons-png.flaticon.com/512/2991/2991234.png" alt="Logo" width="48" height="48" style="margin-bottom:8px">
-              <h1 style="font-size:1.25rem;color:#1e293b;margin:0">SMK MADYA DEPOK</h1>
+              <h1 style="font-size:1.25rem;color:#1e293b;margin:0">InvestaSchool</h1>
               <p style="font-size:.85rem;color:#64748b;margin:4px 0 0">Penerimaan Siswa Baru</p>
             </td>
           </tr>
@@ -31,7 +31,7 @@
 
               <p style="color:#475569;line-height:1.7;margin:0 0 16px;text-align:center">
                 Yth. <strong>{{ $studentName }}</strong>,<br>
-                Selamat! Anda telah resmi diterima sebagai siswa baru di <strong>SMK MADYA DEPOK</strong>.
+                Selamat! Anda telah resmi diterima sebagai siswa baru di <strong>InvestaSchool</strong>.
               </p>
 
               <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:20px;margin-bottom:20px">
@@ -81,13 +81,13 @@
               </a>
 
               <p style="font-size:.82rem;color:#94a3b8;line-height:1.6;margin:0;text-align:center">
-                Harap simpan email ini sebagai bukti penerimaan Anda di SMK MADYA DEPOK.
+                Harap simpan email ini sebagai bukti penerimaan Anda di InvestaSchool.
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding:20px 40px;text-align:center;border-top:1px solid #f1f5f9">
-              <p style="font-size:.78rem;color:#94a3b8;margin:0">&copy; {{ date('Y') }} SMK MADYA DEPOK</p>
+              <p style="font-size:.78rem;color:#94a3b8;margin:0">&copy; {{ date('Y') }} InvestaSchool</p>
             </td>
           </tr>
         </table>
@@ -96,3 +96,6 @@
   </table>
 </body>
 </html>
+
+
+

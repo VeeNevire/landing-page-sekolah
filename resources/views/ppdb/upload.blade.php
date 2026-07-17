@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Upload Berkas PPDB | SMK MADYA DEPOK')
+@section('title', 'Upload Berkas PPDB | InvestaSchool')
 
 @push('styles')
 <style>
@@ -774,7 +774,10 @@ document.querySelectorAll('.nav-links a, .nav-dropdown-menu a, .nav-dropdown-tri
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        document.getElementById('ppdbLogoutForm').submit();
+        const form = document.getElementById('ppdbLogoutForm');
+        const input = form.querySelector('input[name="redirect_to"]');
+        if (input) input.value = href;
+        form.submit();
       }
     });
   });
@@ -782,3 +785,5 @@ document.querySelectorAll('.nav-links a, .nav-dropdown-menu a, .nav-dropdown-tri
 </script>
 @endpush
 @endsection
+
+

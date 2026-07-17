@@ -21,7 +21,7 @@
           </div>
           <div>
             <div class="text-sm font-bold text-white/90 leading-tight">Portal Siswa</div>
-            <div class="text-[11px] text-white/40 leading-tight">CAKRAWALA</div>
+            <div class="text-[11px] text-white/40 leading-tight">InvestaSchool</div>
           </div>
         </a>
       </div>
@@ -109,3 +109,6 @@
   </script>
 </body>
 </html>
+
+
+

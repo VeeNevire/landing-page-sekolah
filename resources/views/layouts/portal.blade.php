@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Portal Orang Tua SMK MADYA DEPOK ">
+  <meta name="description" content="Portal Orang Tua InvestaSchool ">
   <title>@yield('title') | Portal Orang Tua</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
@@ -17,7 +17,7 @@
     <aside class="portal-sidebar" id="portalSidebar">
       <a class="brand" href="{{ route('portal.dashboard') }}">
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="" width="28" height="28"></span>
-        <span class="brand-text">Portal Orang Tua<small>CAKRAWALA </small></span>
+        <span class="brand-text">Portal Orang Tua<small>InvestaSchool </small></span>
       </a>
       <div class="portal-user-card">
         <div class="portal-user-avatar">{{ substr(auth()->user()->name, 0, 1) }}</div>
@@ -197,3 +197,6 @@
 </body>
 
 </html>
+
+
+

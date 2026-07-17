@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Pembayaran PPDB | SMK MADYA DEPOK')
+@section('title', 'Pembayaran PPDB | InvestaSchool')
 
 @section('content')
 <form id="ppdbLogoutForm" method="POST" action="{{ route('logout') }}" style="display:none">
@@ -73,7 +73,7 @@
         </div>
         <div style="display:flex;justify-content:space-between;font-size:.9rem">
           <span style="color:var(--muted)">Atas Nama</span>
-          <span style="font-weight:700;color:var(--ink)">SMK MADYA DEPOK</span>
+          <span style="font-weight:700;color:var(--ink)">InvestaSchool</span>
         </div>
         <div style="border-top:1px solid var(--line);margin:.5rem 0"></div>
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -155,10 +155,15 @@ document.querySelectorAll('.nav-links a, .nav-dropdown-menu a, .nav-dropdown-tri
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        document.getElementById('ppdbLogoutForm').submit();
+        const form = document.getElementById('ppdbLogoutForm');
+        const input = form.querySelector('input[name="redirect_to"]');
+        if (input) input.value = href;
+        form.submit();
       }
     });
   });
 });
 </script>
 @endsection
+
+

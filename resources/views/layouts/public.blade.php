@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <meta name="description" content="@yield('meta_description', 'Website resmi SMK MADYA DEPOK ')">
+  <meta name="description" content="@yield('meta_description', 'Website resmi InvestaSchool ')">
   <title>@yield('title', config('app.name'))</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,7 @@
     <div class="container nav-inner">
       <a class="brand" href="{{ route('beranda') }}">
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="Logo"></span>
-        <span class="brand-text">SMK MADYA <span>Depok</span></span>
+        <span class="brand-text">InvestaSchool</span>
       </a>
       <nav class="nav-links" id="navLinks">
         <a href="{{ route('beranda') }}" @class(['active'=> request()->routeIs('beranda')])>Beranda</a>
@@ -107,7 +107,7 @@
         <div class="footer-col">
           <div class="brand">
             <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="Logo" width="32" height="32"></span>
-            <span class="brand-text">SMK MADYA DEPOK<small>UNGGUL • TERAMPIL • BERKARAKTER</small></span>
+            <span class="brand-text">InvestaSchool<small>UNGGUL • TERAMPIL • BERKARAKTER</small></span>
           </div>
           <p style="margin-top:1rem;color:var(--muted);line-height:1.7">Mencetak generasi unggul, terampil, dan berkarakter sejak 2008 — menuju Indonesia Emas 2045.</p>
         </div>
@@ -134,13 +134,13 @@
           <address>
             Jl. Raya Leuwinanggung No.111, Leuwinanggung, Kec. Tapos, Kota Depok, Jawa Barat 16456<br>
             <a href="tel:+62215550198">(021) 555-0198</a><br>
-            <a href="mailto:info@smadev.sch.id">info@smadev.sch.id</a><br>
+            <a href="mailto:info@investaschool.sch.id">info@investaschool.sch.id</a><br>
             WhatsApp: <a href="https://wa.me/6281234567890">+62 812-3456-7890</a>
           </address>
         </div>
       </div>
       <div class="footer-bottom">
-        <span>&copy; {{ date('Y') }} SMK MADYA DEPOK .</span>
+        <span>&copy; {{ date('Y') }} InvestaSchool .</span>
       </div>
     </div>
   </footer>
@@ -157,3 +157,5 @@
 </body>
 
 </html>
+
+

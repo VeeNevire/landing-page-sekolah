@@ -80,7 +80,7 @@
       </tbody>
     </table>
   </div>
-  <div style="padding:16px">{{ $subjects->links() }}</div>
+  <div style="padding:16px">{{ $subjects->links('vendor.pagination.admin') }}</div>
 </section>
 
 {{-- Modal --}}
@@ -301,3 +301,6 @@ document.getElementById('subjectModal').addEventListener('click', function(e) { 
 </script>
 @endpush
 @endsection
+
+
+
