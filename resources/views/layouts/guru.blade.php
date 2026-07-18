@@ -21,14 +21,8 @@
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="" width="28" height="28"></span>
         <span class="brand-text">Portal Guru<small>InvestaSchool </small></span>
       </a>
-      <div class="portal-user-card">
-        <div class="portal-user-avatar">{{ substr(auth()->user()->name, 0, 1) }}</div>
-        <div>
-          <strong>{{ auth()->user()->full_name ?? auth()->user()->name }}</strong>
-          <span>{{ auth()->user()->email }}</span>
-        </div>
-      </div>
       <nav class="portal-menu" aria-label="Menu Guru">
+        <div class="portal-menu-group">Pembelajaran</div>
         <a href="{{ route('guru.dashboard') }}"
           @class(['active'=> request()->routeIs('guru.dashboard')])>
           <span class="portal-menu-icon">
@@ -83,6 +77,8 @@
           </span>
           <span class="portal-menu-label">Jadwal</span>
         </a>
+
+        <div class="portal-menu-group">Laporan</div>
         <a href="{{ route('guru.catatan') }}"
           @class(['active'=> request()->routeIs('guru.catatan')])>
           <span class="portal-menu-icon">
@@ -125,7 +121,7 @@
         </a>
         <form method="POST" action="{{ route('logout') }}">
           @csrf
-          <button type="submit" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;font:inherit;display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:10px;transition:all .2s ease;width:100%;font-size:.85rem" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='transparent'">
+          <button class="logout-btn" type="submit">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -157,6 +153,13 @@
           </div>
         </div>
         <div class="portal-actions no-print">
+          <div class="topbar-user">
+            <div class="topbar-user-avatar">{{ substr(auth()->user()->name, 0, 1) }}</div>
+            <div class="topbar-user-info">
+              <strong>{{ auth()->user()->full_name ?? auth()->user()->name }}</strong>
+              <span>{{ auth()->user()->email }}</span>
+            </div>
+          </div>
           <button class="icon-btn" id="themeBtn" aria-label="Ubah tema">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5" />
@@ -172,7 +175,7 @@
           </button>
           <form method="POST" action="{{ route('logout') }}" style="display:inline">
             @csrf
-            <button class="btn btn-outline" type="submit">
+            <button class="btn btn-outline btn-logout" type="submit">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />

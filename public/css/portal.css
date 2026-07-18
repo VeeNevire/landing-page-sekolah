@@ -75,54 +75,48 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 }
 .portal-shell{min-height:100vh;display:grid;grid-template-columns:272px 1fr}
 .portal-sidebar{
-  position:sticky;top:0;height:100vh;background:linear-gradient(180deg,#132f4a,#0a1a2e);color:#dbe8f8;
-  padding:28px 20px 18px;display:flex;flex-direction:column;z-index:20;
-  background-image:radial-gradient(ellipse at 120% 30%,rgba(20,87,166,.18) 0%,transparent 55%);
+  position:sticky;top:0;height:100vh;background:#0a1a2e;color:#dbe8f8;
+  padding:24px 16px 18px;display:flex;flex-direction:column;z-index:20;
   overflow-y:auto;
   scrollbar-width:thin;
-  scrollbar-color:rgba(255,255,255,.15) transparent
+  scrollbar-color:rgba(255,255,255,.12) transparent
 }
-.portal-sidebar::-webkit-scrollbar{width:6px}
+.portal-sidebar::-webkit-scrollbar{width:5px}
 .portal-sidebar::-webkit-scrollbar-track{background:transparent}
-.portal-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
-.portal-sidebar::-webkit-scrollbar-thumb:hover{background:#4a8ad4}
-.portal-sidebar .brand{padding:0 6px 22px;color:white;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:4px}
+.portal-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
+.portal-sidebar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
+.portal-sidebar .brand{padding:0 6px 20px;color:white;margin-bottom:2px}
 .portal-sidebar .brand-text small{color:#9fb7d5}
 .portal-user-card{
   display:flex;align-items:center;gap:12px;
-  margin:18px 0 22px;padding:16px;border-radius:14px;
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07)
+  margin:2px 0 4px;padding:10px 14px;border-radius:10px
 }
 .portal-user-avatar{
-  width:40px;height:40px;border-radius:12px;flex-shrink:0;
-  background:linear-gradient(145deg,#4a8ad4,#2563eb);
-  color:white;font-weight:800;font-size:1rem;
+  width:24px;height:24px;border-radius:6px;flex-shrink:0;
+  background:var(--primary-2);color:white;font-weight:800;font-size:.75rem;
   display:grid;place-items:center
 }
-.portal-user-card strong,.portal-user-card span{display:block}
-.portal-user-card span{font-size:.82rem;color:#9fb7d5;margin-top:3px}
-.portal-menu{display:grid;gap:3px}
+.portal-user-card strong,.portal-user-card span{display:block;font-size:.85rem}
+.portal-user-card span{font-size:.78rem;color:#9fb7d5;margin-top:1px}
+.portal-menu{display:grid;gap:2px}
+.portal-menu-group{
+  font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.25);padding:14px 14px 4px
+}
 .portal-menu a{
-  display:flex;align-items:center;gap:14px;padding:12px 14px 12px 15px;
-  border-radius:12px;color:#bdcfe5;font-weight:600;
-  position:relative;transition:all .2s ease;overflow:hidden
-}
-.portal-menu a::before{
-  content:'';position:absolute;left:0;top:8px;bottom:8px;width:4px;
-  background:#4a8ad4;border-radius:0 4px 4px 0;
-  opacity:0;transition:opacity .2s ease
-}
-.portal-menu a.active::before{opacity:1}
-.portal-menu a:hover:not(.active)::before{opacity:.4;background:rgba(255,255,255,.3)}
-.portal-menu a:hover,.portal-menu a.active{background:rgba(255,255,255,.06);color:white}
-.portal-menu-icon{
-  width:32px;height:32px;display:grid;place-items:center;flex-shrink:0;
-  background:rgba(255,255,255,.06);border-radius:10px;
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-radius:10px;color:#bdcfe5;font-weight:600;font-size:.9rem;
   transition:all .2s ease
 }
+.portal-menu a:hover,.portal-menu a.active{background:rgba(255,255,255,.07);color:white}
+.portal-menu-icon{
+  width:20px;height:20px;display:grid;place-items:center;flex-shrink:0;
+  color:rgba(255,255,255,.5);transition:color .2s ease
+}
+.portal-menu-icon svg{width:20px;height:20px}
 .portal-menu a:hover .portal-menu-icon,
 .portal-menu a.active .portal-menu-icon{
-  background:rgba(74,138,212,.15);color:#4a8ad4
+  color:var(--primary-4)
 }
 .portal-menu-divider{height:1px;background:rgba(255,255,255,.07);margin:8px 8px}
 .portal-sidebar-footer{
@@ -146,11 +140,6 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 .kpi-icon{width:24px;height:24px;display:grid;place-items:center;flex-shrink:0;color:var(--muted)}
 .kpi-icon svg{width:22px;height:22px}
 .portal-kpi:hover .kpi-icon{color:var(--primary-2)}
-.portal-topbar::after{
-  content:'';position:absolute;bottom:-2px;left:40px;right:40px;height:2px;
-  background:linear-gradient(90deg,var(--primary-2),var(--accent));
-  border-radius:2px;opacity:.45
-}
 .portal-topbar-left{display:flex;align-items:center;gap:14px}
 .portal-topbar-title{font-size:1.15rem;font-weight:800;letter-spacing:-.03em;margin:0}
 .portal-topbar-date{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);margin-top:-2px}
@@ -340,3 +329,45 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 @media(max-width:360px){
   .portal-topbar-title{font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
 }
+
+/* ── Ortu: Light Sidebar ── */
+.ortu-body .portal-sidebar{
+  background:#f8f9fc;color:#132238;border-right:1px solid var(--line);
+  padding:16px 12px 14px
+}
+.ortu-body .portal-sidebar .brand{color:var(--primary);padding:0 6px 10px}
+.ortu-body .portal-sidebar .brand-text small{color:var(--muted)}
+.ortu-body .portal-menu a{color:#5f6f82;padding:8px 10px;border-radius:8px}
+.ortu-body .portal-menu a:hover{background:color-mix(in srgb,var(--primary-4) 12%,transparent);color:var(--primary)}
+.ortu-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 18%,transparent);color:var(--primary)}
+.ortu-body .portal-menu-icon{color:rgba(0,0,0,.2)}
+.ortu-body .portal-menu a:hover .portal-menu-icon,
+.ortu-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
+.ortu-body .portal-menu-group{color:rgba(0,0,0,.2);padding:14px 10px 4px;font-size:.66rem}
+.ortu-body .portal-menu-divider{height:1.5px;margin:5px 10px;border-radius:2px;background:rgba(95,111,130,.5)}
+.ortu-body .portal-sidebar-footer a{color:var(--muted);padding:7px 10px;font-size:.82rem}
+.ortu-body .portal-sidebar-footer a:hover{background:color-mix(in srgb,var(--primary-4) 10%,transparent);color:var(--primary)}
+.ortu-body .topbar-user{display:flex;align-items:center;gap:10px;padding-right:14px;margin-right:6px;border-right:1px solid var(--line)}
+.ortu-body .topbar-user-avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary-4),var(--primary-2));color:white;font-weight:800;font-size:.85rem;display:grid;place-items:center;flex-shrink:0}
+.ortu-body .topbar-user-info{line-height:1.2}
+.ortu-body .topbar-user-info strong{display:block;font-size:.85rem;color:var(--ink);white-space:nowrap}
+.ortu-body .topbar-user-info span{display:block;font-size:.75rem;color:var(--muted);white-space:nowrap}
+.ortu-body .logout-btn{background:none;border:none;cursor:pointer;font:inherit;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;transition:all .2s ease;width:100%;font-size:.82rem;color:var(--danger);margin-top:2px}
+.ortu-body .logout-btn:hover{background:rgba(239,68,68,.1);color:#dc2626}
+.ortu-body .btn-logout{color:var(--danger)!important;border-color:rgba(239,68,68,.25)!important}
+.ortu-body .btn-logout:hover{background:rgba(239,68,68,.08)!important;border-color:var(--danger)!important;color:#dc2626!important}
+
+body.dark.ortu-body .portal-sidebar{background:#0f2035;color:var(--ink);border-right:1px solid var(--line)}
+body.dark.ortu-body .portal-sidebar .brand{color:var(--primary-2)}
+body.dark.ortu-body .portal-sidebar .brand-text small{color:var(--muted)}
+body.dark.ortu-body .portal-menu a{color:var(--muted)}
+body.dark.ortu-body .portal-menu-group{color:rgba(255,255,255,.2)}
+body.dark.ortu-body .portal-menu a:hover{background:rgba(255,255,255,.06);color:white}
+body.dark.ortu-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 15%,var(--card));color:var(--primary-2)}
+body.dark.ortu-body .portal-menu-icon{color:rgba(255,255,255,.25)}
+body.dark.ortu-body .portal-menu a:hover .portal-menu-icon,
+body.dark.ortu-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
+body.dark.ortu-body .portal-sidebar-footer a{color:var(--muted);padding:7px 10px;font-size:.82rem}
+body.dark.ortu-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,.06);color:white}
+body.dark.ortu-body .topbar-user-info strong{color:var(--ink)}
+body.dark.ortu-body .topbar-user-info span{color:var(--muted)}

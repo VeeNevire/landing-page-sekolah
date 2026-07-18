@@ -21,9 +21,9 @@
 .pagination-page:hover{border-color:var(--primary-2);color:var(--primary-2);transform:translateY(-1px)}
 .pagination-page:active{transform:translateY(0)}
 .pagination-page-active{
-  border-color:#4338ca;background:#4338ca;color:#fff;box-shadow:0 4px 12px rgba(67,56,202,.25)
+  border-color:var(--primary-2);background:var(--primary-2);color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--primary-2) 40%,transparent)
 }
-.pagination-page-active:hover{border-color:#3730a3;background:#3730a3;color:#fff}
+.pagination-page-active:hover{border-color:var(--primary);background:var(--primary);color:#fff}
 .pagination-page-disabled{
   opacity:.4;cursor:not-allowed;pointer-events:none
 }
@@ -41,9 +41,52 @@
 /* =========================================================
    PORTAL ADMIN
    ========================================================= */
-.admin-body{--primary-2:#4338ca;--primary-3:#3730a3;--accent:#f59e0b}
+.admin-body{--sidebar-bg:#0a1a2e}
 .admin-body .portal-heading h1{font-size:clamp(2rem,3.5vw,2.8rem)}
 .admin-sidebar .portal-menu-label{font-size:.88rem}
+
+/* ── Admin: Light Sidebar ── */
+.admin-body .portal-sidebar{
+  background:#f8f9fc;color:#132238;border-right:1px solid var(--line);
+  padding:16px 12px 14px
+}
+.admin-body .portal-sidebar .brand{color:var(--primary);padding:0 6px 10px}
+.admin-body .portal-sidebar .brand-text small{color:var(--muted)}
+.admin-body .portal-user-card{margin:4px 0 2px;padding:8px 10px}
+.admin-body .portal-user-card{color:var(--ink)}
+.admin-body .portal-user-card span{color:var(--muted)}
+.admin-body .portal-menu a{color:#5f6f82;padding:8px 10px;border-radius:8px}
+.admin-body .portal-menu-group{color:rgba(0,0,0,.2);padding:14px 10px 4px;font-size:.66rem}
+.admin-body .portal-menu a:hover{background:color-mix(in srgb,var(--primary-4) 12%,transparent);color:var(--primary)}
+.admin-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 18%,transparent);color:var(--primary)}
+.admin-body .portal-menu-icon{color:rgba(0,0,0,.2)}
+.admin-body .portal-menu a:hover .portal-menu-icon,
+.admin-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
+.admin-body .portal-menu-divider{height:1.5px;margin:5px 10px;border-radius:2px;background:rgba(95,111,130,.5)}
+body.dark.admin-body .portal-menu-divider{background:rgba(255,255,255,.12)}
+.admin-body .portal-sidebar-footer a{color:var(--muted);padding:8px 10px;font-size:.82rem}
+.admin-body .portal-sidebar-footer a:hover{background:color-mix(in srgb,var(--primary-4) 10%,transparent);color:var(--primary)}
+.topbar-user{display:flex;align-items:center;gap:10px;padding-right:14px;margin-right:6px;border-right:1px solid var(--line)}
+.topbar-user-avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary-4),var(--primary-2));color:white;font-weight:800;font-size:.85rem;display:grid;place-items:center;flex-shrink:0}
+.topbar-user-info{line-height:1.2}
+.topbar-user-info strong{display:block;font-size:.85rem;color:var(--ink);white-space:nowrap}
+.topbar-user-info span{display:block;font-size:.75rem;color:var(--muted);white-space:nowrap}
+body.dark.admin-body .portal-sidebar{background:#0f2035;color:var(--ink);border-right:1px solid var(--line)}
+body.dark.admin-body .portal-sidebar .brand{color:var(--primary-2)}
+body.dark.admin-body .portal-sidebar .brand-text small{color:var(--muted)}
+body.dark.admin-body .portal-menu a{color:var(--muted)}
+body.dark.admin-body .portal-menu-group{color:rgba(255,255,255,.2)}
+body.dark.admin-body .portal-menu a:hover{background:rgba(255,255,255,.06);color:white}
+body.dark.admin-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 15%,var(--card));color:var(--primary-2)}
+body.dark.admin-body .portal-menu-icon{color:rgba(255,255,255,.25)}
+body.dark.admin-body .portal-menu a:hover .portal-menu-icon,
+body.dark.admin-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
+body.dark.admin-body .portal-sidebar-footer a{color:var(--muted);padding:7px 10px;font-size:.82rem}
+body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,.06);color:white}
+.logout-btn{background:none;border:none;cursor:pointer;font:inherit;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;transition:all .2s ease;width:100%;font-size:.82rem;color:var(--danger);margin-top:2px}
+.logout-btn:hover{background:rgba(239,68,68,.1);color:#dc2626}
+.btn-logout{color:var(--danger)!important;border-color:rgba(239,68,68,.25)!important}
+.btn-logout:hover{background:rgba(239,68,68,.08)!important;border-color:var(--danger)!important;color:#dc2626!important}
 
 .portal-kpi .portal-kpi-value{letter-spacing:-.04em}
 .portal-dashboard-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
@@ -63,15 +106,15 @@
 
 .admin-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 
-/* SweetAlert custom theme – admin indigo */
+/* SweetAlert custom theme – admin */
 .swal2-popup{border-radius:14px!important;font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;box-shadow:0 20px 60px rgba(0,0,0,.18)!important}
 .swal2-html-container{margin:0 0 8px!important;font-size:.95rem!important;color:var(--ink)!important}
 .swal2-title{font-size:1.2rem!important;font-weight:800!important;color:var(--ink)!important;padding:20px 24px 0!important}
 .swal2-actions{padding:0 24px 20px!important;gap:10px!important}
 .swal2-styled{border-radius:10px!important;font-weight:700!important;font-size:.9rem!important;padding:10px 22px!important;box-shadow:none!important}
 .swal2-styled:focus{box-shadow:none!important}
-.swal2-confirm{background:#4338ca!important}
-.swal2-confirm:hover{background:#3730a3!important}
+.swal2-confirm{background:var(--primary-2)!important}
+.swal2-confirm:hover{background:var(--primary)!important}
 .swal2-cancel{background:transparent!important;border:1px solid var(--line)!important;color:var(--ink)!important}
 .swal2-cancel:hover{background:var(--bg)!important}
 .swal2-danger .swal2-confirm{background:#ef4444!important}
@@ -81,7 +124,7 @@
 .swal2-success [class*=swal2-success-line]{background-color:#1f8f62!important}
 .swal2-icon.swal2-success .swal2-success-ring{border-color:rgba(31,143,98,.3)!important}
 .swal2-icon.swal2-error .swal2-x-mark-line{background-color:#ef4444!important}
-.swal2-timer-progress-bar{background:#4338ca!important}
+.swal2-timer-progress-bar{background:var(--primary-2)!important}
 
 /* Admin modal */
 .admin-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
@@ -112,7 +155,7 @@
 .wizard-step::after{content:'';flex:1;height:2px;background:var(--line);margin:0 8px}
 .wizard-step:last-child::after{display:none}
 .wizard-step-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.78rem;font-weight:800;border:2px solid var(--line);color:var(--muted);background:var(--card);transition:.2s ease;flex-shrink:0}
-.wizard-step.active .wizard-step-dot{border-color:#4338ca;background:#4338ca;color:white}
+.wizard-step.active .wizard-step-dot{border-color:var(--primary-2);background:var(--primary-2);color:white}
 .wizard-step.done .wizard-step-dot{border-color:var(--success);background:var(--success);color:white}
 .wizard-step.done::after{background:var(--success)}
 .wizard-step-label{font-size:.82rem;font-weight:700;color:var(--muted);white-space:nowrap}
@@ -322,14 +365,14 @@
 }
 
 .action-btn-primary {
-    background: #4338ca;
-    border-color: #4338ca;
+    background: var(--primary-2);
+    border-color: var(--primary-2);
     color: white;
 }
 
 .action-btn-primary:hover {
-    background: #3730a3;
-    border-color: #3730a3;
+    background: var(--primary);
+    border-color: var(--primary);
 }
 
 .action-btn-danger {
