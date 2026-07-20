@@ -740,60 +740,65 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Menyimpan...';
+
     const form = document.getElementById('studentForm');
-    const fd = new FormData(form);
+    const $ = id => document.getElementById(id);
+    const isEdit = !!$('formUserId')?.value;
+    const parentAction = $('parentAction')?.value || 'none';
+    const parentRel = parentAction === 'new' ? ($('m_parent_relationship_new')?.value || '') : ($('m_parent_relationship')?.value || '');
+
+    const data = {
+        nisn: $('m_nisn')?.value || '',
+        full_name: $('m_full_name')?.value || '',
+        student_email: $('m_student_email')?.value || '',
+        birth_date: $('m_birth_date')?.value || '',
+        jurusan_id: $('m_jurusan_id')?.value || '',
+        kelas_id: $('m_kelas_id')?.value || '',
+        homeroom_teacher_id: $('m_homeroom_teacher_id')?.value || '',
+        status: $('m_status')?.value || 'active',
+        parent_action: parentAction,
+        parent_id: $('m_parent_id')?.value || '',
+        parent_name: $('m_parent_name')?.value || '',
+        parent_email: $('m_parent_email')?.value || '',
+        parent_password: $('m_parent_password')?.value || '',
+        parent_relationship: parentRel,
+    };
+
+    if (isEdit) data._method = 'PUT';
+
     fetch(form.action, {
         method: 'POST',
-        body: fd,
         headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': CSRF_TOKEN
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN
+        },
+        body: JSON.stringify(data)
+    })
+    .then(r => {
+        if (!r.ok) {
+            return r.json().then(j => Promise.reject({ status: r.status, errors: j.errors, message: j.message }));
         }
-      })
-      .then(r => {
-        const ct = r.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) {
-          return r.text().then(text => {
-            // HTML response — reload aja (data mungkin udah tersimpan)
-            location.reload();
-            return { ok: false };
-          });
-        }
-        return r.json().then(j => ({ ok: r.ok, j }));
-      })
-      .then(({
-        ok,
-        j
-      }) => {
+        return r.json();
+    })
+    .then(j => {
+        closeModal();
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: j.message, showConfirmButton: false, timer: 3000 })
+            .then(() => location.reload());
+    })
+    .catch(err => {
         btn.disabled = false;
         btn.textContent = originalText;
-        if (!ok) return;
-        if (j.success) {
-          closeModal();
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: j.message,
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-          }).then(() => location.reload());
-        } else if (j.errors) {
-          const fields = currentStep === 1 ? ['nisn', 'full_name', 'student_email', 'jurusan_id', 'kelas_id', 'status', 'birth_date', 'homeroom_teacher_id'] : ['parent_id', 'parent_name', 'parent_email', 'parent_password'];
-          fields.forEach(f => {
-            if (j.errors[f]) showFieldError(f, j.errors[f][0]);
-          });
+        if (err.errors) {
+            const fields = currentStep === 1 ? ['nisn', 'full_name', 'student_email', 'jurusan_id', 'kelas_id', 'status', 'birth_date'] : ['parent_id', 'parent_name', 'parent_email', 'parent_password'];
+            fields.forEach(f => { if (err.errors[f]) showFieldError(f, err.errors[f][0]); });
+        } else if (err.status === 419) {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Sesi habis, reload halaman...', timer: 3000 })
+                .then(() => location.reload());
         } else {
-          Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: j.message || 'Gagal', showConfirmButton: false, timer: 3000 });
+            Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: err.message || 'Gagal, coba lagi', timer: 4000 });
         }
-      }).catch((err) => {
-        btn.disabled = false;
-        btn.textContent = originalText;
-        console.error('Fetch error:', err);
-        Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Terjadi kesalahan', text: 'Coba reload dan ulangi', showConfirmButton: false, timer: 4000 });
-      });
+    });
   }
 
   function confirmDelete(id, name) {
