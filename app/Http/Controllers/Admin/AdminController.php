@@ -438,13 +438,17 @@ class AdminController extends Controller
         ]);
 
         // Kirim email kredensial ke siswa
-        Mail::to($user->email)->send(new StudentAcceptedMail(
-            studentName: $validated['full_name'],
-            className: $student->class_name,
-            programName: $student->program_name,
-            nis: $nis,
-            password: $password,
-        ));
+        try {
+            Mail::to($user->email)->send(new StudentAcceptedMail(
+                studentName: $validated['full_name'],
+                className: $student->class_name,
+                programName: $student->program_name,
+                nis: $nis,
+                password: $password,
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Gagal kirim email siswa: ' . $e->getMessage());
+        }
 
         if (($validated['parent_action'] ?? 'none') !== 'none') {
             if ($validated['parent_action'] === 'existing') {
@@ -460,12 +464,16 @@ class AdminController extends Controller
                 ]);
                 $parentId = $parent->id;
 
-                Mail::to($parent->email)->send(new ParentAccountMail(
-                    parentName: $validated['parent_name'],
-                    parentEmail: $parent->email,
-                    password: $validated['parent_password'],
-                    studentName: $validated['full_name'],
-                ));
+                try {
+                    Mail::to($parent->email)->send(new ParentAccountMail(
+                        parentName: $validated['parent_name'],
+                        parentEmail: $parent->email,
+                        password: $validated['parent_password'],
+                        studentName: $validated['full_name'],
+                    ));
+                } catch (\Exception $e) {
+                    \Log::error('Gagal kirim email orang tua: ' . $e->getMessage());
+                }
             }
 
             DB::table('parent_student')->insert([
@@ -579,13 +587,17 @@ class AdminController extends Controller
         $password = (string) random_int(10000000, 99999999);
         $student->user->update(['password' => Hash::make($password)]);
 
-        Mail::to($student->user->email)->send(new StudentAcceptedMail(
-            studentName: $student->full_name,
-            className: $student->class_name,
-            programName: $student->program_name,
-            nis: $student->nis,
-            password: $password,
-        ));
+        try {
+            Mail::to($student->user->email)->send(new StudentAcceptedMail(
+                studentName: $student->full_name,
+                className: $student->class_name,
+                programName: $student->program_name,
+                nis: $student->nis,
+                password: $password,
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Gagal kirim email reset password: ' . $e->getMessage());
+        }
 
         AuditService::log('student.reset-password', 'Student', $student->id);
 

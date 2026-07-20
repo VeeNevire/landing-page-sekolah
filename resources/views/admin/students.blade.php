@@ -752,26 +752,14 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         }
       })
       .then(r => {
-        console.log('Response status:', r.status, r.statusText);
-        console.log('Response headers:', [...r.headers.entries()]);
-        console.log('Response content-type:', r.message || r.headers.get('content-type'));
-        if (!r.ok) {
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
           return r.text().then(text => {
-            console.error('Response body (first 500 chars):', text.substring(0, 500));
-            try {
-              return {
-                ok: r.ok,
-                j: JSON.parse(text)
-              };
-            } catch (e) {
-              throw new Error('HTTP ' + r.status + ': ' + text.match(/<title>([^<]+)<\/title>/)?.[1] || 'Server error');
-            }
+            const title = text.match(/<title>([^<]+)<\/title>/)?.[1] || 'Server returned HTML instead of JSON';
+            throw new Error(title + ' — Coba reload page dan ulangi');
           });
         }
-        return r.json().then(j => ({
-          ok: r.ok,
-          j
-        }));
+        return r.json().then(j => ({ ok: r.ok, j }));
       })
       .then(({
         ok,
