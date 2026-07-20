@@ -32,4 +32,9 @@ class TeachingAssignment extends Model
     {
         return $this->hasMany(Assessment::class);
     }
+
+    public function jadwals()
+    {
+        return $this->hasMany(Jadwal::class);
+    }
 }

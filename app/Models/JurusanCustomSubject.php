@@ -8,9 +8,17 @@ class JurusanCustomSubject extends Model
 {
     protected $fillable = [
         'jurusan_id',
+        'kode',
         'nama',
-        'deskripsi',
+        'kkm',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'kkm' => 'decimal:2',
+        ];
+    }
 
     public function jurusan()
     {

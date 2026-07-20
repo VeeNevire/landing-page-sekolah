@@ -52,11 +52,6 @@ class User extends Authenticatable
         return $this->hasMany(AuditLog::class);
     }
 
-    public function mapels()
-    {
-        return $this->hasMany(GuruMapel::class, 'guru_id');
-    }
-
     public function applicant()
     {
         return $this->hasOne(Applicant::class);

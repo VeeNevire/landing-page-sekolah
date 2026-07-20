@@ -7,7 +7,7 @@
   <div>
     <span class="kicker">Jadwal</span>
     <h1>Jadwal Mengajar</h1>
-    <p>Atur jadwal mengajar per mapel, hari, dan jam.</p>
+    <p>Atur jadwal mengajar per kelas, mapel, hari, dan jam.</p>
   </div>
 </div>
 
@@ -20,6 +20,14 @@
           <option value="{{ $period->id }}" {{ $semesterId == $period->id ? 'selected' : '' }}>
             {{ $period->academic_year }} {{ ucfirst($period->semester) }} {{ $period->is_active ? '(Aktif)' : '' }}
           </option>
+        @endforeach
+      </select>
+    </div>
+    <div class="field" style="flex:1;min-width:160px;margin:0">
+      <label style="font-size:.82rem;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Kelas</label>
+      <select name="class" onchange="this.form.submit()" style="min-height:42px">
+        @foreach ($classNames as $cn)
+          <option value="{{ $cn }}" {{ $selectedClass == $cn ? 'selected' : '' }}>{{ $cn }}</option>
         @endforeach
       </select>
     </div>
@@ -83,10 +91,10 @@ function openAddModal() {
         @csrf
         <div style="margin-bottom:14px">
           <label style="display:block;font-size:.85rem;font-weight:700;margin-bottom:5px;color:#333">Mapel & Guru</label>
-          <select id="modalGuruMapel" required style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.9rem;outline:none">
+          <select id="modalTeachingAssignment" required style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.9rem;outline:none">
             <option value="">-- Pilih Mapel --</option>
             @foreach ($subjects as $subject)
-              <option value="{{ $subject['guru_mapel_id'] }}">{{ $subject['label'] }}</option>
+              <option value="{{ $subject['teaching_assignment_id'] }}">{{ $subject['label'] }}</option>
             @endforeach
           </select>
         </div>
@@ -117,22 +125,21 @@ function openAddModal() {
     cancelButtonColor: '#6b7280',
     reverseButtons: true,
     preConfirm: () => {
-      const guruMapelId = document.getElementById('modalGuruMapel').value;
+      const taId = document.getElementById('modalTeachingAssignment').value;
       const day = document.getElementById('modalDay').value;
       const timeSlot = document.getElementById('modalSlot').value;
-      if (!guruMapelId || !day || !timeSlot) {
+      if (!taId || !day || !timeSlot) {
         Swal.showValidationMessage('Semua field harus diisi');
         return false;
       }
-      return { guru_mapel_id: guruMapelId, day, time_slot: timeSlot };
+      return { teaching_assignment_id: taId, day, time_slot: timeSlot };
     }
   }).then((result) => {
     if (!result.isConfirmed) return;
     const data = result.value;
-    data._token = CSRF;
     fetch('{{ route("admin.jadwal.store") }}', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
       body: JSON.stringify(data)
     })
     .then(r => r.json())
@@ -187,5 +194,3 @@ function confirmDelete(jadwalId, subjectName) {
 }
 </script>
 @endpush
-
-

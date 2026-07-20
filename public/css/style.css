@@ -496,11 +496,25 @@ body.dark .nav-dropdown-menu a:hover {
     margin: 22px 0;
 }
 .hero h1 span {
-    background: linear-gradient(135deg, var(--accent-3), var(--accent-2), var(--accent));
+    background: linear-gradient(135deg,
+        #aed9e6, #87ceeb, #7ab8e0,
+        #5ba3d9, #4a90d9, #5ba3d9,
+        #7ab8e0, #87ceeb, #aed9e6
+    );
+    background-size: 400% 400%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: enchantBlue 4s ease infinite;
+    filter: drop-shadow(0 0 4px rgba(122,184,224,.6))
+            drop-shadow(0 0 10px rgba(90,163,217,.4))
+            drop-shadow(0 0 20px rgba(74,144,217,.2));
     position: relative;
+}
+@keyframes enchantBlue {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 .hero p {
     font-size: 1.12rem;

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\PenugasanController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PPDBController;
@@ -93,6 +92,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('/users/{user}/reset-password', [AdminController::class, 'usersResetPassword'])->name('users.reset-password');
     Route::delete('/users/{user}', [AdminController::class, 'usersDestroy'])->name('users.destroy');
 
+    Route::get('/guru', [AdminController::class, 'guru'])->name('guru.index');
+    Route::get('/guru/{user}/data', [AdminController::class, 'guruData'])->name('guru.data');
+
     Route::get('/students', [AdminController::class, 'students'])->name('students.index');
     Route::get('/students/create', [AdminController::class, 'studentsCreate'])->name('students.create');
     Route::post('/students', [AdminController::class, 'studentsStore'])->name('students.store');
@@ -109,6 +111,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     Route::get('/subjects', [AdminController::class, 'subjects'])->name('subjects.index');
     Route::get('/subjects/{subject}/data', [AdminController::class, 'subjectData'])->name('subjects.data');
+    Route::get('/subjects/{subject}/detail', [AdminController::class, 'subjectDetail'])->name('subjects.detail');
+    Route::post('/subjects/{subject}/assign', [AdminController::class, 'subjectAssignStore'])->name('subjects.assign');
     Route::post('/subjects', [AdminController::class, 'subjectsStore'])->name('subjects.store');
     Route::put('/subjects/{subject}', [AdminController::class, 'subjectsUpdate'])->name('subjects.update');
     Route::delete('/subjects/{subject}', [AdminController::class, 'subjectsDestroy'])->name('subjects.destroy');
@@ -136,11 +140,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('/teaching', [AdminController::class, 'teachingStore'])->name('teaching.store');
     Route::put('/teaching/{assignment}', [AdminController::class, 'teachingUpdate'])->name('teaching.update');
     Route::delete('/teaching/{assignment}', [AdminController::class, 'teachingDestroy'])->name('teaching.destroy');
-
-    Route::get('/penugasan', [PenugasanController::class, 'index'])->name('penugasan.index');
-    Route::post('/penugasan', [PenugasanController::class, 'store'])->name('penugasan.store');
-    Route::delete('/penugasan/{guruMapel}', [PenugasanController::class, 'destroy'])->name('penugasan.destroy');
-    Route::post('/penugasan/copy', [PenugasanController::class, 'copyFromPrevious'])->name('penugasan.copy');
 
     Route::get('/jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
     Route::post('/jadwal', [JadwalController::class, 'store'])->name('jadwal.store');

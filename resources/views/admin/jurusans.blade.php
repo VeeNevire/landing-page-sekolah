@@ -234,9 +234,6 @@ function addKelasRow(data) {
       <div class="kelas-row-field" style="flex:0 0 70px">
         <input type="number" class="kelas-input kelas-nomor" min="1" max="20" required placeholder="No" value="${data.nomor}" oninput="updateKelasPreview(this)">
       </div>
-      <div class="kelas-row-preview" id="kelasPreview-${id}">
-        ${previewKelasNama(data.tingkat, jurusanNama, data.nomor) || '—'}
-      </div>
       <input type="hidden" class="kelas-nama-hidden" value="${data.nama}">
       <input type="hidden" class="kelas-id-hidden" value="${data.id || ''}">
       <button type="button" class="kelas-row-remove" onclick="removeKelasRow(this)" title="Hapus kelas">
@@ -245,6 +242,9 @@ function addKelasRow(data) {
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
+    </div>
+    <div class="kelas-row-preview" id="kelasPreview-${id}">
+      ${previewKelasNama(data.tingkat, jurusanNama, data.nomor) || '—'}
     </div>
   `;
 
@@ -476,14 +476,18 @@ function openDetailModal(jurusanId) {
     html += '<button type="button" class="btn btn-outline" onclick="showAddCustomSubject()" style="min-height:32px;padding:0 12px;font-size:.8rem;display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah</button>';
     html += '</div>';
     html += '<div id="customSubjectForm" style="display:none;margin-bottom:.75rem;padding:.75rem;background:var(--bg);border-radius:10px;border:1px solid var(--line)">';
-    html += '<div class="field" style="margin-bottom:8px"><input id="csNama" type="text" placeholder="Nama mata pelajaran" class="kelas-input" style="padding:.55rem .65rem"></div>';
-    html += '<div class="field" style="margin-bottom:8px"><input id="csDeskripsi" type="text" placeholder="Deskripsi (opsional)" class="kelas-input" style="padding:.55rem .65rem"></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+    html += '<div class="field"><input id="csKode" type="text" placeholder="Kode mapel" class="kelas-input" style="padding:.55rem .65rem;text-transform:uppercase"></div>';
+    html += '<div class="field"><input id="csNama" type="text" placeholder="Nama mata pelajaran" class="kelas-input" style="padding:.55rem .65rem"></div>';
+    html += '<div class="field"><input id="csKkm" type="number" step="0.01" min="0" max="100" placeholder="KKM" class="kelas-input" style="padding:.55rem .65rem"></div>';
+    html += '</div>';
     html += '<button type="button" class="btn btn-primary" onclick="saveCustomSubject(' + jurusanId + ')" style="min-height:34px;padding:0 14px;font-size:.82rem">Simpan</button>';
     html += '</div>';
     html += '<div id="customSubjectList" class="detail-subject-grid" style="max-height:none">';
     if (j.custom_subjects && j.custom_subjects.length) {
       j.custom_subjects.forEach(cs => {
-        html += '<div class="custom-subject-item" data-id="' + cs.id + '"><span>' + cs.nama + '</span><button type="button" onclick="deleteCustomSubject(' + jurusanId + ',' + cs.id + ')" class="cs-delete-btn" title="Hapus"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
+        const kkmText = cs.kkm ? ' — KKM ' + cs.kkm : '';
+        html += '<div class="custom-subject-item" data-id="' + cs.id + '"><span><strong>' + (cs.kode ? cs.kode + ' — ' : '') + cs.nama + '</strong>' + kkmText + '</span><button type="button" onclick="deleteCustomSubject(' + jurusanId + ',' + cs.id + ')" class="cs-delete-btn" title="Hapus"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
       });
     } else {
       html += '<p style="color:var(--muted);font-size:.85rem;padding:.5rem 0">Belum ada pelajaran jurusan.</p>';
@@ -517,10 +521,22 @@ function openDetailModal(jurusanId) {
         // Pelajaran Umum
         if (data.allSubjects.length) {
           html += '<p style="font-size:.78rem;font-weight:700;color:var(--muted);margin:0 0 .5rem">Pelajaran Umum</p>';
-          html += '<div class="detail-subject-grid" style="margin-bottom:.75rem">';
+          html += '<div style="margin-bottom:.75rem">';
+          const classNamaLengkap = (ROMAWI[k.tingkat] || k.tingkat) + ' ' + k.nama;
+          const existingForClass = data.existing_assignments && data.existing_assignments[classNamaLengkap] ? data.existing_assignments[classNamaLengkap] : [];
           data.allSubjects.forEach(s => {
             const checked = k.subjects && k.subjects.some(ks => ks.id === s.id);
-            html += '<label class="subject-check-item"><input type="checkbox" class="kelas-subject-cb" data-kelas-id="' + k.id + '" value="' + s.id + '" ' + (checked ? 'checked' : '') + '><span>' + s.code + ' — ' + s.name + '</span></label>';
+            const pool = (data.subject_teacher_pool && data.subject_teacher_pool[s.id]) ? data.subject_teacher_pool[s.id] : [];
+            const currentAssignment = existingForClass.find(function(e) { return e.subject_id == s.id; });
+            const currentTeacherId = currentAssignment ? currentAssignment.teacher_id : '';
+            html += '<div class="subject-teacher-row">';
+            html += '<label class="subject-check-item" style="flex:1;min-width:0"><input type="checkbox" class="kelas-subject-cb" data-kelas-id="' + k.id + '" value="' + s.id + '" ' + (checked ? 'checked' : '') + ' onchange="toggleSubjectTeacher(this)"><span>' + s.code + ' — ' + s.name + '</span></label>';
+            html += '<select class="subject-teacher-select" data-kelas-id="' + k.id + '" data-subject-id="' + s.id + '" ' + (!checked ? 'disabled' : '') + '>';
+            html += '<option value="">— Guru —</option>';
+            pool.forEach(function(g) {
+              html += '<option value="' + g.id + '" ' + (currentTeacherId == g.id ? 'selected' : '') + '>' + g.name + '</option>';
+            });
+            html += '</select></div>';
           });
           html += '</div>';
         }
@@ -531,7 +547,7 @@ function openDetailModal(jurusanId) {
           html += '<div class="detail-subject-grid">';
           j.custom_subjects.forEach(cs => {
             const checked = k.custom_subjects && k.custom_subjects.some(kcs => kcs.id === cs.id);
-            html += '<label class="subject-check-item"><input type="checkbox" class="kelas-custom-cb" data-kelas-id="' + k.id + '" value="' + cs.id + '" ' + (checked ? 'checked' : '') + '><span>' + cs.nama + '</span></label>';
+            html += '<label class="subject-check-item"><input type="checkbox" class="kelas-custom-cb" data-kelas-id="' + k.id + '" value="' + cs.id + '" ' + (checked ? 'checked' : '') + '><span>' + (cs.kode ? cs.kode + ' — ' : '') + cs.nama + '</span></label>';
           });
           html += '</div>';
         }
@@ -555,29 +571,33 @@ function openDetailModal(jurusanId) {
 function showAddCustomSubject() {
   const form = document.getElementById('customSubjectForm');
   form.style.display = form.style.display === 'none' ? 'block' : 'none';
-  if (form.style.display === 'block') document.getElementById('csNama').focus();
+  if (form.style.display === 'block') document.getElementById('csKode').focus();
 }
 
 function saveCustomSubject(jurusanId) {
+  const kode = document.getElementById('csKode').value.trim();
   const nama = document.getElementById('csNama').value.trim();
+  const kkm = document.getElementById('csKkm').value.trim();
+  if (!kode) { Swal.fire('', 'Kode mata pelajaran wajib diisi.', 'warning'); return; }
   if (!nama) { Swal.fire('', 'Nama mata pelajaran wajib diisi.', 'warning'); return; }
-  const deskripsi = document.getElementById('csDeskripsi').value.trim();
 
   fetch('/admin/jurusans/' + jurusanId + '/custom-subjects', {
     method: 'POST',
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nama: nama, deskripsi: deskripsi })
+    body: JSON.stringify({ kode: kode, nama: nama, kkm: kkm || null })
   })
   .then(r => r.json())
   .then(json => {
     if (json.success) {
+      document.getElementById('csKode').value = '';
       document.getElementById('csNama').value = '';
-      document.getElementById('csDeskripsi').value = '';
+      document.getElementById('csKkm').value = '';
       document.getElementById('customSubjectForm').style.display = 'none';
       const list = document.getElementById('customSubjectList');
       const empty = list.querySelector('p');
       if (empty) empty.remove();
-      list.insertAdjacentHTML('beforeend', '<div class="custom-subject-item" data-id="' + json.subject.id + '"><span>' + json.subject.nama + '</span><button type="button" onclick="deleteCustomSubject(' + jurusanId + ',' + json.subject.id + ')" class="cs-delete-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>');
+      const kkmText = json.subject.kkm ? ' — KKM ' + json.subject.kkm : '';
+      list.insertAdjacentHTML('beforeend', '<div class="custom-subject-item" data-id="' + json.subject.id + '"><span><strong>' + (json.subject.kode ? json.subject.kode + ' — ' : '') + json.subject.nama + '</strong>' + kkmText + '</span><button type="button" onclick="deleteCustomSubject(' + jurusanId + ',' + json.subject.id + ')" class="cs-delete-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>');
 
       // inject checkbox ke setiap kelas
       document.querySelectorAll('.detail-kelas-item').forEach(item => {
@@ -590,7 +610,6 @@ function saveCustomSubject(jurusanId) {
         if (grid.length > 1) {
           csGrid = grid[1];
         } else {
-          // buat section Pelajaran Jurusan kalo belum ada
           const label = document.createElement('p');
           label.style.cssText = 'font-size:.78rem;font-weight:700;color:var(--muted);margin:1rem 0 .5rem';
           label.textContent = 'Pelajaran Jurusan';
@@ -603,7 +622,7 @@ function saveCustomSubject(jurusanId) {
         csGrid.insertAdjacentHTML('beforeend',
           '<label class="subject-check-item">' +
           '<input type="checkbox" class="kelas-custom-cb" data-kelas-id="' + item.dataset.kelasId + '" value="' + json.subject.id + '">' +
-          '<span>' + json.subject.nama + '</span></label>'
+          '<span>' + (json.subject.kode ? json.subject.kode + ' — ' : '') + json.subject.nama + '</span></label>'
         );
       });
 
@@ -654,6 +673,15 @@ function toggleKelasSubjects(header) {
   if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
+function toggleSubjectTeacher(cb) {
+  const row = cb.closest('.subject-teacher-row');
+  const select = row?.querySelector('.subject-teacher-select');
+  if (select) {
+    select.disabled = !cb.checked;
+    if (!cb.checked) select.value = '';
+  }
+}
+
 function saveDetailSubjects() {
   const jurusanId = window._currentJurusanId;
   if (!jurusanId) return;
@@ -672,6 +700,14 @@ function saveDetailSubjects() {
     if (cb.checked) kelasCustomSubjects[kid].push(cb.value);
   });
 
+  const subjectTeachers = {};
+  document.querySelectorAll('.subject-teacher-select').forEach(sel => {
+    const kid = sel.dataset.kelasId;
+    const subjId = sel.dataset.subjectId;
+    if (!subjectTeachers[kid]) subjectTeachers[kid] = {};
+    subjectTeachers[kid][subjId] = sel.value;
+  });
+
   const formData = new FormData();
   formData.append('_token', CSRF_TOKEN);
   Object.entries(kelasSubjects).forEach(([kelasId, ids]) => {
@@ -679,6 +715,12 @@ function saveDetailSubjects() {
   });
   Object.entries(kelasCustomSubjects).forEach(([kelasId, ids]) => {
     ids.forEach(id => formData.append('kelas_custom_subjects[' + kelasId + '][]', id));
+  });
+
+  Object.entries(subjectTeachers).forEach(([kelasId, subjects]) => {
+    Object.entries(subjects).forEach(([subjectId, teacherId]) => {
+      formData.append('subject_teachers[' + kelasId + '][' + subjectId + ']', teacherId);
+    });
   });
 
   document.querySelectorAll('.kelas-wali-select').forEach(sel => {

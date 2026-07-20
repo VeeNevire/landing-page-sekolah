@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
-use App\Models\GuruMapel;
+use App\Models\TeachingAssignment;
 use App\Models\Jadwal;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
@@ -26,13 +26,20 @@ class JadwalController extends Controller
         $activePeriod = AcademicPeriod::where('is_active', true)->first();
         $semesterId = $request->query('semester_id', $activePeriod?->id);
 
-        $guruMapels = GuruMapel::where('semester_id', $semesterId)
+        $classNames = TeachingAssignment::where('period_id', $semesterId)
+            ->distinct()->orderBy('class_name')
+            ->pluck('class_name');
+
+        $selectedClass = $request->query('class', $classNames->first());
+
+        $assignments = TeachingAssignment::where('period_id', $semesterId)
+            ->when($selectedClass, fn($q) => $q->where('class_name', $selectedClass))
             ->with(['subject', 'teacher', 'jadwals'])
             ->get();
 
-        $jadwals = Jadwal::whereIn('guru_mapel_id', $guruMapels->pluck('id'))
+        $jadwals = Jadwal::whereIn('teaching_assignment_id', $assignments->pluck('id'))
             ->get()
-            ->keyBy(fn($j) => $j->guru_mapel_id . '_' . $j->day);
+            ->keyBy(fn($j) => $j->teaching_assignment_id . '_' . $j->day);
 
         $grid = [];
         foreach (self::DAYS as $day) {
@@ -42,36 +49,36 @@ class JadwalController extends Controller
             }
         }
 
-        foreach ($guruMapels as $gm) {
-            foreach ($gm->jadwals as $jadwal) {
+        foreach ($assignments as $ta) {
+            foreach ($ta->jadwals as $jadwal) {
                 $grid[$jadwal->day][$jadwal->time_slot] = [
-                    'subject' => $gm->subject->name,
-                    'code' => $gm->subject->code,
-                    'teacher' => $gm->teacher->full_name ?? $gm->teacher->name,
+                    'subject' => $ta->subject->name,
+                    'code' => $ta->subject->code,
+                    'teacher' => $ta->teacher->full_name ?? $ta->teacher->name,
                     'jadwal_id' => $jadwal->id,
                 ];
             }
         }
 
         $periods = AcademicPeriod::orderByDesc('academic_year')->get();
-        $subjects = $guruMapels->map(fn($gm) => [
-            'guru_mapel_id' => $gm->id,
-            'label' => $gm->subject->code . ' — ' . $gm->subject->name . ' (' . ($gm->teacher->full_name ?? $gm->teacher->name) . ')',
+        $subjects = $assignments->map(fn($ta) => [
+            'teaching_assignment_id' => $ta->id,
+            'label' => $ta->subject->code . ' — ' . $ta->subject->name . ' (' . ($ta->teacher->full_name ?? $ta->teacher->name) . ')',
         ])->values();
 
-        return view('admin.jadwal', compact('grid', 'periods', 'subjects', 'semesterId'));
+        return view('admin.jadwal', compact('grid', 'periods', 'subjects', 'semesterId', 'classNames', 'selectedClass'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'guru_mapel_id' => 'required|exists:guru_mapel,id',
+            'teaching_assignment_id' => 'required|exists:teaching_assignments,id',
             'day' => 'required|in:senin,selasa,rabu,kamis,jumat',
             'time_slot' => 'required|integer|min:1|max:5',
         ]);
 
         $exists = Jadwal::where([
-            'guru_mapel_id' => $validated['guru_mapel_id'],
+            'teaching_assignment_id' => $validated['teaching_assignment_id'],
             'day' => $validated['day'],
         ])->exists();
 

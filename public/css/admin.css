@@ -1074,6 +1074,38 @@ body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,
     font-weight: 500;
 }
 
+.subject-teacher-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.subject-teacher-select {
+    width: 180px;
+    flex-shrink: 0;
+    padding: .4rem .5rem;
+    border-radius: 8px;
+    font-size: .8rem;
+    outline: none;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color .2s;
+}
+
+.subject-teacher-select:focus {
+    border-color: var(--primary-2);
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, .1);
+}
+
+.subject-teacher-select:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
 .detail-kelas-item {
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -1148,14 +1180,13 @@ body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,
     background: var(--bg);
     border: 1px solid var(--line);
     border-radius: 10px;
-    padding: 2px;
+    padding: 10px;
 }
 
 .kelas-row-inner {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px;
 }
 
 .kelas-row-field {
@@ -1181,17 +1212,14 @@ body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,
 }
 
 .kelas-row-preview {
-    flex: 1;
-    min-width: 120px;
-    padding: .55rem .65rem;
+    margin-top: 8px;
+    padding: .5rem .65rem;
     font-size: .85rem;
     font-weight: 700;
     color: var(--primary-2);
     background: color-mix(in srgb, var(--primary-2) 6%, var(--card));
     border-radius: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-word;
 }
 
 .kelas-row-remove {
@@ -1222,9 +1250,54 @@ body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,
         flex: 1 !important;
         min-width: 80px;
     }
-    .kelas-row-preview {
-        width: 100%;
-        min-width: unset;
-        order: 10;
+    .kelas-row-remove {
+        align-self: flex-end;
     }
+}
+
+/* =========================================================
+   JURUSAN CUSTOM SUBJECTS (on subjects page)
+   ========================================================= */
+.jurusan-cs-group {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card);
+}
+
+.jurusan-cs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background .15s ease;
+    user-select: none;
+    background: var(--bg);
+}
+
+.jurusan-cs-header:hover {
+    background: color-mix(in srgb, var(--primary-2) 4%, var(--bg));
+}
+
+.cs-chevron {
+    transition: transform .2s ease;
+}
+
+.jurusan-cs-body {
+    padding: 8px 16px 12px;
+    border-top: 1px solid var(--line);
+}
+
+.jurusan-cs-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 8px;
+    transition: background .15s ease;
+}
+
+.jurusan-cs-item:hover {
+    background: color-mix(in srgb, var(--primary-2) 4%, var(--card));
 }

@@ -72,6 +72,65 @@ class AdminController extends Controller
         return view('admin.users', compact('users', 'tabCounts'));
     }
 
+    public function guru(Request $request)
+    {
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
+
+        $query = User::whereIn('role', ['teacher', 'homeroom', 'principal']);
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('full_name', 'like', "%{$search}%");
+            });
+        }
+
+        $query->with(['teachingAssignments' => fn($q) => $q->where('period_id', $activePeriod?->id)])
+            ->withCount('homeroomStudents');
+
+        $users = $query->latest()->paginate(15)->withQueryString();
+
+        return view('admin.guru', compact('users'));
+    }
+
+    public function guruData(User $user)
+    {
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
+
+        $user->load(['teachingAssignments' => fn($q) => $q->where('period_id', $activePeriod?->id)->with('subject')]);
+
+        $classNames = $user->teachingAssignments->pluck('class_name')->unique();
+        $studentsPerClass = [];
+        foreach ($classNames as $class) {
+            $count = \App\Models\Student::where('class_name', $class)->where('status', 'active')->count();
+            $studentsPerClass[$class] = $count;
+        }
+
+        $subjects = $user->teachingAssignments
+            ->pluck('subject')
+            ->unique('id')
+            ->values()
+            ->map(fn($s) => ['id' => $s->id, 'code' => $s->code, 'name' => $s->name]);
+
+        $homeroomKelas = \App\Models\Kelas::where('homeroom_teacher_id', $user->id)->first();
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'full_name' => $user->full_name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'is_active' => $user->is_active,
+            'subjects' => $subjects,
+            'class_names' => $classNames->values(),
+            'students_per_class' => $studentsPerClass,
+            'homeroom' => $homeroomKelas ? [
+                'nama_lengkap' => $homeroomKelas->nama_lengkap,
+                'student_count' => $homeroomKelas->students()->where('status', 'active')->count(),
+            ] : null,
+        ]);
+    }
+
     public function usersCreate()
     {
         return view('admin.user-form', ['user' => null]);
@@ -591,10 +650,14 @@ class AdminController extends Controller
             });
         }
 
-        $subjects = $query->orderBy('code')->paginate(15)->withQueryString();
+        $subjects = $query->orderBy('code')->paginate(5)->withQueryString();
         $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
 
-        return view('admin.subjects', compact('subjects', 'teachers'));
+        $jurusans = \App\Models\Jurusan::with('customSubjects')
+            ->orderBy('kode')
+            ->get();
+
+        return view('admin.subjects', compact('subjects', 'teachers', 'jurusans'));
     }
 
     public function subjectData(Subject $subject)
@@ -606,6 +669,65 @@ class AdminController extends Controller
             'kkm' => $subject->kkm,
             'guru_ids' => $subject->gurus->pluck('id')->toArray(),
         ]);
+    }
+
+    public function subjectDetail(Subject $subject)
+    {
+        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+
+        $subject->load('gurus');
+
+        $assignedKelasIds = \App\Models\Kelas::whereHas('subjects', fn($q) => $q->where('subject_id', $subject->id))
+            ->pluck('id');
+
+        $allKelas = \App\Models\Kelas::where('is_active', true)
+            ->with('jurusan')
+            ->orderBy('tingkat')
+            ->orderBy('nama')
+            ->get()
+            ->groupBy(fn($k) => $k->jurusan?->nama ?? 'Tanpa Jurusan');
+
+        $assignments = \App\Models\TeachingAssignment::where('subject_id', $subject->id)
+            ->where('period_id', $activePeriod?->id)
+            ->with('teacher')
+            ->get()
+            ->keyBy('class_name');
+
+        return response()->json([
+            'subject' => [
+                'id' => $subject->id,
+                'code' => $subject->code,
+                'name' => $subject->name,
+                'kkm' => $subject->kkm,
+                'gurus' => $subject->gurus->map(fn($g) => ['id' => $g->id, 'name' => $g->full_name ?? $g->name]),
+            ],
+            'all_kelas' => $allKelas->map(fn($kelas, $jurusanNama) => [
+                'jurusan' => $jurusanNama,
+                'kelas' => $kelas->map(fn($k) => [
+                    'id' => $k->id,
+                    'nama_lengkap' => $k->nama_lengkap,
+                    'assigned' => $assignedKelasIds->contains($k->id),
+                    'teacher' => isset($assignments[$k->nama_lengkap]) ? [
+                        'id' => $assignments[$k->nama_lengkap]->teacher->id,
+                        'name' => $assignments[$k->nama_lengkap]->teacher->full_name ?? $assignments[$k->nama_lengkap]->teacher->name,
+                    ] : null,
+                ]),
+            ])->values(),
+        ]);
+    }
+
+    public function subjectAssignStore(Request $request, Subject $subject)
+    {
+        $validated = $request->validate([
+            'kelas_ids' => 'nullable|array',
+            'kelas_ids.*' => 'exists:kelas,id',
+        ]);
+
+        $subject->kelas()->sync($validated['kelas_ids'] ?? []);
+
+        AuditService::log('subject.assign', 'Subject', $subject->id);
+
+        return response()->json(['success' => true, 'message' => 'Kelas berhasil diperbarui.']);
     }
 
     public function subjectsStore(Request $request)
@@ -808,11 +930,35 @@ class AdminController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'full_name']);
 
+        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+
+        // Pool guru per mapel — dari guru_mapel (yang udah di-link di admin/mapel)
+        $subjectTeacherPool = [];
+        foreach ($allSubjects as $subject) {
+            $gurus = $subject->gurus()->get(['users.id', 'users.name', 'users.full_name']);
+            $subjectTeacherPool[$subject->id] = $gurus->map(fn($g) => [
+                'id' => $g->id,
+                'name' => $g->full_name ?? $g->name,
+            ]);
+        }
+
+        // TeachingAssignment existing per kelas
+        $classNames = $jurusan->kelas->map->nama_lengkap;
+        $existingAssignments = collect();
+        if ($activePeriod && $classNames->isNotEmpty()) {
+            $existingAssignments = TeachingAssignment::whereIn('class_name', $classNames)
+                ->where('period_id', $activePeriod->id)
+                ->get()
+                ->groupBy('class_name');
+        }
+
         if (request()->ajax()) {
             return response()->json([
                 'jurusan' => $jurusan,
                 'allSubjects' => $allSubjects,
                 'teachers' => $teachers,
+                'subject_teacher_pool' => $subjectTeacherPool,
+                'existing_assignments' => $existingAssignments,
             ]);
         }
 
@@ -824,9 +970,13 @@ class AdminController extends Controller
         $kelasSubjects = $request->input('kelas_subjects', []);
         $kelasCustomSubjects = $request->input('kelas_custom_subjects', []);
         $homeroomTeachers = $request->input('homeroom_teachers', []);
+        $subjectTeachers = $request->input('subject_teachers', []);
+
+        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
 
         foreach ($jurusan->kelas as $kelas) {
             $kId = (string) $kelas->id;
+            $classNamaLengkap = $kelas->nama_lengkap;
 
             if (isset($kelasSubjects[$kId])) {
                 $kelas->subjects()->sync($kelasSubjects[$kId] ?? []);
@@ -836,6 +986,22 @@ class AdminController extends Controller
             }
             if (array_key_exists($kId, $homeroomTeachers)) {
                 $kelas->update(['homeroom_teacher_id' => $homeroomTeachers[$kId] ?: null]);
+            }
+
+            // Simpan teacher assignment per mapel (updateOrCreate biar data nilai gak ilang)
+            if ($activePeriod && isset($subjectTeachers[$kId])) {
+                foreach ($subjectTeachers[$kId] as $subjectId => $teacherId) {
+                    if (!empty($teacherId)) {
+                        TeachingAssignment::updateOrCreate(
+                            [
+                                'period_id' => $activePeriod->id,
+                                'subject_id' => $subjectId,
+                                'class_name' => $classNamaLengkap,
+                            ],
+                            ['teacher_id' => $teacherId]
+                        );
+                    }
+                }
             }
         }
 
@@ -849,8 +1015,9 @@ class AdminController extends Controller
     public function jurusanCustomSubjectStore(Request $request, Jurusan $jurusan)
     {
         $validated = $request->validate([
+            'kode' => 'required|string|max:20',
             'nama' => 'required|string|max:120',
-            'deskripsi' => 'nullable|string',
+            'kkm' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $subject = $jurusan->customSubjects()->create($validated);

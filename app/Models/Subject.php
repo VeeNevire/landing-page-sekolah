@@ -24,9 +24,9 @@ class Subject extends Model
         return $this->hasMany(TeachingAssignment::class);
     }
 
-    public function guruMapels()
+    public function kelas()
     {
-        return $this->hasMany(GuruMapel::class, 'mapel_id');
+        return $this->belongsToMany(Kelas::class, 'kelas_subject');
     }
 
     public function gurus()
