@@ -60,11 +60,20 @@
             @php $cell = $grid[$day][$slot] ?? null; @endphp
             <td style="text-align:center;min-width:120px;position:relative">
               @if ($cell)
-                <div style="padding:10px 8px;border-radius:10px;background:color-mix(in srgb,var(--primary-2) 8%,var(--card));border:1px solid color-mix(in srgb,var(--primary-2) 15%,var(--line))">
+                @php $detailData = json_encode([
+                  'jadwal_id' => $cell['jadwal_id'],
+                  'code' => $cell['code'],
+                  'subject' => $cell['subject'],
+                  'teacher' => $cell['teacher'],
+                  'day' => $day,
+                  'time' => $time,
+                  'class' => $selectedClass,
+                ]); @endphp
+                <div onclick='openDetailModal({{ $detailData }})' style="padding:10px 8px;border-radius:10px;background:color-mix(in srgb,var(--primary-2) 8%,var(--card));border:1px solid color-mix(in srgb,var(--primary-2) 15%,var(--line));cursor:pointer">
                   <div style="font-weight:700;font-size:.88rem;color:var(--primary-2)">{{ $cell['code'] }}</div>
                   <div style="font-size:.78rem;font-weight:600;margin-top:2px">{{ $cell['subject'] }}</div>
                   <div style="font-size:.72rem;color:var(--muted);margin-top:2px">{{ $cell['teacher'] }}</div>
-                  <button type="button" onclick="confirmDelete({{ $cell['jadwal_id'] }}, '{{ addslashes($cell['subject']) }}')" title="Hapus jadwal" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;border:none;background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1">&times;</button>
+                  <button type="button" onclick="event.stopPropagation();confirmDelete({{ $cell['jadwal_id'] }}, '{{ addslashes($cell['subject']) }}')" title="Hapus jadwal" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;border:none;background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1">&times;</button>
                 </div>
               @else
                 <span style="color:var(--line);font-size:.75rem">—</span>
@@ -190,6 +199,40 @@ function confirmDelete(jadwalId, subjectName) {
     .catch(() => {
       Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan server.' });
     });
+  });
+}
+
+function openDetailModal(d) {
+  Swal.fire({
+    title: 'Detail Jadwal',
+    html: `
+      <div style="text-align:left">
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">
+            <span style="font-weight:600;min-width:70px;color:var(--muted);font-size:.85rem">Kelas</span>
+            <span style="font-weight:700;font-size:.9rem">${d.class}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">
+            <span style="font-weight:600;min-width:70px;color:var(--muted);font-size:.85rem">Hari</span>
+            <span style="font-weight:700;font-size:.9rem;text-transform:capitalize">${d.day}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">
+            <span style="font-weight:600;min-width:70px;color:var(--muted);font-size:.85rem">Waktu</span>
+            <span style="font-weight:700;font-size:.9rem">${d.time}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">
+            <span style="font-weight:600;min-width:70px;color:var(--muted);font-size:.85rem">Mapel</span>
+            <span style="font-weight:700;font-size:.9rem">${d.code} — ${d.subject}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">
+            <span style="font-weight:600;min-width:70px;color:var(--muted);font-size:.85rem">Guru</span>
+            <span style="font-weight:700;font-size:.9rem">${d.teacher}</span>
+          </div>
+        </div>
+      </div>
+    `,
+    confirmButtonText: 'Tutup',
+    confirmButtonColor: '#6b7280',
   });
 }
 </script>

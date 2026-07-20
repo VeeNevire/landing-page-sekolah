@@ -59,11 +59,10 @@
                 <span style="color:var(--muted);font-size:.8rem">NISN {{ $student->nisn }}</span>
               </td>
               <td>
-                <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
+                <div class="absensi-group" data-student="{{ $student->id }}" style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
                   @foreach (['present' => 'Hadir', 'sick' => 'Sakit', 'excused' => 'Izin', 'unexcused' => 'Alpha', 'late' => 'Terlambat'] as $val => $label)
-                    <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);font-size:.78rem;font-weight:700;cursor:pointer;
-                      @if ($current === $val) background:color-mix(in srgb,var(--primary-2) 12%,var(--card));color:var(--primary-2);border-color:var(--primary-2) @endif">
-                      <input type="radio" name="status[{{ $student->id }}]" value="{{ $val }}" @checked($current === $val) style="display:none">
+                    <label class="absensi-label {{ $val }} {{ $current === $val ? 'active' : '' }}" onclick="selectAbsensi(this, '{{ $student->id }}', '{{ $val }}')">
+                      <input type="radio" name="status[{{ $student->id }}]" value="{{ $val }}" {{ $current === $val ? 'checked' : '' }} style="display:none">
                       {{ $label }}
                     </label>
                   @endforeach
@@ -84,6 +83,16 @@
     @endif
   </form>
 </section>
+@push('scripts')
+<script>
+function selectAbsensi(label, studentId, value) {
+  const group = label.closest('.absensi-group');
+  group.querySelectorAll('.absensi-label').forEach(l => l.classList.remove('active'));
+  label.classList.add('active');
+  label.querySelector('input[type="radio"]').checked = true;
+}
+</script>
+@endpush
 @endsection
 
 

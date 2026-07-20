@@ -34,7 +34,7 @@ class JadwalController extends Controller
 
         $assignments = TeachingAssignment::where('period_id', $semesterId)
             ->when($selectedClass, fn($q) => $q->where('class_name', $selectedClass))
-            ->with(['subject', 'teacher', 'jadwals'])
+            ->with(['subject', 'customSubject', 'teacher', 'jadwals'])
             ->get();
 
         $jadwals = Jadwal::whereIn('teaching_assignment_id', $assignments->pluck('id'))
@@ -50,10 +50,12 @@ class JadwalController extends Controller
         }
 
         foreach ($assignments as $ta) {
+            $subjectName = $ta->subject?->name ?? $ta->customSubject?->nama ?? '-';
+            $subjectCode = $ta->subject?->code ?? $ta->customSubject?->kode ?? '-';
             foreach ($ta->jadwals as $jadwal) {
                 $grid[$jadwal->day][$jadwal->time_slot] = [
-                    'subject' => $ta->subject->name,
-                    'code' => $ta->subject->code,
+                    'subject' => $subjectName,
+                    'code' => $subjectCode,
                     'teacher' => $ta->teacher->full_name ?? $ta->teacher->name,
                     'jadwal_id' => $jadwal->id,
                 ];
@@ -63,7 +65,7 @@ class JadwalController extends Controller
         $periods = AcademicPeriod::orderByDesc('academic_year')->get();
         $subjects = $assignments->map(fn($ta) => [
             'teaching_assignment_id' => $ta->id,
-            'label' => $ta->subject->code . ' — ' . $ta->subject->name . ' (' . ($ta->teacher->full_name ?? $ta->teacher->name) . ')',
+            'label' => ($ta->subject?->code ?? $ta->customSubject?->kode ?? '-') . ' — ' . ($ta->subject?->name ?? $ta->customSubject?->nama ?? '-') . ' (' . ($ta->teacher->full_name ?? $ta->teacher->name) . ')',
         ])->values();
 
         return view('admin.jadwal', compact('grid', 'periods', 'subjects', 'semesterId', 'classNames', 'selectedClass'));

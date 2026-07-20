@@ -56,3 +56,34 @@ body.dark.guru-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,.
 .portal-empty{padding:40px 20px;text-align:center}
 .portal-empty h2{margin:0 0 8px;font-size:1.3rem}
 .portal-empty p{color:var(--muted);margin:0}
+
+/* ── Absensi Labels ── */
+.absensi-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s ease;
+    user-select: none;
+    color: var(--muted);
+}
+.absensi-label:hover {
+    border-color: var(--primary-3);
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary-4) 6%, transparent);
+}
+.absensi-label.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.absensi-label.present.active { background: var(--success); border-color: var(--success); color: #fff; }
+.absensi-label.sick.active { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+.absensi-label.excused.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+.absensi-label.late.active { background: #f97316; border-color: #f97316; color: #fff; }
+.absensi-label.unexcused.active { background: var(--danger); border-color: var(--danger); color: #fff; }
