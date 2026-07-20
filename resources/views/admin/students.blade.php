@@ -755,8 +755,9 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         const ct = r.headers.get('content-type') || '';
         if (!ct.includes('application/json')) {
           return r.text().then(text => {
-            const title = text.match(/<title>([^<]+)<\/title>/)?.[1] || 'Server returned HTML instead of JSON';
-            throw new Error(title + ' — Coba reload page dan ulangi');
+            // HTML response — reload aja (data mungkin udah tersimpan)
+            location.reload();
+            return { ok: false };
           });
         }
         return r.json().then(j => ({ ok: r.ok, j }));
@@ -767,7 +768,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       }) => {
         btn.disabled = false;
         btn.textContent = originalText;
-        if (ok && j.success) {
+        if (!ok) return;
+        if (j.success) {
           closeModal();
           Swal.fire({
             toast: true,
@@ -784,13 +786,13 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
             if (j.errors[f]) showFieldError(f, j.errors[f][0]);
           });
         } else {
-          Swal.fire('Gagal', j.message || 'Terjadi kesalahan.', 'error');
+          Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: j.message || 'Gagal', showConfirmButton: false, timer: 3000 });
         }
       }).catch((err) => {
         btn.disabled = false;
         btn.textContent = originalText;
         console.error('Fetch error:', err);
-        Swal.fire('Error', err.message || 'Tidak dapat terhubung ke server.', 'error');
+        Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Terjadi kesalahan', text: 'Coba reload dan ulangi', showConfirmButton: false, timer: 4000 });
       });
   }
 

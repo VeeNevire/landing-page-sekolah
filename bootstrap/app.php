@@ -27,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
          $middleware->validateCsrfTokens(except: [
         'admin/jadwal',
         'admin/jadwal/*',
+        'admin/students',
+        'admin/students/*',
     ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
