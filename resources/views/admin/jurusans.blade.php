@@ -454,10 +454,24 @@ function openDetailModal(jurusanId) {
   fetch('/admin/jurusans/' + jurusanId + '/detail', {
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
   })
-  .then(r => r.json())
+  .then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
   .then(data => {
     const j = data.jurusan;
     document.getElementById('detailTitle').textContent = j.nama;
+
+    // build teacher data for inject checkbox
+    window._teacherOptions = [];
+    window._csTeachers = [];
+    if (data.teachers) {
+      data.teachers.forEach(function(t) {
+        const full = t.full_name || t.name;
+        window._teacherOptions.push('<option value="' + t.id + '">' + full + '</option>');
+        window._csTeachers.push({id: t.id, name: full});
+      });
+    }
     let html = '';
 
     // info jurusan
@@ -519,11 +533,11 @@ function openDetailModal(jurusanId) {
         html += '</select></div>';
 
         // Pelajaran Umum
+        const classNamaLengkap = (ROMAWI[k.tingkat] || k.tingkat) + ' ' + k.nama;
+        const existingForClass = data.existing_assignments && data.existing_assignments[classNamaLengkap] ? data.existing_assignments[classNamaLengkap] : [];
         if (data.allSubjects.length) {
           html += '<p style="font-size:.78rem;font-weight:700;color:var(--muted);margin:0 0 .5rem">Pelajaran Umum</p>';
           html += '<div style="margin-bottom:.75rem">';
-          const classNamaLengkap = (ROMAWI[k.tingkat] || k.tingkat) + ' ' + k.nama;
-          const existingForClass = data.existing_assignments && data.existing_assignments[classNamaLengkap] ? data.existing_assignments[classNamaLengkap] : [];
           data.allSubjects.forEach(s => {
             const checked = k.subjects && k.subjects.some(ks => ks.id === s.id);
             const pool = (data.subject_teacher_pool && data.subject_teacher_pool[s.id]) ? data.subject_teacher_pool[s.id] : [];
@@ -544,10 +558,31 @@ function openDetailModal(jurusanId) {
         // Pelajaran Jurusan (custom) per kelas
         if (j.custom_subjects && j.custom_subjects.length) {
           html += '<p style="font-size:.78rem;font-weight:700;color:var(--muted);margin:0 0 .5rem">Pelajaran Jurusan</p>';
-          html += '<div class="detail-subject-grid">';
+          html += '<div style="margin-bottom:.75rem">';
           j.custom_subjects.forEach(cs => {
             const checked = k.custom_subjects && k.custom_subjects.some(kcs => kcs.id === cs.id);
-            html += '<label class="subject-check-item"><input type="checkbox" class="kelas-custom-cb" data-kelas-id="' + k.id + '" value="' + cs.id + '" ' + (checked ? 'checked' : '') + '><span>' + (cs.kode ? cs.kode + ' — ' : '') + cs.nama + '</span></label>';
+            const currentAssignment = existingForClass.find(function(e) { return e.custom_subject_id == cs.id; });
+            const currentTeacherId = currentAssignment ? currentAssignment.teacher_id : '';
+            const currentTeacherName = currentAssignment ? (currentAssignment.teacher ? (currentAssignment.teacher.full_name || currentAssignment.teacher.name) : '') : '';
+            html += '<div class="subject-teacher-row">';
+            html += '<label class="subject-check-item" style="flex:1;min-width:0"><input type="checkbox" class="kelas-custom-cb" data-kelas-id="' + k.id + '" value="' + cs.id + '" ' + (checked ? 'checked' : '') + ' onchange="toggleCSSubjectTeacher(this)"><span>' + (cs.kode ? cs.kode + ' — ' : '') + cs.nama + '</span></label>';
+            html += '<div class="cs-teacher-wrapper" data-kelas-id="' + k.id + '" data-cs-id="' + cs.id + '" data-teachers=\'' + JSON.stringify(data.teachers.map(function(t) { return {id: t.id, name: t.full_name || t.name}; })) + '\'>';
+            html += '<div class="cs-teacher-field" onclick="toggleCSDropdown(this)" data-selected="' + currentTeacherId + '">';
+            html += '<input type="hidden" class="cs-teacher-hidden" value="' + currentTeacherId + '">';
+            html += '<span class="cs-teacher-value' + (currentTeacherId ? ' selected' : '') + '">' + (currentTeacherName || '— Guru —') + '</span>';
+            if (currentTeacherId) {
+              html += '<button type="button" class="cs-teacher-clear" onclick="event.stopPropagation();clearCSTeacher(this)" title="Hapus">✕</button>';
+            }
+            html += '<svg class="cs-teacher-arrow' + (currentTeacherId ? '' : '') + '" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+            html += '</div>';
+            html += '<div class="cs-teacher-dropdown">';
+            html += '<input type="text" class="cs-teacher-search" placeholder="Cari guru..." oninput="filterCSOptions(this)" onclick="event.stopPropagation()">';
+            html += '<div class="cs-teacher-options">';
+            data.teachers.forEach(function(t) {
+              const full = t.full_name || t.name;
+              html += '<div class="cs-teacher-option' + (currentTeacherId == t.id ? ' selected' : '') + '" data-value="' + t.id + '" onclick="selectCSOption(this)">' + full + '</div>';
+            });
+            html += '</div></div></div></div>';
           });
           html += '</div>';
         }
@@ -563,7 +598,8 @@ function openDetailModal(jurusanId) {
     footer.style.display = 'flex';
     window._currentJurusanId = jurusanId;
   })
-  .catch(() => {
+  .catch((err) => {
+    console.error('Detail error:', err);
     body.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444">Gagal memuat data.</div>';
   });
 }
@@ -604,25 +640,45 @@ function saveCustomSubject(jurusanId) {
         const body = item.querySelector('.detail-kelas-subjects');
         if (!body) return;
 
-        let grid = body.querySelectorAll('.detail-subject-grid');
-        let csGrid;
+        // Cari container Pelajaran Jurusan (div with style margin-bottom:.75rem after the p tag)
+        const labels = body.querySelectorAll('p');
+        let csContainer = null;
+        labels.forEach(l => {
+          if (l.textContent === 'Pelajaran Jurusan') {
+            csContainer = l.nextElementSibling;
+          }
+        });
 
-        if (grid.length > 1) {
-          csGrid = grid[1];
-        } else {
+        if (!csContainer) {
           const label = document.createElement('p');
-          label.style.cssText = 'font-size:.78rem;font-weight:700;color:var(--muted);margin:1rem 0 .5rem';
+          label.style.cssText = 'font-size:.78rem;font-weight:700;color:var(--muted);margin:0 0 .5rem';
           label.textContent = 'Pelajaran Jurusan';
-          csGrid = document.createElement('div');
-          csGrid.className = 'detail-subject-grid';
+          csContainer = document.createElement('div');
+          csContainer.style.marginBottom = '.75rem';
           body.appendChild(label);
-          body.appendChild(csGrid);
+          body.appendChild(csContainer);
         }
 
-        csGrid.insertAdjacentHTML('beforeend',
-          '<label class="subject-check-item">' +
-          '<input type="checkbox" class="kelas-custom-cb" data-kelas-id="' + item.dataset.kelasId + '" value="' + json.subject.id + '">' +
-          '<span>' + (json.subject.kode ? json.subject.kode + ' — ' : '') + json.subject.nama + '</span></label>'
+        const teachers = window._csTeachers || [];
+        let teacherOpts = '';
+        teachers.forEach(function(t) {
+          teacherOpts += '<div class="cs-teacher-option" data-value="' + t.id + '" onclick="selectCSOption(this)">' + t.name + '</div>';
+        });
+
+        csContainer.insertAdjacentHTML('beforeend',
+          '<div class="subject-teacher-row">' +
+          '<label class="subject-check-item" style="flex:1;min-width:0">' +
+          '<input type="checkbox" class="kelas-custom-cb" data-kelas-id="' + item.dataset.kelasId + '" value="' + json.subject.id + '" checked onchange="toggleCSSubjectTeacher(this)">' +
+          '<span>' + (json.subject.kode ? json.subject.kode + ' — ' : '') + json.subject.nama + '</span></label>' +
+          '<div class="cs-teacher-wrapper" data-kelas-id="' + item.dataset.kelasId + '" data-cs-id="' + json.subject.id + '" data-teachers=\'' + JSON.stringify(teachers) + '\'>' +
+          '<div class="cs-teacher-field" onclick="toggleCSDropdown(this)">' +
+          '<input type="hidden" class="cs-teacher-hidden" value="">' +
+          '<span class="cs-teacher-value">— Guru —</span>' +
+          '<svg class="cs-teacher-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+          '</div>' +
+          '<div class="cs-teacher-dropdown">' +
+          '<input type="text" class="cs-teacher-search" placeholder="Cari guru..." oninput="filterCSOptions(this)" onclick="event.stopPropagation()">' +
+          '<div class="cs-teacher-options">' + teacherOpts + '</div></div></div></div>'
         );
       });
 
@@ -682,6 +738,105 @@ function toggleSubjectTeacher(cb) {
   }
 }
 
+function toggleCSSubjectTeacher(cb) {
+  const row = cb.closest('.subject-teacher-row');
+  const wrapper = row?.querySelector('.cs-teacher-wrapper');
+  const field = wrapper?.querySelector('.cs-teacher-field');
+  const dropdown = wrapper?.querySelector('.cs-teacher-dropdown');
+  if (!cb.checked) {
+    wrapper.querySelector('.cs-teacher-hidden').value = '';
+    wrapper.querySelector('.cs-teacher-value').textContent = '— Guru —';
+    wrapper.querySelector('.cs-teacher-value').classList.remove('selected');
+    wrapper.querySelector('.cs-teacher-clear')?.remove();
+    field.dataset.selected = '';
+    if (dropdown) dropdown.classList.remove('open');
+    if (field) field.classList.remove('open');
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.cs-teacher-wrapper')) {
+    document.querySelectorAll('.cs-teacher-dropdown.open').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.cs-teacher-field.open').forEach(f => f.classList.remove('open'));
+  }
+});
+
+function toggleCSDropdown(field) {
+  const wrapper = field.closest('.cs-teacher-wrapper');
+  const dropdown = wrapper.querySelector('.cs-teacher-dropdown');
+  const isOpen = dropdown.classList.contains('open');
+  document.querySelectorAll('.cs-teacher-dropdown.open').forEach(d => { if (d !== dropdown) d.classList.remove('open'); });
+  document.querySelectorAll('.cs-teacher-field.open').forEach(f => { if (f !== field) f.classList.remove('open'); });
+  dropdown.classList.toggle('open');
+  field.classList.toggle('open');
+  if (!isOpen) {
+    setTimeout(() => wrapper.querySelector('.cs-teacher-search')?.focus(), 50);
+  }
+}
+
+function filterCSOptions(input) {
+  const q = input.value.toLowerCase();
+  const options = input.closest('.cs-teacher-dropdown').querySelectorAll('.cs-teacher-option');
+  let found = false;
+  options.forEach(o => {
+    const match = o.textContent.toLowerCase().includes(q);
+    o.classList.toggle('hidden', !match);
+    if (match) found = true;
+  });
+  const empty = input.closest('.cs-teacher-dropdown').querySelector('.cs-teacher-empty');
+  if (empty) empty.remove();
+  if (!found) {
+    const el = document.createElement('div');
+    el.className = 'cs-teacher-empty';
+    el.textContent = 'Guru tidak ditemukan';
+    input.closest('.cs-teacher-dropdown').querySelector('.cs-teacher-options').appendChild(el);
+  }
+}
+
+function selectCSOption(opt) {
+  const wrapper = opt.closest('.cs-teacher-wrapper');
+  const field = wrapper.querySelector('.cs-teacher-field');
+  const valueEl = wrapper.querySelector('.cs-teacher-value');
+  const hidden = wrapper.querySelector('.cs-teacher-hidden');
+  const dropdown = wrapper.querySelector('.cs-teacher-dropdown');
+  const id = opt.dataset.value;
+  const name = opt.textContent;
+
+  hidden.value = id;
+  valueEl.textContent = name;
+  valueEl.classList.add('selected');
+  field.dataset.selected = id;
+
+  wrapper.querySelectorAll('.cs-teacher-option').forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+
+  const existingClear = wrapper.querySelector('.cs-teacher-clear');
+  if (!existingClear && field.querySelector('.cs-teacher-arrow')) {
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'cs-teacher-clear';
+    clearBtn.title = 'Hapus';
+    clearBtn.innerHTML = '✕';
+    clearBtn.onclick = function(e) { e.stopPropagation(); clearCSTeacher(this); };
+    field.insertBefore(clearBtn, field.querySelector('.cs-teacher-arrow'));
+  }
+
+  dropdown.classList.remove('open');
+  field.classList.remove('open');
+}
+
+function clearCSTeacher(btn) {
+  const wrapper = btn.closest('.cs-teacher-wrapper');
+  const field = wrapper.querySelector('.cs-teacher-field');
+  const valueEl = wrapper.querySelector('.cs-teacher-value');
+  const hidden = wrapper.querySelector('.cs-teacher-hidden');
+  hidden.value = '';
+  valueEl.textContent = '— Guru —';
+  valueEl.classList.remove('selected');
+  field.dataset.selected = '';
+  btn.remove();
+}
+
 function saveDetailSubjects() {
   const jurusanId = window._currentJurusanId;
   if (!jurusanId) return;
@@ -708,6 +863,15 @@ function saveDetailSubjects() {
     subjectTeachers[kid][subjId] = sel.value;
   });
 
+  const customSubjectTeachers = {};
+  document.querySelectorAll('.cs-teacher-wrapper').forEach(w => {
+    const kid = w.dataset.kelasId;
+    const csId = w.dataset.csId;
+    const val = w.querySelector('.cs-teacher-hidden').value;
+    if (!customSubjectTeachers[kid]) customSubjectTeachers[kid] = {};
+    customSubjectTeachers[kid][csId] = val;
+  });
+
   const formData = new FormData();
   formData.append('_token', CSRF_TOKEN);
   Object.entries(kelasSubjects).forEach(([kelasId, ids]) => {
@@ -720,6 +884,12 @@ function saveDetailSubjects() {
   Object.entries(subjectTeachers).forEach(([kelasId, subjects]) => {
     Object.entries(subjects).forEach(([subjectId, teacherId]) => {
       formData.append('subject_teachers[' + kelasId + '][' + subjectId + ']', teacherId);
+    });
+  });
+
+  Object.entries(customSubjectTeachers).forEach(([kelasId, subjects]) => {
+    Object.entries(subjects).forEach(([csId, teacherId]) => {
+      formData.append('custom_subject_teachers[' + kelasId + '][' + csId + ']', teacherId);
     });
   });
 

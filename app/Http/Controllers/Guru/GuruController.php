@@ -3,11 +3,16 @@
 namespace App\Http\Controllers\Guru;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicPeriod;
 use App\Models\Assessment;
 use App\Models\AssessmentScore;
 use App\Models\Attendance;
+use App\Models\JurusanCustomSubject;
+use App\Models\Kelas;
 use App\Models\Material;
 use App\Models\Student;
+use App\Models\Subject;
+use App\Models\TeachingAssignment;
 use App\Models\TeacherNote;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
@@ -17,14 +22,35 @@ class GuruController extends Controller
     private function getAssignments($user)
     {
         return $user->teachingAssignments()
-            ->with('subject', 'period')
+            ->with('subject', 'customSubject', 'period')
             ->whereHas('period', fn($q) => $q->where('is_active', true))
             ->get();
     }
 
     private function getActivePeriod()
     {
-        return \App\Models\AcademicPeriod::where('is_active', true)->first();
+        return AcademicPeriod::where('is_active', true)->first();
+    }
+
+    private function subjectName($ta): string
+    {
+        if ($ta->subject) return $ta->subject->name;
+        if ($ta->customSubject) return $ta->customSubject->nama;
+        return '-';
+    }
+
+    private function subjectCode($ta): string
+    {
+        if ($ta->subject) return $ta->subject->code;
+        if ($ta->customSubject) return $ta->customSubject->kode;
+        return '-';
+    }
+
+    private function subjectRouteId($ta): string
+    {
+        if ($ta->subject_id) return (string) $ta->subject_id;
+        if ($ta->custom_subject_id) return 'cs_' . $ta->custom_subject_id;
+        return '';
     }
 
     public function dashboard(Request $request)
@@ -57,7 +83,7 @@ class GuruController extends Controller
             'isHomeroom' => $isHomeroom,
             'totalStudents' => $totalStudents,
             'totalClasses' => $classNames->count(),
-            'totalSubjects' => $teachingAssignments->pluck('subject_id')->unique()->count(),
+            'totalSubjects' => $teachingAssignments->filter(fn($a) => $a->subject_id || $a->custom_subject_id)->unique(fn($a) => $a->subject_id ?? 'cs_' . $a->custom_subject_id)->count(),
             'schedule' => $schedule,
             'todaySchedule' => $todaySchedule,
             'today' => $today,
@@ -76,40 +102,48 @@ class GuruController extends Controller
         foreach ($classNames as $class) {
             $students = Student::where('class_name', $class)->where('status', 'active')->get();
             $subjects = $teachingAssignments->where('class_name', $class)
-                ->map(fn($a) => $a->subject ? ['id' => $a->subject->id, 'name' => $a->subject->name, 'code' => $a->subject->code] : null)
+                ->map(fn($a) => $a->subject_id || $a->custom_subject_id ? [
+                    'id' => $this->subjectRouteId($a),
+                    'name' => $this->subjectName($a),
+                    'code' => $this->subjectCode($a),
+                ] : null)
                 ->filter()
                 ->unique('id')->values()->all();
 
-                $subjectAverages = [];
-                foreach ($subjects as $subject) {
-                    $scores = \App\Models\AssessmentScore::whereHas('assessment.teachingAssignment', function ($q) use ($class, $subject, $activePeriod) {
-                        $q->where('class_name', $class)->where('subject_id', $subject['id'])->where('period_id', $activePeriod?->id);
-                    })->pluck('score')->filter()->toArray();
-                    $subjectAverages[$subject['id']] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
-                }
-
-                $studentIds = $students->pluck('id');
-                $attendance = \App\Models\Attendance::whereIn('student_id', $studentIds)
-                    ->selectRaw('status, count(*) as total')
-                    ->groupBy('status')->pluck('total', 'status')->toArray();
-                $totalDays = array_sum($attendance);
-                $attendanceRate = $totalDays > 0 ? round(($attendance['present'] ?? 0) / $totalDays * 100, 1) : 0;
-
-                $classList[] = [
-                    'name' => $class,
-                    'student_count' => $students->count(),
-                    'students' => $students,
-                    'subjects' => $subjects,
-                    'subject_averages' => $subjectAverages,
-                    'attendance_rate' => $attendanceRate,
-                    'attendance' => $attendance,
-                    'total_attendance_days' => $totalDays,
-                ];
+            $subjectAverages = [];
+            foreach ($subjects as $subject) {
+                $subjectId = is_numeric($subject['id']) ? $subject['id'] : null;
+                $csId = !is_numeric($subject['id']) ? str_replace('cs_', '', $subject['id']) : null;
+                $scores = AssessmentScore::whereHas('assessment.teachingAssignment', function ($q) use ($class, $subjectId, $csId, $activePeriod) {
+                    $q->where('class_name', $class)->where('period_id', $activePeriod?->id);
+                    if ($subjectId) $q->where('subject_id', $subjectId);
+                    if ($csId) $q->where('custom_subject_id', $csId);
+                })->pluck('score')->filter()->toArray();
+                $subjectAverages[$subject['id']] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
             }
 
-            return view('guru.kelas', [
-                'classList' => $classList,
-            ]);
+            $studentIds = $students->pluck('id');
+            $attendance = Attendance::whereIn('student_id', $studentIds)
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')->pluck('total', 'status')->toArray();
+            $totalDays = array_sum($attendance);
+            $attendanceRate = $totalDays > 0 ? round(($attendance['present'] ?? 0) / $totalDays * 100, 1) : 0;
+
+            $classList[] = [
+                'name' => $class,
+                'student_count' => $students->count(),
+                'students' => $students,
+                'subjects' => $subjects,
+                'subject_averages' => $subjectAverages,
+                'attendance_rate' => $attendanceRate,
+                'attendance' => $attendance,
+                'total_attendance_days' => $totalDays,
+            ];
+        }
+
+        return view('guru.kelas', [
+            'classList' => $classList,
+        ]);
     }
 
     public function kelasData(Request $request, $className)
@@ -126,27 +160,27 @@ class GuruController extends Controller
                 'birth_date' => $s->birth_date?->format('d M Y'),
             ]);
 
-        $assignments = \App\Models\TeachingAssignment::where('class_name', $className)
+        $assignments = TeachingAssignment::where('class_name', $className)
             ->where('period_id', $activePeriod?->id)
-            ->with('subject')
+            ->with('subject', 'customSubject')
             ->get();
 
         $subjectGrades = [];
         foreach ($assignments as $a) {
-            if (!$a->subject) continue;
-            $scores = \App\Models\AssessmentScore::whereHas('assessment', fn($q) => $q->where('teaching_assignment_id', $a->id))
+            if (!$a->subject_id && !$a->custom_subject_id) continue;
+            $scores = AssessmentScore::whereHas('assessment', fn($q) => $q->where('teaching_assignment_id', $a->id))
                 ->pluck('score')->filter()->toArray();
             $avg = $scores ? round(array_sum($scores) / count($scores), 1) : null;
             $subjectGrades[] = [
-                'subject' => $a->subject->name,
-                'code' => $a->subject->code,
+                'subject' => $this->subjectName($a),
+                'code' => $this->subjectCode($a),
                 'average' => $avg,
                 'grade' => $avg !== null ? $this->gradeLetter($avg) : '-',
             ];
         }
 
         $studentIds = $students->pluck('id');
-        $attendance = \App\Models\Attendance::whereIn('student_id', $studentIds)
+        $attendance = Attendance::whereIn('student_id', $studentIds)
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')->pluck('total', 'status')->toArray();
 
@@ -184,9 +218,10 @@ class GuruController extends Controller
 
         $classSubjectPairs = $teachingAssignments->map(fn($a) => [
             'class_name' => $a->class_name,
-            'subject_id' => $a->subject->id,
-            'subject_name' => $a->subject->name,
-        ])->unique(fn($p) => $p['class_name'] . '-' . $p['subject_id'])->values();
+            'subject_id' => $this->subjectRouteId($a),
+            'subject_name' => $this->subjectName($a),
+        ])->filter(fn($p) => $p['subject_id'] !== '')
+            ->unique(fn($p) => $p['class_name'] . '-' . $p['subject_id'])->values();
 
         return view('guru.nilai', [
             'classNames' => $classNames,
@@ -197,14 +232,29 @@ class GuruController extends Controller
     public function nilaiDetail(Request $request, $class, $subject)
     {
         $user = $request->user();
+        $period = $this->getActivePeriod();
         $students = Student::where('class_name', $class)->where('status', 'active')->get();
-        $subjectModel = \App\Models\Subject::findOrFail($subject);
 
-        $assignment = $user->teachingAssignments()
-            ->where('class_name', $class)
-            ->where('subject_id', $subject)
-            ->whereHas('period', fn($q) => $q->where('is_active', true))
-            ->first();
+        $isCustom = str_starts_with($subject, 'cs_');
+        $subjectModel = null;
+        $assignment = null;
+
+        if ($isCustom) {
+            $csId = (int) str_replace('cs_', '', $subject);
+            $subjectModel = JurusanCustomSubject::findOrFail($csId);
+            $assignment = $user->teachingAssignments()
+                ->where('class_name', $class)
+                ->where('custom_subject_id', $csId)
+                ->whereHas('period', fn($q) => $q->where('is_active', true))
+                ->first();
+        } else {
+            $subjectModel = Subject::findOrFail($subject);
+            $assignment = $user->teachingAssignments()
+                ->where('class_name', $class)
+                ->where('subject_id', $subject)
+                ->whereHas('period', fn($q) => $q->where('is_active', true))
+                ->first();
+        }
 
         $assessments = [];
         if ($assignment) {
@@ -227,6 +277,7 @@ class GuruController extends Controller
             'assessments' => $assessments,
             'scores' => $scores,
             'savedDraft' => $savedDraft,
+            'isCustom' => $isCustom,
         ]);
     }
 
@@ -235,11 +286,23 @@ class GuruController extends Controller
         $user = $request->user();
         $period = $this->getActivePeriod();
 
-        $assignment = $user->teachingAssignments()
-            ->where('class_name', $class)
-            ->where('subject_id', $subject)
-            ->whereHas('period', fn($q) => $q->where('is_active', true))
-            ->first();
+        $isCustom = str_starts_with($subject, 'cs_');
+        $assignment = null;
+
+        if ($isCustom) {
+            $csId = (int) str_replace('cs_', '', $subject);
+            $assignment = $user->teachingAssignments()
+                ->where('class_name', $class)
+                ->where('custom_subject_id', $csId)
+                ->whereHas('period', fn($q) => $q->where('is_active', true))
+                ->first();
+        } else {
+            $assignment = $user->teachingAssignments()
+                ->where('class_name', $class)
+                ->where('subject_id', $subject)
+                ->whereHas('period', fn($q) => $q->where('is_active', true))
+                ->first();
+        }
 
         if (!$assignment) {
             return back()->with('error', 'Tidak ada penugasan ditemukan.');
@@ -346,7 +409,7 @@ class GuruController extends Controller
 
         $selectedStudent = $request->query('student');
 
-        $students = Student::where('class_name', 'in', $classNames->toArray())
+        $students = Student::whereIn('class_name', $classNames->toArray())
             ->where('status', 'active')->get();
 
         $existingNotes = collect();
@@ -400,7 +463,8 @@ class GuruController extends Controller
         foreach ($classNames as $class) {
             $students = Student::where('class_name', $class)->where('status', 'active')->get();
             $subjectNames = $teachingAssignments->where('class_name', $class)
-                ->pluck('subject.name')->unique()->implode(', ');
+                ->map(fn($a) => $this->subjectName($a))
+                ->filter()->unique()->implode(', ');
             $totalAssessments = Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))->count();
             $publishedCount = Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))
                 ->whereNotNull('published_at')->count();
@@ -435,7 +499,7 @@ class GuruController extends Controller
         $user = $request->user();
         $teachingAssignments = $this->getAssignments($user);
 
-        $materials = Material::with('teachingAssignment.subject')
+        $materials = Material::with('teachingAssignment.subject', 'teachingAssignment.customSubject')
             ->whereIn('teaching_assignment_id', $teachingAssignments->pluck('id'))
             ->latest()
             ->get();
@@ -444,7 +508,7 @@ class GuruController extends Controller
         $pairs = $teachingAssignments->map(fn($a) => [
             'assignment_id' => $a->id,
             'class_name' => $a->class_name,
-            'subject_name' => $a->subject->name ?? '-',
+            'subject_name' => $this->subjectName($a),
         ])->unique('assignment_id')->values();
 
         return view('guru.materi', [
@@ -469,7 +533,7 @@ class GuruController extends Controller
         return back()->with('success', 'Materi berhasil ditambahkan.');
     }
 
-    public function materiDestroy(Request $request, \App\Models\Material $material)
+    public function materiDestroy(Request $request, Material $material)
     {
         $user = $request->user();
 
@@ -496,11 +560,11 @@ class GuruController extends Controller
 
         $schedule = [];
         $assignments->each(function ($a) use (&$schedule, $days, $times) {
-            $hash = crc32($a->subject_id . $a->class_name);
+            $hash = crc32(($a->subject_id ?? 'cs_' . $a->custom_subject_id) . $a->class_name);
             $schedule[] = [
                 'day' => $days[$hash % count($days)],
                 'time' => $times[($hash >> 4) % count($times)],
-                'subject' => $a->subject->name ?? '-',
+                'subject' => $this->subjectName($a),
                 'class_name' => $a->class_name,
                 'subject_id' => $a->subject_id,
             ];

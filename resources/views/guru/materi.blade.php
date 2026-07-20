@@ -59,7 +59,7 @@
             <div style="display:flex;justify-content:space-between;align-items:start;gap:12px">
               <div style="flex:1;min-width:0">
                 <strong style="display:block">{{ $material->title }}</strong>
-                <span style="font-size:.82rem;color:var(--muted)">{{ $material->teachingAssignment->class_name }} — {{ $material->teachingAssignment->subject->name ?? '' }}</span>
+                <span style="font-size:.82rem;color:var(--muted)">{{ $material->teachingAssignment->class_name }} — {{ $material->teachingAssignment->subject->name ?? $material->teachingAssignment->customSubject->nama ?? '' }}</span>
                 @if ($material->description)
                   <p style="margin:8px 0 0;font-size:.88rem;color:var(--muted)">{{ $material->description }}</p>
                 @endif

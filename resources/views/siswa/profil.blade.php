@@ -1,52 +1,70 @@
 @extends('layouts.siswa')
 @section('title', 'Profil')
-@section('page-title', 'Profil Siswa')
-
 @section('content')
-<div class="grid lg:grid-cols-3 gap-5">
-  <div class="lg:col-span-1 space-y-5">
-    <div class="rounded-2xl bg-white border border-slate-200/50 shadow-sm p-6 text-center">
-      <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-400 to-emerald-500 text-white flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg shadow-teal-500/20">{{ $initials }}</div>
-      <h2 class="text-lg font-bold text-slate-800">{{ $student->full_name }}</h2>
-      <p class="text-xs text-slate-400 mt-0.5">{{ $student->class_name }} &middot; {{ $student->program_name }}</p>
-      <div class="mt-4 pt-4 border-t border-slate-100 text-left text-sm space-y-3">
-        <div class="flex justify-between"><span class="text-slate-400">NISN</span><span class="font-semibold text-slate-700">{{ $student->nisn }}</span></div>
-        <div class="flex justify-between"><span class="text-slate-400">Status</span><span class="inline-flex px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-600">Aktif</span></div>
-        <div class="flex justify-between"><span class="text-slate-400">Semester</span><span class="font-semibold text-slate-700">{{ $period?->academic_year }} {{ ucfirst($period?->semester ?? '-') }}</span></div>
+<div style="margin-bottom:16px">
+  <h2 style="font-size:1.1rem;font-weight:700;color:var(--s-ink);margin:0">Profil Siswa</h2>
+  <p style="font-size:.82rem;color:var(--s-muted);margin:2px 0 0">Data diri dan informasi akun</p>
+</div>
+
+<div class="bento bento-2">
+  <div class="b-card" style="text-align:center;padding:28px 24px">
+    <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,var(--s-primary),var(--s-primary-dark));display:grid;place-items:center;margin:0 auto 14px;box-shadow:0 4px 16px rgba(107,163,199,0.25)">
+      <span style="font-size:1.6rem;font-weight:800;color:#fff">{{ $initials }}</span>
+    </div>
+    <h2 style="font-size:1.05rem;font-weight:700;color:var(--s-ink);margin:0">{{ $student->full_name }}</h2>
+    <p style="font-size:.82rem;color:var(--s-muted);margin:4px 0 0">{{ $student->class_name }} @if($student->program_name) · {{ $student->program_name }} @endif</p>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--s-line);text-align:left">
+      <div style="display:grid;gap:12px">
+        <div class="b-flex-between" style="padding:0 2px">
+          <span style="font-size:.78rem;color:var(--s-muted)">NISN</span>
+          <span style="font-size:.82rem;font-weight:600;color:var(--s-ink)">{{ $student->nisn ?? '-' }}</span>
+        </div>
+        <div class="b-flex-between" style="padding:0 2px">
+          <span style="font-size:.78rem;color:var(--s-muted)">Status</span>
+          <span style="font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:6px;background:rgba(52,199,89,0.1);color:var(--s-success)">Aktif</span>
+        </div>
+        <div class="b-flex-between" style="padding:0 2px">
+          <span style="font-size:.78rem;color:var(--s-muted)">Semester</span>
+          <span style="font-size:.82rem;font-weight:600;color:var(--s-ink)">{{ $period?->academic_year }} {{ ucfirst($period?->semester ?? '-') }}</span>
+        </div>
         @if($student->birth_date)
-        <div class="flex justify-between"><span class="text-slate-400">Tanggal Lahir</span><span class="font-semibold text-slate-700">{{ $student->birth_date->translatedFormat('d M Y') }}</span></div>
+        <div class="b-flex-between" style="padding:0 2px">
+          <span style="font-size:.78rem;color:var(--s-muted)">Tanggal Lahir</span>
+          <span style="font-size:.82rem;font-weight:600;color:var(--s-ink)">{{ $student->birth_date->translatedFormat('d M Y') }}</span>
+        </div>
         @endif
       </div>
     </div>
+  </div>
 
-    <div class="rounded-2xl bg-white border border-slate-200/50 shadow-sm p-5">
-      <h3 class="text-sm font-bold text-slate-800 mb-3">Wali Kelas</h3>
+  <div class="bento bento-full" style="gap:12px">
+    <div class="b-card" style="padding:16px 18px">
+      <h3 class="b-section-title" style="margin-bottom:10px">Wali Kelas</h3>
       @if($student->homeroomTeacher)
-      <div class="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white text-sm font-bold">{{ strtoupper(mb_substr($student->homeroomTeacher->full_name ?? $student->homeroomTeacher->name, 0, 1)) }}</div>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--s-primary-soft);border:1px solid rgba(79,70,229,0.1)">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--s-primary),var(--s-primary-dark));display:grid;place-items:center;color:#fff;font-size:.78rem;font-weight:700;flex-shrink:0">{{ strtoupper(mb_substr($student->homeroomTeacher->full_name ?? $student->homeroomTeacher->name, 0, 1)) }}</div>
         <div>
-          <div class="text-sm font-semibold text-slate-700">{{ $student->homeroomTeacher->full_name ?? $student->homeroomTeacher->name }}</div>
-          <div class="text-xs text-slate-400">{{ $student->homeroomTeacher->email }}</div>
+          <div style="font-size:.85rem;font-weight:600;color:var(--s-ink)">{{ $student->homeroomTeacher->full_name ?? $student->homeroomTeacher->name }}</div>
+          <div style="font-size:.72rem;color:var(--s-muted)">{{ $student->homeroomTeacher->email }}</div>
         </div>
       </div>
       @else
-      <p class="text-xs text-slate-400">Belum ditentukan</p>
+      <div style="font-size:.82rem;color:var(--s-muted)">Belum ditentukan</div>
       @endif
     </div>
-  </div>
 
-  <div class="lg:col-span-2 space-y-5">
     @if($behavior->count() > 0)
-    <div class="rounded-2xl bg-white border border-slate-200/50 shadow-sm p-5">
-      <h3 class="text-sm font-bold text-slate-800 mb-3">Nilai Sikap</h3>
-      <div class="grid grid-cols-2 gap-3">
+    <div class="b-card" style="padding:16px 18px">
+      <h3 class="b-section-title" style="margin-bottom:10px">Nilai Sikap</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         @php $aspectLabels = ['discipline' => 'Disiplin', 'responsibility' => 'Tanggung Jawab', 'collaboration' => 'Kolaborasi', 'independence' => 'Kemandirian'] @endphp
         @foreach($behavior as $b)
-        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-100/50">
-          <div class="text-[11px] font-semibold text-slate-400 uppercase">{{ $aspectLabels[$b->aspect] ?? $b->aspect }}</div>
-          <div class="text-2xl font-bold mt-1 {{ $b->grade >= 'A' ? 'text-teal-600' : ($b->grade >= 'B' ? 'text-amber-600' : 'text-slate-600') }}">{{ $b->grade }}</div>
+        <div style="padding:12px;border-radius:10px;background:var(--s-bg);border:1px solid var(--s-line)">
+          <div style="font-size:.68rem;font-weight:600;color:var(--s-muted);text-transform:uppercase">{{ $aspectLabels[$b->aspect] ?? $b->aspect }}</div>
+          <div style="font-size:1.3rem;font-weight:800;margin-top:2px;color:{{ $b->grade >= 'A' ? 'var(--s-success)' : ($b->grade >= 'B' ? '#FF9F0A' : 'var(--s-muted)') }}">{{ $b->grade }}</div>
           @if($b->note)
-          <div class="text-xs text-slate-500 mt-1 leading-relaxed">{{ $b->note }}</div>
+          <div style="font-size:.72rem;color:var(--s-muted);margin-top:4px;line-height:1.4">{{ $b->note }}</div>
           @endif
         </div>
         @endforeach
@@ -55,15 +73,15 @@
     @endif
 
     @if($extracurriculars->count() > 0)
-    <div class="rounded-2xl bg-white border border-slate-200/50 shadow-sm p-5">
-      <h3 class="text-sm font-bold text-slate-800 mb-3">Ekstrakurikuler</h3>
-      <div class="grid sm:grid-cols-2 gap-3">
+    <div class="b-card" style="padding:16px 18px">
+      <h3 class="b-section-title" style="margin-bottom:10px">Ekstrakurikuler</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         @foreach($extracurriculars as $e)
-        <div class="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 border border-slate-100/50 hover:border-teal-100 hover:bg-teal-50/30 transition-all duration-200">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-sm">{{ strtoupper(mb_substr($e->name, 0, 1)) }}</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--s-bg);border:1px solid var(--s-line)">
+          <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#8B5CF6,#A78BFA);display:grid;place-items:center;color:#fff;font-size:.7rem;font-weight:700;flex-shrink:0">{{ strtoupper(mb_substr($e->name, 0, 1)) }}</div>
           <div>
-            <div class="text-sm font-semibold text-slate-700">{{ $e->name }}</div>
-            <div class="text-xs text-slate-400">Nilai: <span class="font-semibold text-slate-600">{{ $e->score }}</span></div>
+            <div style="font-size:.8rem;font-weight:600;color:var(--s-ink)">{{ $e->name }}</div>
+            <div style="font-size:.7rem;color:var(--s-muted)">Nilai: <span style="font-weight:600;color:var(--s-ink)">{{ $e->score }}</span></div>
           </div>
         </div>
         @endforeach
@@ -73,5 +91,3 @@
   </div>
 </div>
 @endsection
-
-

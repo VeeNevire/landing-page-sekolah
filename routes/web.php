@@ -113,6 +113,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/subjects/{subject}/data', [AdminController::class, 'subjectData'])->name('subjects.data');
     Route::get('/subjects/{subject}/detail', [AdminController::class, 'subjectDetail'])->name('subjects.detail');
     Route::post('/subjects/{subject}/assign', [AdminController::class, 'subjectAssignStore'])->name('subjects.assign');
+    Route::post('/subjects/assign-cs', [AdminController::class, 'subjectAssignCSStore'])->name('subjects.assign-cs');
     Route::post('/subjects', [AdminController::class, 'subjectsStore'])->name('subjects.store');
     Route::put('/subjects/{subject}', [AdminController::class, 'subjectsUpdate'])->name('subjects.update');
     Route::delete('/subjects/{subject}', [AdminController::class, 'subjectsDestroy'])->name('subjects.destroy');

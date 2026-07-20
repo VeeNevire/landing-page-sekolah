@@ -41,7 +41,7 @@ class SiswaController extends Controller
 
         $assignments = TeachingAssignment::where('period_id', $period->id)
             ->where('class_name', $student->class_name)
-            ->with('subject')
+            ->with('subject', 'customSubject')
             ->get();
 
         $grades = [];
@@ -73,14 +73,18 @@ class SiswaController extends Controller
             $componentScores = PortalHelper::componentScores($raw);
             $finalScore = PortalHelper::finalScore($raw);
 
+            $subjectName = $assignment->subject?->name ?? $assignment->customSubject?->nama ?? '-';
+            $subjectCode = $assignment->subject?->code ?? $assignment->customSubject?->kode ?? '-';
+            $kkm = (float) ($assignment->subject?->kkm ?? $assignment->customSubject?->kkm ?? 0);
+
             $grades[] = [
-                'subject' => $assignment->subject->name,
-                'subject_code' => $assignment->subject->code,
-                'kkm' => (float) $assignment->subject->kkm,
+                'subject' => $subjectName,
+                'subject_code' => $subjectCode,
+                'kkm' => $kkm,
                 'components' => $componentScores,
                 'final_score' => $finalScore,
                 'letter' => PortalHelper::gradeLetter($finalScore),
-                'passed' => $finalScore >= (float) $assignment->subject->kkm,
+                'passed' => $finalScore >= $kkm,
             ];
         }
 
@@ -112,7 +116,7 @@ class SiswaController extends Controller
         if ($period) {
             $assignments = TeachingAssignment::where('period_id', $period->id)
                 ->where('class_name', $student->class_name)
-                ->with('subject')
+                ->with('subject', 'customSubject')
                 ->get();
 
             $dayMap = ['Monday' => 0, 'Tuesday' => 1, 'Wednesday' => 2, 'Thursday' => 3, 'Friday' => 4];
@@ -122,7 +126,7 @@ class SiswaController extends Controller
             if ($dayIndex !== null) {
                 $dayAssignments = $assignments->filter(fn($ta, $i) => ($i % 5) === $dayIndex);
                 $todaySchedule = $dayAssignments->values()->map(fn($ta, $i) => [
-                    'subject' => optional($ta->subject)->name ?? '-',
+                    'subject' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
                     'slot' => $times[$i] ?? '-'
                 ]);
             }
@@ -211,7 +215,7 @@ class SiswaController extends Controller
 
         $assignments = TeachingAssignment::where('period_id', $period->id)
             ->where('class_name', $student->class_name)
-            ->with('subject')
+            ->with('subject', 'customSubject')
             ->get();
 
         $grouped = $assignments->groupBy(fn($ta, $i) => $i % count($days));
@@ -220,7 +224,7 @@ class SiswaController extends Controller
         foreach ($days as $dayIndex => $day) {
             $group = $grouped[$dayIndex] ?? collect();
             $jadwal[$day] = $group->values()->map(fn($ta, $i) => [
-                'subject' => optional($ta->subject)->name ?? '-',
+                'subject' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
                 'slot' => $i + 1,
             ]);
         }
@@ -246,8 +250,8 @@ class SiswaController extends Controller
             ->where('class_name', $student->class_name)
             ->pluck('id');
 
-        $materials = Material::whereIn('teaching_assignment_id', $assignmentIds)
-            ->with('teachingAssignment.subject')
+        $materials = Material::with('teachingAssignment.subject', 'teachingAssignment.customSubject')
+            ->whereIn('teaching_assignment_id', $assignmentIds)
             ->orderByDesc('created_at')
             ->get();
 

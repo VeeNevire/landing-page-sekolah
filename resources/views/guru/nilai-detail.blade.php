@@ -22,7 +22,7 @@
   <div class="portal-panel-header">
     <div><h2>Tambah Penilaian Baru</h2><p>Isi data penilaian, lalu input nilai per siswa di bawah.</p></div>
   </div>
-  <form method="POST" action="{{ route('guru.nilai.store', ['class' => $class, 'subject' => $subject->id]) }}">
+  <form method="POST" action="{{ route('guru.nilai.store', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id]) }}">
     @csrf
     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end">
       <div class="field">

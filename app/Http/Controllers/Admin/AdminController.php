@@ -398,9 +398,9 @@ class AdminController extends Controller
             'student_email' => 'required|email|unique:users,email',
             'parent_action' => 'required|in:existing,new,none',
             'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
-            'parent_name' => 'required_if:parent_action,new|nullable|string|max:255',
-            'parent_email' => 'required_if:parent_action,new|nullable|email|unique:users,email',
-            'parent_password' => 'required_if:parent_action,new|nullable|min:6',
+            'parent_name' => 'prohibited_if:parent_action,existing,none|required_if:parent_action,new|string|max:255',
+            'parent_email' => 'prohibited_if:parent_action,existing,none|required_if:parent_action,new|email|unique:users,email',
+            'parent_password' => 'prohibited_if:parent_action,existing,none|required_if:parent_action,new|min:6',
             'parent_relationship' => 'nullable|string|max:40',
         ]);
         $kelas = !empty($validated['kelas_id']) ? Kelas::with('jurusan')->find($validated['kelas_id']) : null;
@@ -503,9 +503,9 @@ class AdminController extends Controller
             'student_email' => 'nullable|email|unique:users,email,' . ($student->user_id ?? 'NULL'),
             'parent_action' => 'nullable|in:existing,new,none,disconnect',
             'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
-            'parent_name' => 'required_if:parent_action,new|nullable|string|max:255',
-            'parent_email' => 'required_if:parent_action,new|nullable|email|unique:users,email',
-            'parent_password' => 'required_if:parent_action,new|nullable|min:6',
+            'parent_name' => 'prohibited_if:parent_action,existing,none,disconnect|required_if:parent_action,new|string|max:255',
+            'parent_email' => 'prohibited_if:parent_action,existing,none,disconnect|required_if:parent_action,new|email|unique:users,email',
+            'parent_password' => 'prohibited_if:parent_action,existing,none,disconnect|required_if:parent_action,new|min:6',
             'parent_relationship' => 'nullable|string|max:40',
             'disconnect_parent_id' => 'nullable|exists:users,id',
         ]);
@@ -653,11 +653,89 @@ class AdminController extends Controller
         $subjects = $query->orderBy('code')->paginate(5)->withQueryString();
         $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
 
-        $jurusans = \App\Models\Jurusan::with('customSubjects')
+        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+
+        $jurusans = \App\Models\Jurusan::with(['customSubjects' => fn($q) => $q->with('kelas')])
             ->orderBy('kode')
             ->get();
 
-        return view('admin.subjects', compact('subjects', 'teachers', 'jurusans'));
+        // Load all kelas per jurusan (buat checkbox centang)
+        foreach ($jurusans as $j) {
+            $j->load(['kelas' => fn($q) => $q->orderBy('tingkat')->orderBy('nama')]);
+        }
+
+        $csAssignments = collect();
+        if ($activePeriod) {
+            $allClassNames = $jurusans->flatMap->kelas->map->nama_lengkap->unique();
+            $csAssignments = \App\Models\TeachingAssignment::with('teacher')
+                ->whereNotNull('custom_subject_id')
+                ->where('period_id', $activePeriod->id)
+                ->whereIn('class_name', $allClassNames)
+                ->get()
+                ->groupBy('custom_subject_id');
+        }
+
+        return view('admin.subjects', compact('subjects', 'teachers', 'jurusans', 'activePeriod', 'csAssignments'));
+    }
+
+    public function subjectAssignCSStore(Request $request)
+    {
+        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $csData = $request->input('cs_data', []);
+
+        if (!$activePeriod) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada periode aktif.']);
+        }
+
+        foreach ($csData as $csId => $data) {
+            $customSubject = \App\Models\JurusanCustomSubject::find($csId);
+            if (!$customSubject) continue;
+
+            // Sync checked kelas ke pivot kelas_custom_subject
+            $kelasIds = $data['kelas_ids'] ?? [];
+            $customSubject->kelas()->sync($kelasIds);
+
+            // Simpan teacher assignments untuk kelas yang dicentang
+            $teachers = $data['teachers'] ?? [];
+            if (!empty($kelasIds)) {
+                $kelasModels = \App\Models\Kelas::whereIn('id', $kelasIds)->get();
+                foreach ($kelasModels as $kelas) {
+                    $className = $kelas->nama_lengkap;
+                    $teacherId = $teachers[$className] ?? '';
+                    if (!empty($teacherId)) {
+                        TeachingAssignment::updateOrCreate(
+                            [
+                                'period_id' => $activePeriod->id,
+                                'custom_subject_id' => $csId,
+                                'class_name' => $className,
+                            ],
+                            ['teacher_id' => $teacherId]
+                        );
+                    }
+                }
+            }
+
+            // Hapus teacher assignments untuk kelas yang tidak dicentang
+            if (!empty($kelasIds)) {
+                $keptClassNames = $kelasModels->pluck('nama_lengkap')->toArray();
+                TeachingAssignment::where('custom_subject_id', $csId)
+                    ->where('period_id', $activePeriod->id)
+                    ->whereNotIn('class_name', $keptClassNames)
+                    ->delete();
+            } else {
+                TeachingAssignment::where('custom_subject_id', $csId)
+                    ->where('period_id', $activePeriod->id)
+                    ->delete();
+            }
+        }
+
+        AuditService::log('subject.assign-cs', 'JurusanCustomSubject');
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Pelajaran jurusan berhasil disimpan.']);
+        }
+
+        return back()->with('success', 'Pelajaran jurusan berhasil disimpan.');
     }
 
     public function subjectData(Subject $subject)
@@ -946,7 +1024,8 @@ class AdminController extends Controller
         $classNames = $jurusan->kelas->map->nama_lengkap;
         $existingAssignments = collect();
         if ($activePeriod && $classNames->isNotEmpty()) {
-            $existingAssignments = TeachingAssignment::whereIn('class_name', $classNames)
+            $existingAssignments = TeachingAssignment::with('teacher')
+                ->whereIn('class_name', $classNames)
                 ->where('period_id', $activePeriod->id)
                 ->get()
                 ->groupBy('class_name');
@@ -971,6 +1050,7 @@ class AdminController extends Controller
         $kelasCustomSubjects = $request->input('kelas_custom_subjects', []);
         $homeroomTeachers = $request->input('homeroom_teachers', []);
         $subjectTeachers = $request->input('subject_teachers', []);
+        $customSubjectTeachers = $request->input('custom_subject_teachers', []);
 
         $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
 
@@ -988,7 +1068,7 @@ class AdminController extends Controller
                 $kelas->update(['homeroom_teacher_id' => $homeroomTeachers[$kId] ?: null]);
             }
 
-            // Simpan teacher assignment per mapel (updateOrCreate biar data nilai gak ilang)
+            // Simpan teacher assignment per mapel umum
             if ($activePeriod && isset($subjectTeachers[$kId])) {
                 foreach ($subjectTeachers[$kId] as $subjectId => $teacherId) {
                     if (!empty($teacherId)) {
@@ -996,6 +1076,22 @@ class AdminController extends Controller
                             [
                                 'period_id' => $activePeriod->id,
                                 'subject_id' => $subjectId,
+                                'class_name' => $classNamaLengkap,
+                            ],
+                            ['teacher_id' => $teacherId]
+                        );
+                    }
+                }
+            }
+
+            // Simpan teacher assignment per custom subject
+            if ($activePeriod && isset($customSubjectTeachers[$kId])) {
+                foreach ($customSubjectTeachers[$kId] as $csId => $teacherId) {
+                    if (!empty($teacherId)) {
+                        TeachingAssignment::updateOrCreate(
+                            [
+                                'period_id' => $activePeriod->id,
+                                'custom_subject_id' => $csId,
                                 'class_name' => $classNamaLengkap,
                             ],
                             ['teacher_id' => $teacherId]

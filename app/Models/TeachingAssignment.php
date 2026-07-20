@@ -9,6 +9,7 @@ class TeachingAssignment extends Model
     protected $fillable = [
         'period_id',
         'subject_id',
+        'custom_subject_id',
         'teacher_id',
         'class_name',
     ];
@@ -21,6 +22,11 @@ class TeachingAssignment extends Model
     public function subject()
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function customSubject()
+    {
+        return $this->belongsTo(JurusanCustomSubject::class);
     }
 
     public function teacher()

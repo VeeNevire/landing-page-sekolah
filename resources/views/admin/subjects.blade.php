@@ -110,15 +110,51 @@
       </div>
       <div class="jurusan-cs-body" style="display:none">
         @forelse ($jurusan->customSubjects as $cs)
-        <div class="jurusan-cs-item" data-cs-id="{{ $cs->id }}">
-          <span style="font-weight:600;font-size:.85rem"><strong>{{ $cs->kode }}</strong> — {{ $cs->nama }}@if($cs->kkm) <span style="font-weight:400;color:var(--muted);font-size:.78rem">(KKM {{ $cs->kkm }})</span>@endif</span>
-          <button type="button" onclick="confirmDeleteCS({{ $jurusan->id }}, {{ $cs->id }}, '{{ addslashes($cs->nama) }}')" class="btn btn-outline" style="min-height:28px;min-width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" title="Hapus">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+        @php
+          $existingForCS = $csAssignments->get($cs->id, collect());
+        @endphp
+        <div class="jurusan-cs-item" data-cs-id="{{ $cs->id }}" style="flex-direction:column;align-items:stretch;gap:6px;padding:8px 10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:600;font-size:.85rem"><strong>{{ $cs->kode }}</strong> — {{ $cs->nama }}@if($cs->kkm) <span style="font-weight:400;color:var(--muted);font-size:.78rem">(KKM {{ $cs->kkm }})</span>@endif</span>
+            <button type="button" onclick="confirmDeleteCS({{ $jurusan->id }}, {{ $cs->id }}, '{{ addslashes($cs->nama) }}')" class="btn btn-outline" style="min-height:28px;min-width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" title="Hapus">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+            @php $csKelasIds = $cs->kelas->pluck('id')->toArray(); @endphp
+            @foreach ($jurusan->kelas as $kelas)
+              @php
+                $cl = $kelas->nama_lengkap;
+                $isChecked = in_array($kelas->id, $csKelasIds);
+                $match = $existingForCS->firstWhere('class_name', $cl);
+                $tid = $match ? $match->teacher_id : '';
+                $tname = $match && $match->teacher ? ($match->teacher->full_name ?? $match->teacher->name) : '';
+              @endphp
+              <div class="subject-teacher-row" style="padding:2px 0">
+                  <label class="subject-check-item" style="flex:1;min-width:0;gap:4px;padding:2px 4px">
+                    <input type="checkbox" class="cs-kelas-cb" data-kelas-id="{{ $kelas->id }}" data-cs-id="{{ $cs->id }}" {{ $isChecked ? 'checked' : '' }} onchange="toggleCSKelas(this)">
+                    <span style="font-size:.78rem;font-weight:600">{{ $kelas->nama_lengkap }}</span>
+                  </label>
+                  <select class="subject-teacher-select" data-class-name="{{ $cl }}" data-cs-id="{{ $cs->id }}" {{ !$isChecked ? 'disabled' : '' }}>
+                  <option value="">— Guru —</option>
+                  @foreach ($teachers as $t)
+                    <option value="{{ $t->id }}" {{ $tid == $t->id ? 'selected' : '' }}>{{ $t->full_name ?: $t->name }}</option>
+                  @endforeach
+                </select>
+              </div>
+            @endforeach
+          </div>
         </div>
         @empty
         <p style="margin:8px 0;font-size:.85rem;color:var(--muted);padding:8px 14px">Belum ada pelajaran jurusan.</p>
         @endforelse
+
+        @if ($jurusan->customSubjects->isNotEmpty())
+        <div style="padding:8px 10px 0;border-top:1px solid var(--line);margin-top:4px;padding-top:8px;display:flex;justify-content:flex-end">
+          <button type="button" class="btn btn-primary" onclick="saveCSAssignments({{ $jurusan->id }})" style="min-height:32px;padding:0 16px;font-size:.82rem">Simpan Semua Guru</button>
+        </div>
+        @endif
+
         <div class="jurusan-cs-form" style="display:none;margin-top:8px;padding-top:10px;border-top:1px solid var(--line)">
           <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;margin-bottom:8px">
             <input type="text" class="cs-form-kode" placeholder="Kode" style="padding:.5rem .6rem;border-radius:8px;font-size:.82rem;outline:none;background:var(--card);border:1.5px solid var(--line);color:var(--ink);font-family:inherit;text-transform:uppercase">
@@ -589,6 +625,57 @@ function confirmDeleteCS(jurusanId, csId, csName) {
       .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
     }
   });
+}
+
+function toggleCSKelas(cb) {
+  const row = cb.closest('.subject-teacher-row');
+  const sel = row?.querySelector('.subject-teacher-select');
+  if (sel) {
+    sel.disabled = !cb.checked;
+    if (!cb.checked) sel.value = '';
+  }
+}
+
+function saveCSAssignments(jurusanId) {
+  const group = document.querySelector('.jurusan-cs-group[data-jurusan-id="' + jurusanId + '"]');
+  if (!group) return;
+
+  const csData = {};
+  group.querySelectorAll('.jurusan-cs-item').forEach(item => {
+    const csId = item.dataset.csId;
+    if (!csId) return;
+
+    // Collect checked kelas ids
+    const kelasIds = [];
+    item.querySelectorAll('.cs-kelas-cb:checked').forEach(cb => {
+      kelasIds.push(cb.dataset.kelasId);
+    });
+
+    // Collect teacher assignments
+    const teachers = {};
+    item.querySelectorAll('.subject-teacher-select').forEach(sel => {
+      if (sel.value) {
+        teachers[sel.dataset.className] = sel.value;
+      }
+    });
+
+    csData[csId] = { kelas_ids: kelasIds, teachers: teachers };
+  });
+
+  fetch('{{ route("admin.subjects.assign-cs") }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+    body: JSON.stringify({ cs_data: csData })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 2000 });
+    } else {
+      Swal.fire('Gagal', d.message || 'Terjadi kesalahan.', 'error');
+    }
+  })
+  .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
 }
 </script>
 @endpush

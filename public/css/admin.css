@@ -1106,10 +1106,161 @@ body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,
     cursor: not-allowed;
 }
 
+/* =========================================================
+   CUSTOM SUBJECT TEACHER SEARCHABLE DROPDOWN
+   ========================================================= */
+.cs-teacher-wrapper {
+    position: relative;
+    min-width: 180px;
+    flex-shrink: 0;
+}
+
+.cs-teacher-field {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: .38rem .5rem;
+    border-radius: 8px;
+    font-size: .8rem;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color .2s;
+    min-height: 32px;
+}
+
+.cs-teacher-field:hover {
+    border-color: var(--primary-2);
+}
+
+.cs-teacher-field.open {
+    border-color: var(--primary-2);
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, .1);
+}
+
+.cs-teacher-value {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    font-size: .8rem;
+    color: var(--muted);
+}
+
+.cs-teacher-value.selected {
+    color: var(--ink);
+}
+
+.cs-teacher-arrow {
+    flex-shrink: 0;
+    color: var(--muted);
+    transition: transform .2s ease;
+}
+
+.cs-teacher-arrow.open {
+    transform: rotate(180deg);
+}
+
+.cs-teacher-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 100%;
+    z-index: 100;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+}
+
+.cs-teacher-dropdown.open {
+    display: block;
+}
+
+.cs-teacher-search {
+    width: 100%;
+    padding: .5rem .6rem;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    font-size: .82rem;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.cs-teacher-search::placeholder {
+    color: var(--muted);
+}
+
+.cs-teacher-options {
+    max-height: 160px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.cs-teacher-option {
+    padding: .45rem .6rem;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: background .1s ease;
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.cs-teacher-option:hover {
+    background: color-mix(in srgb, var(--primary-2) 8%, var(--card));
+}
+
+.cs-teacher-option.selected {
+    background: #4338ca;
+    color: #fff;
+    font-weight: 600;
+}
+
+.cs-teacher-option.selected:hover {
+    background: #3730a3;
+}
+
+.cs-teacher-option.hidden {
+    display: none;
+}
+
+.cs-teacher-empty {
+    padding: .6rem;
+    font-size: .8rem;
+    color: var(--muted);
+    text-align: center;
+}
+
+.cs-teacher-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.cs-teacher-clear:hover {
+    background: color-mix(in srgb, var(--danger) 12%, var(--card));
+    color: var(--danger);
+}
+
 .detail-kelas-item {
     border: 1px solid var(--line);
     border-radius: 10px;
-    overflow: hidden;
     background: var(--card);
 }
 
@@ -1121,6 +1272,7 @@ body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,
     cursor: pointer;
     transition: background .15s ease;
     user-select: none;
+    border-radius: 10px 10px 0 0;
 }
 
 .detail-kelas-header:hover {
@@ -1135,6 +1287,7 @@ body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,
     padding: .75rem;
     border-top: 1px solid var(--line);
     background: var(--bg);
+    overflow: visible;
 }
 
 .detail-kelas-subjects .detail-subject-grid {

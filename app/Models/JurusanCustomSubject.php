@@ -24,4 +24,9 @@ class JurusanCustomSubject extends Model
     {
         return $this->belongsTo(Jurusan::class);
     }
+
+    public function kelas()
+    {
+        return $this->belongsToMany(Kelas::class, 'kelas_custom_subject');
+    }
 }

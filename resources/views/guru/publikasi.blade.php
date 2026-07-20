@@ -20,9 +20,10 @@
     <div><h2>Status Publikasi</h2><p>Publikasikan semua penilaian per kelas sekaligus.</p></div>
   </div>
   <div style="display:grid;gap:14px">
-    @forelse ($classList as $class)
+@forelse ($classList as $class)
+      @php $tingkat = explode(' ', $class['name'])[0]; @endphp
       <div style="display:flex;align-items:center;gap:18px;padding:18px;border-radius:14px;border:1px solid var(--line);background:var(--card)">
-        <span style="width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-2) 12%,var(--card));color:var(--primary-2);font-weight:900;font-size:.9rem;flex-shrink:0">{{ $class['name'] }}</span>
+        <span style="width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-2) 12%,var(--card));color:var(--primary-2);font-weight:900;font-size:.9rem;flex-shrink:0">{{ $tingkat }}</span>
         <div style="flex:1">
           <strong style="display:block">{{ $class['name'] }}</strong>
           <span style="color:var(--muted);font-size:.85rem">{{ $class['student_count'] }} siswa &bull; {{ $class['subjects'] }}</span>

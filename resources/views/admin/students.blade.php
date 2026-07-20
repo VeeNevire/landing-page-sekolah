@@ -736,6 +736,10 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
   function submitForm(e) {
     e.preventDefault();
     clearErrors();
+    const btn = document.getElementById('modalSubmitBtn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
     const form = document.getElementById('studentForm');
     const fd = new FormData(form);
     fetch(form.action, {
@@ -773,6 +777,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         ok,
         j
       }) => {
+        btn.disabled = false;
+        btn.textContent = originalText;
         if (ok && j.success) {
           closeModal();
           Swal.fire({
@@ -793,6 +799,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           Swal.fire('Gagal', j.message || 'Terjadi kesalahan.', 'error');
         }
       }).catch((err) => {
+        btn.disabled = false;
+        btn.textContent = originalText;
         console.error('Fetch error:', err);
         Swal.fire('Error', err.message || 'Tidak dapat terhubung ke server.', 'error');
       });

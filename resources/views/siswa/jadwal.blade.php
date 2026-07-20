@@ -1,36 +1,35 @@
 @extends('layouts.siswa')
 @section('title', 'Jadwal')
-@section('page-title', 'Jadwal Pelajaran')
-
 @section('content')
-<div class="rounded-2xl bg-white border border-slate-200/50 shadow-sm overflow-hidden">
-  <div class="overflow-x-auto">
-    <table class="w-full text-sm">
+<div style="margin-bottom:16px">
+  <h2 style="font-size:1.1rem;font-weight:700;color:var(--s-ink);margin:0">Jadwal Pelajaran</h2>
+  <p style="font-size:.82rem;color:var(--s-muted);margin:2px 0 0">Jadwal pelajaran mingguan</p>
+</div>
+
+<div class="b-card" style="padding:0;overflow:hidden">
+  <div style="overflow-x:auto">
+    <table class="b-table">
       <thead>
         <tr>
-          <th class="text-left py-3 px-4 text-[11px] font-semibold text-slate-400 uppercase w-16 bg-slate-50/50"></th>
+          <th style="width:50px;text-align:center"></th>
           @foreach($days as $day)
-          <th class="text-center py-3 px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide bg-slate-50/50 border-l border-slate-100">{{ $day }}</th>
+          <th style="text-align:center;min-width:110px">{{ $day }}</th>
           @endforeach
         </tr>
       </thead>
       <tbody>
-        @php $subjectColors = ['#0d9488','#6366f1','#f43f5e','#a855f7','#f59e0b','#0891b2','#8b5cf6','#ec4899'] @endphp
+        @php $palette = ['#95BDD7','#34C759','#FF9F0A','#FF3B30','#007AFF','#8B5CF6','#64D2FF','#FF6482'] @endphp
         @for($slot = 1; $slot <= 3; $slot++)
-        <tr class="border-t border-slate-100">
-          <td class="py-3 px-4 text-center">
-            <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 text-[11px] font-bold text-slate-500">{{ $slot }}</span>
-          </td>
+        <tr>
+          <td style="text-align:center;font-size:.72rem;font-weight:600;color:var(--s-muted);width:50px">{{ $slot }}</td>
           @foreach($days as $day)
-          <td class="py-3 px-2 text-center border-l border-slate-50">
+          <td style="text-align:center">
             @php $match = $jadwal[$day]->firstWhere('slot', $slot) @endphp
             @if($match)
-            @php $idx = crc32($match['subject']) % 8; $bg = $subjectColors[abs($idx)] @endphp
-            <div class="inline-flex flex-col items-center px-3 py-2 rounded-xl w-full" style="background:color-mix(in srgb, {{ $bg }} 12%, transparent);border:1px solid color-mix(in srgb, {{ $bg }} 20%, transparent)">
-              <span class="text-xs font-bold" style="color:{{ $bg }}">{{ $match['subject'] }}</span>
-            </div>
+              @php $idx = abs(crc32($match['subject'])) % 8; $c = $palette[$idx]; @endphp
+              <div class="b-sched-cell" style="background:color-mix(in srgb,{{ $c }} 10%,transparent);color:{{ $c }};border:1px solid color-mix(in srgb,{{ $c }} 15%,transparent)">{{ $match['subject'] }}</div>
             @else
-            <span class="text-slate-200">-</span>
+              <span style="color:var(--s-line);font-size:.78rem">—</span>
             @endif
           </td>
           @endforeach
@@ -41,5 +40,3 @@
   </div>
 </div>
 @endsection
-
-
