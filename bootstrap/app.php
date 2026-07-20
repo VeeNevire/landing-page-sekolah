@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 default => '/portal/dashboard',
             };
         });
+         $middleware->validateCsrfTokens(except: [
+        'admin/jadwal',
+        'admin/jadwal/*',
+    ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
