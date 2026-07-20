@@ -279,7 +279,7 @@ class AdminController extends Controller
             });
         }
 
-        $students = $query->latest()->paginate(15)->withQueryString();
+        $students = $query->latest()->paginate(10)->withQueryString();
 
         $jurusans = Jurusan::where('is_active', true)->orderBy('nama')->get(['id', 'kode', 'nama']);
         $kelasList = Kelas::where('is_active', true)->orderBy('tingkat')->orderBy('nama')->get(['id', 'tingkat', 'nama', 'jurusan_id']);
