@@ -17,9 +17,23 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3 # SESUAIKAN VPS
+          extensions: mbstring, intl, xml, zip, bcmath, pdo_mysql
+          ini-values: memory_limit=2G
 
+      - name: Cache Composer
+        uses: actions/cache@v3
+        with:
+         path: ~/.composer/cache
+         key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+         restore-keys: ${{ runner.os }}-composer-
+
+      - name: ✅ Check platform requirements (fast failure)
+        run: composer check-platform-reqs || true
+        
       - name: 📦 Install Composer
-        run: composer install --no-progress --prefer-dist --no-dev
+        env:
+          COMPOSER_ALLOW_SUPERUSER: 1
+        run: composer install --no-progress --prefer-dist --no-dev --no-interaction --optimize-autoloader -o
 
       - name: 🚀 Deploy ke VPS
         uses: appleboy/ssh-action@v1.0.0
