@@ -69,6 +69,14 @@
           <span class="siswa-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/></svg></span>
           Materi
         </a>
+        <a href="{{ route('siswa.tugas.index') }}" class="siswa-nav-item {{ request()->routeIs('siswa.tugas*') ? 'active' : '' }}">
+          <span class="siswa-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+          Tugas
+        </a>
+        <a href="{{ route('siswa.kuis.index') }}" class="siswa-nav-item {{ request()->routeIs('siswa.kuis*') ? 'active' : '' }}">
+          <span class="siswa-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+          Kuis
+        </a>
         <div class="siswa-nav-divider"></div>
         <a href="{{ route('siswa.profil') }}" class="siswa-nav-item {{ request()->routeIs('siswa.profil') ? 'active' : '' }}">
           <span class="siswa-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
@@ -157,6 +165,7 @@
       }
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   @stack('scripts')
 </body>
 </html>

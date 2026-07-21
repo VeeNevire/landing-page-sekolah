@@ -14,8 +14,10 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\TeachingAssignment;
 use App\Models\TeacherNote;
+use App\Models\CourseModule;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class GuruController extends Controller
 {
@@ -499,9 +501,13 @@ class GuruController extends Controller
         $user = $request->user();
         $teachingAssignments = $this->getAssignments($user);
 
-        $materials = Material::with('teachingAssignment.subject', 'teachingAssignment.customSubject')
+        $selectedTaId = $request->query('ta_id');
+
+        $materials = Material::with('teachingAssignment.subject', 'teachingAssignment.customSubject', 'module')
             ->whereIn('teaching_assignment_id', $teachingAssignments->pluck('id'))
-            ->latest()
+            ->when($selectedTaId, fn($q) => $q->where('teaching_assignment_id', $selectedTaId))
+            ->orderBy('order')
+            ->latest('id')
             ->get();
 
         $classNames = $teachingAssignments->pluck('class_name')->unique()->values();
@@ -511,10 +517,18 @@ class GuruController extends Controller
             'subject_name' => $this->subjectName($a),
         ])->unique('assignment_id')->values();
 
+        $selectedTa = $selectedTaId ? $teachingAssignments->firstWhere('id', $selectedTaId) : $teachingAssignments->first();
+        $modules = collect();
+        if ($selectedTa) {
+            $modules = $selectedTa->modules()->with('materials')->get();
+        }
+
         return view('guru.materi', [
             'materials' => $materials,
             'classNames' => $classNames,
             'pairs' => $pairs,
+            'modules' => $modules,
+            'selectedTa' => $selectedTa,
         ]);
     }
 
@@ -522,15 +536,50 @@ class GuruController extends Controller
     {
         $validated = $request->validate([
             'teaching_assignment_id' => 'required|exists:teaching_assignments,id',
+            'module_id' => 'nullable|exists:course_modules,id',
             'title' => 'required|string|max:160',
             'description' => 'nullable|string|max:500',
             'url' => 'nullable|url|max:500',
+            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,jpg,jpeg,png,gif,webp,svg,mp4,webm,mp3,zip,rar|max:51200',
+            'type' => 'nullable|in:file,link,embed',
         ]);
 
-        $material = Material::create($validated);
+        $user = $request->user();
+
+        if (!$user->teachingAssignments()->where('id', $validated['teaching_assignment_id'])->exists()) {
+            abort(403);
+        }
+
+        $data = [
+            'teaching_assignment_id' => $validated['teaching_assignment_id'],
+            'module_id' => $validated['module_id'] ?? null,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'url' => $validated['url'] ?? null,
+            'type' => $validated['type'] ?? ($request->hasFile('file') ? 'file' : 'link'),
+        ];
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $taId = $validated['teaching_assignment_id'];
+            $path = $file->store("lms/materials/{$taId}", 'public');
+
+            $data['file_path'] = $path;
+            $data['file_name'] = $file->getClientOriginalName();
+            $data['file_size'] = $file->getSize();
+            $data['file_type'] = $file->getMimeType();
+        }
+
+        $maxOrder = Material::where('teaching_assignment_id', $validated['teaching_assignment_id'])
+            ->max('order') ?? -1;
+        $data['order'] = $maxOrder + 1;
+
+        $material = Material::create($data);
 
         AuditService::log('material.create', 'Material', $material->id);
-        return back()->with('success', 'Materi berhasil ditambahkan.');
+
+        $redirect = redirect()->route('guru.materi', ['ta_id' => $validated['teaching_assignment_id']]);
+        return $redirect->with('success', 'Materi berhasil ditambahkan.');
     }
 
     public function materiDestroy(Request $request, Material $material)
@@ -539,6 +588,10 @@ class GuruController extends Controller
 
         if (!$user->teachingAssignments()->where('id', $material->teaching_assignment_id)->exists()) {
             abort(403);
+        }
+
+        if ($material->file_path) {
+            Storage::disk('public')->delete($material->file_path);
         }
 
         AuditService::log('material.delete', 'Material', $material->id);

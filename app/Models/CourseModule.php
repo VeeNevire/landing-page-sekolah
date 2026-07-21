@@ -4,19 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Material extends Model
+class CourseModule extends Model
 {
     protected $fillable = [
         'teaching_assignment_id',
-        'module_id',
         'title',
         'description',
-        'url',
-        'file_path',
-        'file_name',
-        'file_size',
-        'file_type',
-        'type',
         'order',
     ];
 
@@ -25,9 +18,9 @@ class Material extends Model
         return $this->belongsTo(TeachingAssignment::class);
     }
 
-    public function module()
+    public function materials()
     {
-        return $this->belongsTo(CourseModule::class);
+        return $this->hasMany(Material::class, 'module_id')->orderBy('order');
     }
 
     public function scopeOrdered($query)

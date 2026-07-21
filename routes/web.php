@@ -7,8 +7,15 @@ use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\ReportController;
 use App\Http\Controllers\Portal\StudentController;
+use App\Http\Controllers\Guru\BankSoalController;
 use App\Http\Controllers\Guru\GuruController;
+use App\Http\Controllers\Guru\KuisController;
+use App\Http\Controllers\Guru\ModuleController;
+use App\Http\Controllers\Guru\TugasController;
+use App\Http\Controllers\Lms\DownloadController;
 use App\Http\Controllers\Siswa\SiswaController;
+use App\Http\Controllers\Siswa\SiswaKuisController;
+use App\Http\Controllers\Siswa\SiswaTugasController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +64,14 @@ Route::middleware(['auth', 'verified', 'role:student'])->prefix('siswa')->name('
     Route::get('/kehadiran', [SiswaController::class, 'kehadiran'])->name('kehadiran');
     Route::get('/jadwal', [SiswaController::class, 'jadwal'])->name('jadwal');
     Route::get('/materi', [SiswaController::class, 'materi'])->name('materi');
+    Route::get('/tugas', [SiswaTugasController::class, 'index'])->name('tugas.index');
+    Route::get('/tugas/{assignment}', [SiswaTugasController::class, 'show'])->name('tugas.show');
+    Route::post('/tugas/{assignment}/submit', [SiswaTugasController::class, 'submit'])->name('tugas.submit');
+    Route::get('/kuis', [SiswaKuisController::class, 'index'])->name('kuis.index');
+    Route::post('/kuis/{quiz}/mulai', [SiswaKuisController::class, 'mulai'])->name('kuis.mulai');
+    Route::get('/kuis/{attempt}/kerjakan', [SiswaKuisController::class, 'kerjakan'])->name('kuis.kerjakan');
+    Route::post('/kuis/{attempt}/submit', [SiswaKuisController::class, 'submit'])->name('kuis.submit');
+    Route::get('/kuis/{attempt}/hasil', [SiswaKuisController::class, 'hasil'])->name('kuis.hasil');
     Route::get('/profil', [SiswaController::class, 'profil'])->name('profil');
 });
 
@@ -77,6 +92,41 @@ Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin,principal'])
     Route::get('/materi', [GuruController::class, 'materi'])->name('materi');
     Route::post('/materi', [GuruController::class, 'materiStore'])->name('materi.store');
     Route::delete('/materi/{material}', [GuruController::class, 'materiDestroy'])->name('materi.destroy');
+
+    Route::post('/module', [ModuleController::class, 'store'])->name('module.store');
+    Route::put('/module/{module}', [ModuleController::class, 'update'])->name('module.update');
+    Route::delete('/module/{module}', [ModuleController::class, 'destroy'])->name('module.destroy');
+    Route::post('/module/reorder', [ModuleController::class, 'reorder'])->name('module.reorder');
+    Route::post('/module/reorder-materials', [ModuleController::class, 'reorderMaterials'])->name('module.reorder-materials');
+    Route::get('/module/data', [ModuleController::class, 'data'])->name('module.data');
+
+    Route::get('/tugas', [TugasController::class, 'index'])->name('tugas.index');
+    Route::get('/tugas/create', [TugasController::class, 'create'])->name('tugas.create');
+    Route::post('/tugas', [TugasController::class, 'store'])->name('tugas.store');
+    Route::get('/tugas/{assignment}/edit', [TugasController::class, 'edit'])->name('tugas.edit');
+    Route::put('/tugas/{assignment}', [TugasController::class, 'update'])->name('tugas.update');
+    Route::delete('/tugas/{assignment}', [TugasController::class, 'destroy'])->name('tugas.destroy');
+    Route::patch('/tugas/{assignment}/publish', [TugasController::class, 'publish'])->name('tugas.publish');
+    Route::get('/tugas/{assignment}/submissions', [TugasController::class, 'submissions'])->name('tugas.submissions');
+    Route::post('/submissions/{submission}/grade', [TugasController::class, 'grade'])->name('submissions.grade');
+
+    Route::get('/bank-soal', [BankSoalController::class, 'index'])->name('bank-soal.index');
+    Route::get('/bank-soal/create', [BankSoalController::class, 'create'])->name('bank-soal.create');
+    Route::post('/bank-soal', [BankSoalController::class, 'store'])->name('bank-soal.store');
+    Route::get('/bank-soal/{questionBank}', [BankSoalController::class, 'edit'])->name('bank-soal.edit')->whereNumber('questionBank');
+    Route::put('/bank-soal/{questionBank}', [BankSoalController::class, 'update'])->name('bank-soal.update');
+    Route::delete('/bank-soal/{questionBank}', [BankSoalController::class, 'destroy'])->name('bank-soal.destroy');
+
+    Route::get('/kuis', [KuisController::class, 'index'])->name('kuis.index');
+    Route::get('/kuis/create', [KuisController::class, 'create'])->name('kuis.create');
+    Route::post('/kuis', [KuisController::class, 'store'])->name('kuis.store');
+    Route::get('/kuis/{quiz}/edit', [KuisController::class, 'edit'])->name('kuis.edit');
+    Route::put('/kuis/{quiz}', [KuisController::class, 'update'])->name('kuis.update');
+    Route::delete('/kuis/{quiz}', [KuisController::class, 'destroy'])->name('kuis.destroy');
+    Route::patch('/kuis/{quiz}/publish', [KuisController::class, 'publish'])->name('kuis.publish');
+    Route::get('/kuis/{quiz}/hasil', [KuisController::class, 'hasil'])->name('kuis.hasil');
+    Route::get('/kuis/{attempt}/nilai-essay-data', [KuisController::class, 'nilaiEssayData'])->name('kuis.nilai-essay-data');
+    Route::post('/kuis/{attempt}/nilai-essay', [KuisController::class, 'nilaiEssay'])->name('kuis.nilai-essay');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')->name('admin.')->group(function () {
@@ -166,6 +216,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::prefix('download')->name('download.')->group(function () {
+        Route::get('/materi/{material}', [DownloadController::class, 'materi'])->name('materi');
+        Route::get('/materi/{material}/preview', [DownloadController::class, 'preview'])->name('materi.preview');
+        Route::get('/assignment/{assignment}', [DownloadController::class, 'assignment'])->name('assignment');
+        Route::get('/submission/{submission}', [DownloadController::class, 'submission'])->name('submission');
+    });
 });
 
 require __DIR__ . '/auth.php';

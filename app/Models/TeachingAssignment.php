@@ -43,4 +43,14 @@ class TeachingAssignment extends Model
     {
         return $this->hasMany(Jadwal::class);
     }
+
+    public function modules()
+    {
+        return $this->hasMany(CourseModule::class)->ordered();
+    }
+
+    public function materials()
+    {
+        return $this->hasMany(Material::class)->ordered();
+    }
 }

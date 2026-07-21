@@ -9,6 +9,7 @@ use App\Models\Assessment;
 use App\Models\AssessmentScore;
 use App\Models\Attendance;
 use App\Models\BehaviorScore;
+use App\Models\CourseModule;
 use App\Models\Extracurricular;
 use App\Models\Material;
 use App\Models\Notification;
@@ -250,16 +251,33 @@ class SiswaController extends Controller
             ->where('class_name', $student->class_name)
             ->pluck('id');
 
-        $materials = Material::with('teachingAssignment.subject', 'teachingAssignment.customSubject')
+        $materials = Material::with('teachingAssignment.subject', 'teachingAssignment.customSubject', 'module')
             ->whereIn('teaching_assignment_id', $assignmentIds)
-            ->orderByDesc('created_at')
+            ->orderBy('order')
+            ->latest('id')
             ->get();
+
+        $modules = CourseModule::with(['materials' => fn($q) => $q->orderBy('order')])
+            ->whereIn('teaching_assignment_id', $assignmentIds)
+            ->ordered()
+            ->get();
+
+        $grouped = $modules->mapWithKeys(fn($m) => [
+            $m->id => [
+                'module' => $m,
+                'materials' => $m->materials,
+            ]
+        ]);
+
+        $ungrouped = $materials->whereNull('module_id');
 
         return view('siswa.materi', [
             'student' => $student,
             'period' => $period,
             'initials' => $data['initials'],
             'materials' => $materials,
+            'grouped' => $grouped,
+            'ungrouped' => $ungrouped,
         ]);
     }
 

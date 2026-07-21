@@ -6,8 +6,9 @@ class PortalHelper
 {
     const WEIGHTS = [
         'quiz' => 0.15,
-        'homework' => 0.20,
+        'homework' => 0.10,
         'project' => 0.20,
+        'assignment' => 0.10,
         'uts' => 0.20,
         'uas' => 0.25,
     ];

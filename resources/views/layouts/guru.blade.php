@@ -110,6 +110,38 @@
           </span>
           <span class="portal-menu-label">Materi</span>
         </a>
+        <a href="{{ route('guru.tugas.index') }}"
+          @class(['active'=> request()->routeIs('guru.tugas*')])>
+          <span class="portal-menu-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </span>
+          <span class="portal-menu-label">Tugas</span>
+        </a>
+        <a href="{{ route('guru.bank-soal.create') }}"
+          @class(['active'=> request()->routeIs('guru.bank-soal*')])>
+          <span class="portal-menu-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              <polyline points="2 7 6 7 6 6" />
+            </svg>
+          </span>
+          <span class="portal-menu-label">Bank Soal</span>
+        </a>
+        <a href="{{ route('guru.kuis.index') }}"
+          @class(['active'=> request()->routeIs('guru.kuis*')])>
+          <span class="portal-menu-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </span>
+          <span class="portal-menu-label">Kuis</span>
+        </a>
       </nav>
       <div class="portal-menu-divider"></div>
       <div class="portal-sidebar-footer">
