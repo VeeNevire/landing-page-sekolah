@@ -79,18 +79,20 @@ Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin,principal'])
     Route::delete('/materi/{material}', [GuruController::class, 'materiDestroy'])->name('materi.destroy');
 });
 
-Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    Route::get('/users', [AdminController::class, 'users'])->name('users.index');
-    Route::get('/users/create', [AdminController::class, 'usersCreate'])->name('users.create');
-    Route::post('/users', [AdminController::class, 'usersStore'])->name('users.store');
-    Route::get('/users/{user}/edit', [AdminController::class, 'usersEdit'])->name('users.edit');
-    Route::get('/users/{user}/data', [AdminController::class, 'userData'])->name('users.data');
-    Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('users.update');
-    Route::patch('/users/{user}/toggle', [AdminController::class, 'usersToggle'])->name('users.toggle');
-    Route::post('/users/{user}/reset-password', [AdminController::class, 'usersResetPassword'])->name('users.reset-password');
-    Route::delete('/users/{user}', [AdminController::class, 'usersDestroy'])->name('users.destroy');
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/users', [AdminController::class, 'users'])->name('users.index');
+        Route::get('/users/create', [AdminController::class, 'usersCreate'])->name('users.create');
+        Route::post('/users', [AdminController::class, 'usersStore'])->name('users.store');
+        Route::get('/users/{user}/edit', [AdminController::class, 'usersEdit'])->name('users.edit');
+        Route::get('/users/{user}/data', [AdminController::class, 'userData'])->name('users.data');
+        Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('users.update');
+        Route::patch('/users/{user}/toggle', [AdminController::class, 'usersToggle'])->name('users.toggle');
+        Route::post('/users/{user}/reset-password', [AdminController::class, 'usersResetPassword'])->name('users.reset-password');
+        Route::delete('/users/{user}', [AdminController::class, 'usersDestroy'])->name('users.destroy');
+    });
 
     Route::get('/guru', [AdminController::class, 'guru'])->name('guru.index');
     Route::get('/guru/{user}/data', [AdminController::class, 'guruData'])->name('guru.data');
@@ -144,6 +146,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     Route::get('/jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
     Route::post('/jadwal', [JadwalController::class, 'store'])->name('jadwal.store');
+    Route::put('/jadwal/{jadwal}', [JadwalController::class, 'update'])->name('jadwal.update');
     Route::delete('/jadwal/{jadwal}', [JadwalController::class, 'destroy'])->name('jadwal.destroy');
 
     Route::get('/parent-student', [AdminController::class, 'parentStudent'])->name('parent-student.index');

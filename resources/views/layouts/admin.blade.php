@@ -33,6 +33,7 @@
           </span>
           <span class="portal-menu-label">Dashboard</span>
         </a>
+        @if (auth()->user()->role === 'admin')
         <a href="{{ route('admin.users.index') }}"
           @class(['active'=> request()->routeIs('admin.users.*')])>
           <span class="portal-menu-icon">
@@ -45,6 +46,7 @@
           </span>
           <span class="portal-menu-label">Pengguna</span>
         </a>
+        @endif
         <a href="{{ route('admin.guru.index') }}"
           @class(['active'=> request()->routeIs('admin.guru.*')])>
           <span class="portal-menu-icon">
