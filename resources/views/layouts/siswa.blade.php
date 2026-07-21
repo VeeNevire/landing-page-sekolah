@@ -11,6 +11,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  @push('styles')
+  <style>
+    .siswa-body .brand {
+      padding: 0 6px 20px;
+      color: var(--s-ink);
+    }
+    .siswa-body .brand-mark {
+      background: linear-gradient(145deg, var(--s-primary-dark), var(--s-primary));
+      box-shadow: 0 6px 16px rgba(107, 163, 199, 0.3);
+    }
+    .siswa-body .brand-mark img {
+      width: 22px;
+      height: 22px;
+    }
+  </style>
+  @endpush
   @stack('styles')
 </head>
 <body class="siswa-body">
@@ -18,9 +34,9 @@
 
     {{-- Sidebar --}}
     <aside class="siswa-sidebar" id="siswaSidebar">
-      <a class="siswa-brand" href="{{ route('siswa.dashboard') }}">
-        <span class="siswa-brand-mark"><img src="{{ asset('img/logo.svg') }}" alt=""></span>
-        <span class="siswa-brand-text">Portal Siswa<small>InvestaSchool</small></span>
+      <a class="brand" href="{{ route('siswa.dashboard') }}">
+        <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="" width="28" height="28"></span>
+        <span class="brand-text">Portal Siswa<small>InvestaSchool</small></span>
       </a>
 
       <div class="siswa-user-card">
