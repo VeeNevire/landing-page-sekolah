@@ -27,6 +27,11 @@ use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
+    protected $roleLabels = [
+        'admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kelas',
+        'parent' => 'Orang Tua', 'principal' => 'Kepsek', 'student' => 'Siswa',
+    ];
+
     public function dashboard()
     {
         $totalStudents = Student::where('status', 'active')->count();
@@ -156,7 +161,7 @@ class AdminController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        AuditService::log('user.create', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
+        AuditService::log('user.create', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Pengguna berhasil ditambahkan.', 'user' => $user]);
@@ -205,7 +210,7 @@ class AdminController extends Controller
 
         $user->update($data);
 
-        AuditService::log('user.update', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
+        AuditService::log('user.update', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Pengguna berhasil diperbarui.', 'user' => $user]);
@@ -219,7 +224,7 @@ class AdminController extends Controller
         $user->update(['is_active' => !$user->is_active]);
         $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
-        AuditService::log('user.toggle', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
+        AuditService::log('user.toggle', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => "Akun {$user->name} berhasil {$status}.", 'is_active' => $user->is_active]);
@@ -236,7 +241,7 @@ class AdminController extends Controller
 
         $user->update(['password' => Hash::make($validated['new_password'])]);
 
-        AuditService::log('user.reset-password', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
+        AuditService::log('user.reset-password', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
         return back()->with('success', "Password {$user->name} berhasil direset.");
     }
 
@@ -249,7 +254,7 @@ class AdminController extends Controller
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
         }
 
-        AuditService::log('user.delete', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
+        AuditService::log('user.delete', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
         $user->delete();
 
         if ($request->ajax()) {

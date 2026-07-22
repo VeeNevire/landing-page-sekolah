@@ -19,6 +19,18 @@ $entityLabels = [
 'QuizAttempt' => 'Percobaan Kuis', 'JurusanCustomSubject' => 'Mapel Custom',
 ];
 
+$entityColors = [
+    'User' => '#6366f1', 'Student' => '#22c55e', 'Subject' => '#06b6d4',
+    'Quiz' => '#a855f7', 'Assignment' => '#f97316', 'Material' => '#ec4899',
+    'AcademicPeriod' => '#14b8a6', 'TeachingAssignment' => '#d97706',
+    'Jadwal' => '#64748b', 'Assessment' => '#10b981',
+    'Attendance' => '#0ea5e9', 'TeacherNote' => '#eab308',
+    'CourseModule' => '#8b5cf6', 'QuestionBank' => '#f43f5e',
+    'Applicant' => '#d946ef', 'Jurusan' => '#0891b2',
+    'ParentStudent' => '#84cc16', 'Submission' => '#f97316',
+    'QuizAttempt' => '#c026d3', 'JurusanCustomSubject' => '#06b6d4',
+];
+
 $actionLabels = [
 'auth.login' => 'Login',
 'auth.logout' => 'Logout',
@@ -111,6 +123,36 @@ $actionColors = [
 'applicant.status_update' => '#b45309', 'applicant.bulk-accept' => 'var(--success)',
 'applicant.bulk-status' => '#b45309', 'applicant.deleted' => '#ef4444',
 ];
+
+function parseUserAgent(?string $ua): string {
+    if (!$ua) return '—';
+    
+    // Browser detection
+    if (preg_match('/Edg\/(\d+)/', $ua, $m)) $browser = 'Edge ' . $m[1];
+    elseif (preg_match('/Chrome\/(\d+)/', $ua, $m)) $browser = 'Chrome ' . $m[1];
+    elseif (preg_match('/Firefox\/(\d+)/', $ua, $m)) $browser = 'Firefox ' . $m[1];
+    elseif (preg_match('/Safari\//', $ua)) $browser = 'Safari';
+    elseif (preg_match('/OPR\/(\d+)/', $ua, $m)) $browser = 'Opera ' . $m[1];
+    else $browser = '?';
+    
+    // OS detection
+    if (preg_match('/Windows NT (\d+\.\d+)/', $ua, $m)) {
+        $versions = ['10.0' => 'Win 10/11', '6.3' => 'Win 8.1', '6.2' => 'Win 8', '6.1' => 'Win 7'];
+        $os = $versions[$m[1]] ?? 'Win ' . $m[1];
+    } elseif (preg_match('/Mac OS X (\d+)[_\.](\d+)/', $ua, $m)) {
+        $os = 'macOS ' . $m[1] . '.' . $m[2];
+    } elseif (preg_match('/Android (\d+)/', $ua, $m)) {
+        $os = 'Android ' . $m[1];
+    } elseif (preg_match('/iPhone; CPU iPhone OS (\d+)_(\d+)/', $ua, $m)) {
+        $os = 'iOS ' . $m[1] . '.' . $m[2];
+    } elseif (preg_match('/Linux/', $ua)) {
+        $os = 'Linux';
+    } else {
+        $os = '?';
+    }
+    
+    return $browser . ' · ' . $os;
+}
 @endphp
 
 @section('content')
@@ -185,22 +227,41 @@ $actionColors = [
         @forelse ($logs as $log)
         @php
           $entityName = $log->entity_identifier;
-          $entityRoleKey = null;
-          if ($log->entity_identifier && str_contains($log->entity_identifier, '|')) {
-            $parts = explode('|', $log->entity_identifier, 2);
-            $entityName = $parts[0];
-            $entityRoleKey = $parts[1] ?? null;
+          $entityRoleLabel = null;
+          if ($log->entity_identifier) {
+            // New format: "Nama (Role)"
+            if (preg_match('/^(.+?)\s*\((.+?)\)$/', $log->entity_identifier, $m)) {
+              $entityName = trim($m[1]);
+              $entityRoleLabel = $m[2];
+            }
+            // Old format fallback: "Nama|role_key"
+            elseif (str_contains($log->entity_identifier, '|')) {
+              $parts = explode('|', $log->entity_identifier, 2);
+              $entityName = $parts[0];
+              $entityRoleLabel = $roleLabels[$parts[1]] ?? $parts[1];
+            }
           }
           $actionLabel = $actionLabels[$log->action] ?? $log->action;
-          if ($entityRoleKey && str_starts_with($log->action, 'user.')) {
-            $roleLabel = $roleLabels[$entityRoleKey] ?? $entityRoleKey;
+          if ($entityRoleLabel && str_starts_with($log->action, 'user.')) {
             if (in_array($log->action, ['user.create', 'user.update', 'user.delete'])) {
-              $actionLabel .= ' ' . strtolower($roleLabel);
+              $actionLabel .= ' ' . strtolower($entityRoleLabel);
             }
           }
         @endphp
         <tr>
-          <td style="font-size:.85rem;white-space:nowrap">{{ $log->created_at->format('d M Y H:i') }}</td>
+          @php
+          $carbon = $log->created_at;
+          $now = now();
+          @endphp
+          <td style="font-size:.85rem;white-space:nowrap">
+            @if ($carbon->isToday())
+              <span>{{ $carbon->format('H:i') }} <span style="color:var(--muted)">WIB</span></span>
+            @elseif ($carbon->isYesterday())
+              <span>{{ $carbon->format('d M H:i') }}</span>
+            @else
+              <span>{{ $carbon->format('d M Y H:i') }}</span>
+            @endif
+          </td>
           <td>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,{{ $roleColors[$log->user->role ?? 'parent'] ?? '#666' }} 12%,var(--card));color:{{ $roleColors[$log->user->role ?? 'parent'] ?? '#666' }};font-weight:800;font-size:.7rem;flex-shrink:0">{{ strtoupper(substr($log->user->name ?? '?', 0, 1)) }}</span>
@@ -215,13 +276,20 @@ $actionColors = [
           <td>
             <span style="padding:4px 10px;border-radius:8px;font-size:.78rem;font-weight:700;background:color-mix(in srgb,{{ $actionColors[$log->action] ?? 'var(--primary-2)' }} 12%,var(--card));color:{{ $actionColors[$log->action] ?? 'var(--primary-2)' }}">{{ $actionLabel }}</span>
           </td>
-          <td style="font-size:.82rem;color:var(--muted)">
-            @if ($log->entity_identifier)
-              <strong style="color:var(--s-ink)">{{ $entityName }}</strong>
-              <span style="font-size:.7rem;display:block;color:var(--muted)">{{ $entityLabels[class_basename($log->entity_type)] ?? class_basename($log->entity_type) }}</span>
+          <td style="font-size:.82rem">
+            @if (str_starts_with($log->action, 'auth.'))
+              <span style="color:var(--muted);font-size:.72rem;white-space:nowrap">{{ parseUserAgent($log->user_agent) }}</span>
+            @elseif ($log->entity_identifier)
+              @if ($entityRoleLabel)
+                <span style="color:var(--s-ink);font-weight:500">{{ $entityName }} <span style="color:var(--muted);font-weight:400">({{ $entityRoleLabel }})</span></span>
+              @else
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="color:var(--s-ink);font-weight:500">{{ $entityName }}</span>
+                  <span style="padding:2px 8px;border-radius:6px;font-size:.7rem;font-weight:600;background:color-mix(in srgb,{{ $entityColors[class_basename($log->entity_type)] ?? '#666' }} 12%,var(--card));color:{{ $entityColors[class_basename($log->entity_type)] ?? '#666' }}">{{ $entityLabels[class_basename($log->entity_type)] ?? class_basename($log->entity_type) }}</span>
+                </div>
+              @endif
             @else
-              {{ $entityLabels[class_basename($log->entity_type)] ?? class_basename($log->entity_type) }}
-              @if ($log->entity_id) <span style="font-family:monospace">#{{ $log->entity_id }}</span> @endif
+              <span style="padding:2px 8px;border-radius:6px;font-size:.7rem;font-weight:600;background:color-mix(in srgb,{{ $entityColors[class_basename($log->entity_type)] ?? '#666' }} 12%,var(--card));color:{{ $entityColors[class_basename($log->entity_type)] ?? '#666' }}">{{ $entityLabels[class_basename($log->entity_type)] ?? class_basename($log->entity_type) }}</span>
             @endif
           </td>
         </tr>
