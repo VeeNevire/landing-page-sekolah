@@ -38,6 +38,9 @@
       <select id="role" name="role" required>
         @php $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'parent' => 'Orang Tua', 'principal' => 'Kepala Sekolah']; @endphp
         @foreach ($roleLabels as $val => $label)
+          @if (auth()->user()->role === 'principal' && $val === 'principal')
+            @continue
+          @endif
           <option value="{{ $val }}" {{ old('role', $user->role ?? '') === $val ? 'selected' : '' }}>{{ $label }}</option>
         @endforeach
       </select>

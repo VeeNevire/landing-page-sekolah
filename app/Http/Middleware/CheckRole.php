@@ -14,6 +14,10 @@ class CheckRole
 
         if (!in_array($user?->role, $roles)) {
             if ($user) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Akses ditolak.'], 403);
+                }
+
                 return match($user->role) {
                     'principal', 'admin' => redirect()->route('admin.dashboard'),
                     'teacher', 'homeroom' => redirect()->route('guru.dashboard'),

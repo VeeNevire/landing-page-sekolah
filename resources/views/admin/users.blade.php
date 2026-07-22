@@ -188,7 +188,9 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
               <option value="teacher">Guru</option>
               <option value="homeroom">Wali Kelas</option>
               <option value="admin">Admin</option>
+              @if (auth()->user()->role !== 'principal')
               <option value="principal">Kepala Sekolah</option>
+              @endif
             </select>
         </div>
 

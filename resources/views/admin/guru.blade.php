@@ -165,7 +165,9 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
             <select id="modal_role" name="role" required>
               <option value="teacher">Guru</option>
               <option value="homeroom">Wali Kelas</option>
+              @if (auth()->user()->role !== 'principal')
               <option value="principal">Kepala Sekolah</option>
+              @endif
             </select>
         </div>
 
