@@ -335,7 +335,7 @@ class GuruController extends Controller
             }
         }
 
-        AuditService::log('assessment.create', 'Assessment', $assessment->id);
+        AuditService::log('assessment.create', 'Assessment', $assessment->id, $assessment->title);
 
         return back()->with('success', "Nilai \"{$validated['title']}\" berhasil disimpan.");
     }
@@ -387,7 +387,7 @@ class GuruController extends Controller
             }
         }
 
-        AuditService::log('attendance.record', 'Attendance', null, $user->id);
+        AuditService::log('attendance.record', 'Attendance', null, null, $user->id);
         return back()->with('success', 'Absensi berhasil disimpan.');
     }
 
@@ -451,7 +451,7 @@ class GuruController extends Controller
             'follow_up' => $validated['follow_up'] ?? null,
         ]);
 
-        AuditService::log('teacher-note.create', 'TeacherNote', $note->id);
+        AuditService::log('teacher-note.create', 'TeacherNote', $note->id, null);
         return redirect()->route('guru.catatan', ['student' => $validated['student_id']])->with('success', 'Catatan berhasil disimpan.');
     }
 
@@ -492,7 +492,7 @@ class GuruController extends Controller
             ->whereNull('published_at')
             ->update(['published_at' => now()]);
 
-        AuditService::log('grade.publish', 'Assessment', null);
+        AuditService::log('grade.publish', 'Assessment', null, null);
         return back()->with('success', "Nilai untuk kelas {$class} berhasil dipublikasikan.");
     }
 
@@ -576,7 +576,7 @@ class GuruController extends Controller
 
         $material = Material::create($data);
 
-        AuditService::log('material.create', 'Material', $material->id);
+        AuditService::log('material.create', 'Material', $material->id, $material->title);
 
         $redirect = redirect()->route('guru.materi', ['ta_id' => $validated['teaching_assignment_id']]);
         return $redirect->with('success', 'Materi berhasil ditambahkan.');
@@ -594,7 +594,7 @@ class GuruController extends Controller
             Storage::disk('public')->delete($material->file_path);
         }
 
-        AuditService::log('material.delete', 'Material', $material->id);
+        AuditService::log('material.delete', 'Material', $material->id, $material->title);
         $material->delete();
 
         return back()->with('success', 'Materi berhasil dihapus.');

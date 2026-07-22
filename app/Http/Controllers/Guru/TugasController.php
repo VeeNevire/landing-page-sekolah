@@ -117,7 +117,7 @@ class TugasController extends Controller
         }
 
         $assignment = Assignment::create($data);
-        AuditService::log('assignment.create', 'Assignment', $assignment->id);
+        AuditService::log('assignment.create', 'Assignment', $assignment->id, $assignment->title);
 
         return redirect()->route('guru.tugas.index', ['ta_id' => $validated['teaching_assignment_id']])
             ->with('success', 'Tugas berhasil dibuat.');
@@ -179,7 +179,7 @@ class TugasController extends Controller
         }
 
         $assignment->update($data);
-        AuditService::log('assignment.update', 'Assignment', $assignment->id);
+        AuditService::log('assignment.update', 'Assignment', $assignment->id, $assignment->title);
 
         return redirect()->route('guru.tugas.index', ['ta_id' => $assignment->teaching_assignment_id])
             ->with('success', 'Tugas berhasil diperbarui.');
@@ -196,7 +196,7 @@ class TugasController extends Controller
             Storage::disk('public')->delete($assignment->attachment_path);
         }
 
-        AuditService::log('assignment.delete', 'Assignment', $assignment->id);
+        AuditService::log('assignment.delete', 'Assignment', $assignment->id, $assignment->title);
         $assignment->delete();
 
         return back()->with('success', 'Tugas berhasil dihapus.');
@@ -214,7 +214,7 @@ class TugasController extends Controller
         ]);
 
         $status = $assignment->published_at ? 'dipublikasikan' : 'ditarik';
-        AuditService::log('assignment.publish', 'Assignment', $assignment->id);
+        AuditService::log('assignment.publish', 'Assignment', $assignment->id, $assignment->title);
 
         return back()->with('success', "Tugas berhasil {$status}.");
     }
@@ -295,7 +295,7 @@ class TugasController extends Controller
             ]
         );
 
-        AuditService::log('submission.grade', 'Submission', $submission->id);
+        AuditService::log('submission.grade', 'Submission', $submission->id, null);
 
         return back()->with('success', 'Nilai berhasil disimpan untuk ' . $submission->student->full_name);
     }

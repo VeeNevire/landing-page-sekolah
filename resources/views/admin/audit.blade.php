@@ -7,53 +7,109 @@ $currentRole = request('role', '');
 $roleColors = ['admin' => '#4338ca', 'teacher' => '#0369a1', 'homeroom' => '#0d9488', 'parent' => '#b45309', 'principal' => '#7c3aed'];
 $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'parent' => 'Orang Tua', 'principal' => 'Kepsek'];
 
+$entityLabels = [
+'User' => 'Akun', 'Student' => 'Siswa', 'Subject' => 'Mapel',
+'Quiz' => 'Kuis', 'Assignment' => 'Tugas', 'Material' => 'Materi',
+'AcademicPeriod' => 'Periode', 'TeachingAssignment' => 'Penugasan',
+'Jadwal' => 'Jadwal', 'Assessment' => 'Nilai',
+'Attendance' => 'Absensi', 'TeacherNote' => 'Catatan',
+'CourseModule' => 'Modul', 'QuestionBank' => 'Soal',
+'Applicant' => 'Pendaftar', 'Jurusan' => 'Jurusan',
+'ParentStudent' => 'Orang Tua-Siswa', 'Submission' => 'Tugas',
+'QuizAttempt' => 'Percobaan Kuis', 'JurusanCustomSubject' => 'Mapel Custom',
+];
+
 $actionLabels = [
 'auth.login' => 'Login',
 'auth.logout' => 'Logout',
-'user.create' => 'Membuat pengguna',
-'user.update' => 'Mengedit pengguna',
-'user.toggle' => 'Toggle status pengguna',
-'user.reset-password' => 'Reset password',
-'user.delete' => 'Menghapus pengguna',
-'student.create' => 'Membuat siswa',
-'student.update' => 'Mengedit siswa',
-'student.delete' => 'Menghapus siswa',
-'subject.create' => 'Membuat mata pelajaran',
+'user.create' => 'Menambahkan akun',
+'user.update' => 'Mengedit akun',
+'user.toggle' => 'Mengubah status akun',
+'user.reset-password' => 'Mereset password akun',
+'user.delete' => 'Menghapus akun',
+'student.create' => 'Menambahkan data siswa',
+'student.update' => 'Mengedit data siswa',
+'student.delete' => 'Menghapus data siswa',
+'student.reset-password' => 'Mereset password siswa',
+'subject.create' => 'Menambahkan mata pelajaran',
 'subject.update' => 'Mengedit mata pelajaran',
 'subject.delete' => 'Menghapus mata pelajaran',
-'period.create' => 'Membuat periode',
+'subject.assign' => 'Menugaskan mata pelajaran',
+'subject.assign-cs' => 'Menambahkan mapel custom',
+'period.create' => 'Menambahkan periode',
 'period.update' => 'Mengedit periode',
 'period.delete' => 'Menghapus periode',
 'period.activate' => 'Mengaktifkan periode',
-'teaching.create' => 'Membuat penugasan',
+'teaching.create' => 'Menambahkan penugasan',
 'teaching.update' => 'Mengedit penugasan',
 'teaching.delete' => 'Menghapus penugasan',
+'jurusan.create' => 'Menambahkan jurusan',
+'jurusan.update' => 'Mengedit jurusan',
+'jurusan.delete' => 'Menghapus jurusan',
+'jadwal.create' => 'Menambahkan jadwal',
+'jadwal.update' => 'Mengedit jadwal',
+'jadwal.delete' => 'Menghapus jadwal',
 'assessment.create' => 'Input nilai',
 'attendance.record' => 'Input absensi',
 'teacher-note.create' => 'Menulis catatan',
 'grade.publish' => 'Mempublikasi nilai',
 'material.create' => 'Upload materi',
 'material.delete' => 'Menghapus materi',
+'module.create' => 'Menambahkan modul',
+'module.update' => 'Mengedit modul',
+'module.delete' => 'Menghapus modul',
+'quiz.create' => 'Menambahkan kuis',
+'quiz.update' => 'Mengedit kuis',
+'quiz.delete' => 'Menghapus kuis',
+'quiz.publish' => 'Mempublikasi kuis',
+'quiz.grade_essay' => 'Menilai essay',
+'assignment.create' => 'Menambahkan tugas',
+'assignment.update' => 'Mengedit tugas',
+'assignment.delete' => 'Menghapus tugas',
+'assignment.publish' => 'Mempublikasi tugas',
+'submission.grade' => 'Menilai tugas',
 'parent-student.create' => 'Menghubungkan orang tua-siswa',
 'parent-student.delete' => 'Memutuskan orang tua-siswa',
+'question_bank.bulk_create' => 'Menambahkan soal',
+'question_bank.update' => 'Mengedit soal',
+'question_bank.delete' => 'Menghapus soal',
+'applicant.status_update' => 'Mengubah status pendaftar',
+'applicant.bulk-accept' => 'Menerima pendaftar',
+'applicant.bulk-status' => 'Mengubah status pendaftar massal',
+'applicant.deleted' => 'Menghapus pendaftar',
 ];
 
 $actionColors = [
 'auth.login' => 'var(--success)', 'auth.logout' => 'var(--muted)',
 'user.create' => 'var(--success)', 'user.update' => 'var(--primary-2)',
-'user.delete' => '#ef4444', 'user.toggle' => '#b45309',
+'user.delete' => '#ef4444', 'user.toggle' => '#b45309', 'user.reset-password' => '#b45309',
 'student.create' => 'var(--success)', 'student.update' => 'var(--primary-2)',
-'student.delete' => '#ef4444',
+'student.delete' => '#ef4444', 'student.reset-password' => '#b45309',
 'subject.create' => 'var(--success)', 'subject.update' => 'var(--primary-2)',
-'subject.delete' => '#ef4444',
+'subject.delete' => '#ef4444', 'subject.assign' => 'var(--primary-2)', 'subject.assign-cs' => 'var(--primary-2)',
 'period.create' => 'var(--success)', 'period.update' => 'var(--primary-2)',
 'period.delete' => '#ef4444', 'period.activate' => '#b45309',
 'teaching.create' => 'var(--success)', 'teaching.update' => 'var(--primary-2)',
 'teaching.delete' => '#ef4444',
+'jurusan.create' => 'var(--success)', 'jurusan.update' => 'var(--primary-2)',
+'jurusan.delete' => '#ef4444',
+'jadwal.create' => 'var(--success)', 'jadwal.update' => 'var(--primary-2)',
+'jadwal.delete' => '#ef4444',
 'assessment.create' => 'var(--primary-2)', 'attendance.record' => 'var(--primary-2)',
 'teacher-note.create' => 'var(--primary-2)', 'grade.publish' => '#b45309',
 'material.create' => 'var(--success)', 'material.delete' => '#ef4444',
+'module.create' => 'var(--success)', 'module.update' => 'var(--primary-2)',
+'module.delete' => '#ef4444',
+'quiz.create' => 'var(--success)', 'quiz.update' => 'var(--primary-2)',
+'quiz.delete' => '#ef4444', 'quiz.publish' => '#b45309', 'quiz.grade_essay' => '#b45309',
+'assignment.create' => 'var(--success)', 'assignment.update' => 'var(--primary-2)',
+'assignment.delete' => '#ef4444', 'assignment.publish' => '#b45309',
+'submission.grade' => '#b45309',
 'parent-student.create' => 'var(--success)', 'parent-student.delete' => '#ef4444',
+'question_bank.bulk_create' => 'var(--success)', 'question_bank.update' => 'var(--primary-2)',
+'question_bank.delete' => '#ef4444',
+'applicant.status_update' => '#b45309', 'applicant.bulk-accept' => 'var(--success)',
+'applicant.bulk-status' => '#b45309', 'applicant.deleted' => '#ef4444',
 ];
 @endphp
 
@@ -127,6 +183,22 @@ $actionColors = [
       </thead>
       <tbody>
         @forelse ($logs as $log)
+        @php
+          $entityName = $log->entity_identifier;
+          $entityRoleKey = null;
+          if ($log->entity_identifier && str_contains($log->entity_identifier, '|')) {
+            $parts = explode('|', $log->entity_identifier, 2);
+            $entityName = $parts[0];
+            $entityRoleKey = $parts[1] ?? null;
+          }
+          $actionLabel = $actionLabels[$log->action] ?? $log->action;
+          if ($entityRoleKey && str_starts_with($log->action, 'user.')) {
+            $roleLabel = $roleLabels[$entityRoleKey] ?? $entityRoleKey;
+            if (in_array($log->action, ['user.create', 'user.update', 'user.delete'])) {
+              $actionLabel .= ' ' . strtolower($roleLabel);
+            }
+          }
+        @endphp
         <tr>
           <td style="font-size:.85rem;white-space:nowrap">{{ $log->created_at->format('d M Y H:i') }}</td>
           <td>
@@ -141,11 +213,16 @@ $actionColors = [
             </div>
           </td>
           <td>
-            <span style="padding:4px 10px;border-radius:8px;font-size:.78rem;font-weight:700;background:color-mix(in srgb,{{ $actionColors[$log->action] ?? 'var(--primary-2)' }} 12%,var(--card));color:{{ $actionColors[$log->action] ?? 'var(--primary-2)' }}">{{ $actionLabels[$log->action] ?? $log->action }}</span>
+            <span style="padding:4px 10px;border-radius:8px;font-size:.78rem;font-weight:700;background:color-mix(in srgb,{{ $actionColors[$log->action] ?? 'var(--primary-2)' }} 12%,var(--card));color:{{ $actionColors[$log->action] ?? 'var(--primary-2)' }}">{{ $actionLabel }}</span>
           </td>
           <td style="font-size:.82rem;color:var(--muted)">
-            {{ $log->entity_type ? class_basename($log->entity_type) : '-' }}
-            @if ($log->entity_id) <span style="font-family:monospace">#{{ $log->entity_id }}</span> @endif
+            @if ($log->entity_identifier)
+              <strong style="color:var(--s-ink)">{{ $entityName }}</strong>
+              <span style="font-size:.7rem;display:block;color:var(--muted)">{{ $entityLabels[class_basename($log->entity_type)] ?? class_basename($log->entity_type) }}</span>
+            @else
+              {{ $entityLabels[class_basename($log->entity_type)] ?? class_basename($log->entity_type) }}
+              @if ($log->entity_id) <span style="font-family:monospace">#{{ $log->entity_id }}</span> @endif
+            @endif
           </td>
         </tr>
         @empty

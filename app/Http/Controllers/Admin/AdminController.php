@@ -156,7 +156,7 @@ class AdminController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        AuditService::log('user.create', 'User', $user->id);
+        AuditService::log('user.create', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Pengguna berhasil ditambahkan.', 'user' => $user]);
@@ -205,7 +205,7 @@ class AdminController extends Controller
 
         $user->update($data);
 
-        AuditService::log('user.update', 'User', $user->id);
+        AuditService::log('user.update', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Pengguna berhasil diperbarui.', 'user' => $user]);
@@ -219,7 +219,7 @@ class AdminController extends Controller
         $user->update(['is_active' => !$user->is_active]);
         $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
-        AuditService::log('user.toggle', 'User', $user->id);
+        AuditService::log('user.toggle', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => "Akun {$user->name} berhasil {$status}.", 'is_active' => $user->is_active]);
@@ -236,7 +236,7 @@ class AdminController extends Controller
 
         $user->update(['password' => Hash::make($validated['new_password'])]);
 
-        AuditService::log('user.reset-password', 'User', $user->id);
+        AuditService::log('user.reset-password', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
         return back()->with('success', "Password {$user->name} berhasil direset.");
     }
 
@@ -249,7 +249,7 @@ class AdminController extends Controller
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
         }
 
-        AuditService::log('user.delete', 'User', $user->id);
+        AuditService::log('user.delete', 'User', $user->id, ($user->full_name ?: $user->name) . '|' . $user->role);
         $user->delete();
 
         if ($request->ajax()) {
@@ -476,7 +476,7 @@ class AdminController extends Controller
                 }
             }
 
-            AuditService::log('student.create', 'Student', $student->id);
+            AuditService::log('student.create', 'Student', $student->id, $student->full_name);
             return response()->json(['success' => true, 'message' => 'Siswa berhasil ditambahkan. Kredensial terkirim ke email ' . $validated['student_email'] . '.']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
@@ -559,7 +559,7 @@ class AdminController extends Controller
                 }
             }
 
-            AuditService::log('student.update', 'Student', $student->id);
+            AuditService::log('student.update', 'Student', $student->id, $student->full_name);
             return response()->json(['success' => true, 'message' => 'Data siswa berhasil diperbarui.']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
@@ -571,7 +571,7 @@ class AdminController extends Controller
 
     public function studentsDestroy(Request $request, Student $student)
     {
-        AuditService::log('student.delete', 'Student', $student->id);
+        AuditService::log('student.delete', 'Student', $student->id, $student->full_name);
         $student->delete();
 
         return response()->json(['success' => true, 'message' => 'Siswa berhasil dihapus.']);
@@ -598,7 +598,7 @@ class AdminController extends Controller
             \Log::error('Gagal kirim email reset password: ' . $e->getMessage());
         }
 
-        AuditService::log('student.reset-password', 'Student', $student->id);
+        AuditService::log('student.reset-password', 'Student', $student->id, $student->full_name);
 
         return response()->json(['success' => true, 'message' => 'Password berhasil direset. Kredensial baru terkirim ke email ' . $student->user->email . '.']);
 
@@ -740,7 +740,7 @@ class AdminController extends Controller
             }
         }
 
-        AuditService::log('subject.assign-cs', 'JurusanCustomSubject');
+        AuditService::log('subject.assign-cs', 'JurusanCustomSubject', null, null);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Pelajaran jurusan berhasil disimpan.']);
@@ -814,7 +814,7 @@ class AdminController extends Controller
 
         $subject->kelas()->sync($validated['kelas_ids'] ?? []);
 
-        AuditService::log('subject.assign', 'Subject', $subject->id);
+        AuditService::log('subject.assign', 'Subject', $subject->id, $subject->name);
 
         return response()->json(['success' => true, 'message' => 'Kelas berhasil diperbarui.']);
     }
@@ -840,7 +840,7 @@ class AdminController extends Controller
             $subject->gurus()->syncWithPivotValues($validated['guru_ids'], ['semester_id' => $activePeriod->id]);
         }
 
-        AuditService::log('subject.create', 'Subject', $subject->id);
+        AuditService::log('subject.create', 'Subject', $subject->id, $subject->name);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Mata pelajaran berhasil ditambahkan.']);
@@ -868,7 +868,7 @@ class AdminController extends Controller
         $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
         $subject->gurus()->syncWithPivotValues($validated['guru_ids'] ?? [], ['semester_id' => $activePeriod?->id]);
 
-        AuditService::log('subject.update', 'Subject', $subject->id);
+        AuditService::log('subject.update', 'Subject', $subject->id, $subject->name);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Mata pelajaran berhasil diperbarui.']);
@@ -879,7 +879,7 @@ class AdminController extends Controller
 
     public function subjectsDestroy(Request $request, Subject $subject)
     {
-        AuditService::log('subject.delete', 'Subject', $subject->id);
+        AuditService::log('subject.delete', 'Subject', $subject->id, $subject->name);
         $subject->gurus()->detach();
         $subject->teachingAssignments()->delete();
         $subject->delete();
@@ -935,7 +935,7 @@ class AdminController extends Controller
             }
         }
 
-        AuditService::log('jurusan.create', 'Jurusan', $jurusan->id);
+        AuditService::log('jurusan.create', 'Jurusan', $jurusan->id, $jurusan->nama);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Jurusan berhasil ditambahkan.']);
@@ -987,7 +987,7 @@ class AdminController extends Controller
             }
         }
 
-        AuditService::log('jurusan.update', 'Jurusan', $jurusan->id);
+        AuditService::log('jurusan.update', 'Jurusan', $jurusan->id, $jurusan->nama);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Jurusan berhasil diperbarui.']);
@@ -998,7 +998,7 @@ class AdminController extends Controller
 
     public function jurusansDestroy(Request $request, Jurusan $jurusan)
     {
-        AuditService::log('jurusan.delete', 'Jurusan', $jurusan->id);
+        AuditService::log('jurusan.delete', 'Jurusan', $jurusan->id, $jurusan->nama);
         $jurusan->delete();
 
         if ($request->ajax()) {
@@ -1218,7 +1218,7 @@ class AdminController extends Controller
 
         AcademicPeriod::create($validated);
 
-        AuditService::log('period.create', 'AcademicPeriod');
+        AuditService::log('period.create', 'AcademicPeriod', null, null);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Periode akademik berhasil ditambahkan.']);
@@ -1238,7 +1238,7 @@ class AdminController extends Controller
 
         $period->update($validated);
 
-        AuditService::log('period.update', 'AcademicPeriod', $period->id);
+        AuditService::log('period.update', 'AcademicPeriod', $period->id, $period->academic_year . ' ' . $period->semester);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Periode akademik berhasil diperbarui.']);
@@ -1249,7 +1249,7 @@ class AdminController extends Controller
 
     public function periodsDestroy(Request $request, AcademicPeriod $period)
     {
-        AuditService::log('period.delete', 'AcademicPeriod', $period->id);
+        AuditService::log('period.delete', 'AcademicPeriod', $period->id, $period->academic_year . ' ' . $period->semester);
         $period->delete();
 
         if ($request->ajax()) {
@@ -1264,7 +1264,7 @@ class AdminController extends Controller
         AcademicPeriod::where('is_active', true)->update(['is_active' => false]);
         $period->update(['is_active' => true]);
 
-        AuditService::log('period.activate', 'AcademicPeriod', $period->id);
+        AuditService::log('period.activate', 'AcademicPeriod', $period->id, $period->academic_year . ' ' . $period->semester);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => "Periode {$period->academic_year} {$period->semester} diaktifkan."]);
@@ -1343,7 +1343,7 @@ class AdminController extends Controller
 
         TeachingAssignment::create($validated);
 
-        AuditService::log('teaching.create', 'TeachingAssignment');
+        AuditService::log('teaching.create', 'TeachingAssignment', null, null);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Penugasan guru berhasil ditambahkan.']);
@@ -1371,7 +1371,7 @@ class AdminController extends Controller
 
         $assignment->update($validated);
 
-        AuditService::log('teaching.update', 'TeachingAssignment', $assignment->id);
+        AuditService::log('teaching.update', 'TeachingAssignment', $assignment->id, null);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Penugasan berhasil diperbarui.']);
@@ -1382,7 +1382,7 @@ class AdminController extends Controller
 
     public function teachingDestroy(Request $request, TeachingAssignment $assignment)
     {
-        AuditService::log('teaching.delete', 'TeachingAssignment', $assignment->id);
+        AuditService::log('teaching.delete', 'TeachingAssignment', $assignment->id, null);
         $assignment->delete();
 
         if ($request->ajax()) {
@@ -1430,13 +1430,13 @@ class AdminController extends Controller
             'is_primary' => $validated['is_primary'] ?? false,
         ]);
 
-        AuditService::log('parent-student.create', 'ParentStudent', $validated['student_id']);
+        AuditService::log('parent-student.create', 'ParentStudent', $validated['student_id'], null);
         return back()->with('success', 'Hubungan orang tua–siswa berhasil ditambahkan.');
     }
 
     public function parentStudentDestroy(Request $request)
     {
-        AuditService::log('parent-student.delete', 'ParentStudent', $request->student_id);
+        AuditService::log('parent-student.delete', 'ParentStudent', $request->student_id, null);
         \DB::table('parent_student')
             ->where('parent_id', $request->parent_id)
             ->where('student_id', $request->student_id)
@@ -1519,7 +1519,7 @@ class AdminController extends Controller
 
         $applicant->update($validated);
 
-        AuditService::log('applicant.status_update', 'Applicant', $applicant->id);
+        AuditService::log('applicant.status_update', 'Applicant', $applicant->id, $applicant->full_name);
 
         return response()->json(['success' => true, 'message' => 'Status pendaftar berhasil diperbarui.']);
     }
@@ -1580,9 +1580,9 @@ class AdminController extends Controller
                     }
                 }
 
-                AuditService::log('applicant.bulk-accept', 'Applicant', $applicant->id);
+                AuditService::log('applicant.bulk-accept', 'Applicant', $applicant->id, $applicant->full_name);
             } else {
-                AuditService::log('applicant.bulk-status', 'Applicant', $applicant->id);
+                AuditService::log('applicant.bulk-status', 'Applicant', $applicant->id, $applicant->full_name);
             }
         }
 
@@ -1595,7 +1595,7 @@ class AdminController extends Controller
             Storage::disk('public')->delete($doc->file_path);
         }
 
-        AuditService::log('applicant.deleted', 'Applicant', $applicant->id);
+        AuditService::log('applicant.deleted', 'Applicant', $applicant->id, $applicant->full_name);
 
         $applicant->delete();
 

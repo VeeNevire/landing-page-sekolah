@@ -10,14 +10,16 @@ class AuditService
         string $action,
         ?string $entityType = null,
         $entityId = null,
+        ?string $entityIdentifier = null,
         ?int $userId = null
     ): AuditLog {
         return AuditLog::create([
-            'user_id'     => $userId ?? auth()->id(),
-            'action'      => $action,
-            'entity_type' => $entityType,
-            'entity_id'   => $entityId ? (string) $entityId : null,
-            'user_agent'  => request()->userAgent(),
+            'user_id'           => $userId ?? auth()->id(),
+            'action'            => $action,
+            'entity_type'       => $entityType,
+            'entity_id'         => $entityId ? (string) $entityId : null,
+            'entity_identifier' => $entityIdentifier,
+            'user_agent'        => request()->userAgent(),
         ]);
     }
 }

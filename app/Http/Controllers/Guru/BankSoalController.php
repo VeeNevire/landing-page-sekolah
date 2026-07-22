@@ -130,7 +130,7 @@ class BankSoalController extends Controller
             $created++;
         }
 
-        AuditService::log('question_bank.bulk_create', 'QuestionBank', $validated['teaching_assignment_id']);
+        AuditService::log('question_bank.bulk_create', 'QuestionBank', $validated['teaching_assignment_id'], null);
 
         return redirect()->route('guru.bank-soal.index', ['ta_id' => $validated['teaching_assignment_id']])
             ->with('success', "{$created} soal berhasil ditambahkan ke bank soal.");
@@ -163,7 +163,7 @@ class BankSoalController extends Controller
             'explanation' => $validated['explanation'] ?? null,
         ]);
 
-        AuditService::log('question_bank.update', 'QuestionBank', $questionBank->id);
+        AuditService::log('question_bank.update', 'QuestionBank', $questionBank->id, null);
 
         return redirect()->route('guru.bank-soal.index', ['ta_id' => $questionBank->teaching_assignment_id])
             ->with('success', 'Soal berhasil diperbarui.');
@@ -186,7 +186,7 @@ class BankSoalController extends Controller
             abort(403);
         }
 
-        AuditService::log('question_bank.delete', 'QuestionBank', $questionBank->id);
+        AuditService::log('question_bank.delete', 'QuestionBank', $questionBank->id, null);
         $questionBank->delete();
 
         return back()->with('success', 'Soal berhasil dihapus dari bank soal.');

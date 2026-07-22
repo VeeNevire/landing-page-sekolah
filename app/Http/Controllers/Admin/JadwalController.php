@@ -165,7 +165,7 @@ class JadwalController extends Controller
 
         $jadwal = Jadwal::create($validated);
 
-        AuditService::log('jadwal.create', 'Jadwal', $jadwal->id);
+        AuditService::log('jadwal.create', 'Jadwal', $jadwal->id, null);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Jadwal berhasil ditambahkan.']);
@@ -195,7 +195,7 @@ class JadwalController extends Controller
 
         $jadwal->update($validated);
 
-        AuditService::log('jadwal.update', 'Jadwal', $jadwal->id);
+        AuditService::log('jadwal.update', 'Jadwal', $jadwal->id, null);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Jadwal berhasil diperbarui.']);
@@ -206,7 +206,7 @@ class JadwalController extends Controller
 
     public function destroy(Request $request, Jadwal $jadwal)
     {
-        AuditService::log('jadwal.delete', 'Jadwal', $jadwal->id);
+        AuditService::log('jadwal.delete', 'Jadwal', $jadwal->id, null);
         $jadwal->delete();
 
         if ($request->ajax()) {

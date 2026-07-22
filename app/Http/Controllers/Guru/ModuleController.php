@@ -34,7 +34,7 @@ class ModuleController extends Controller
             'order' => $maxOrder + 1,
         ]);
 
-        AuditService::log('module.create', 'CourseModule', $module->id);
+        AuditService::log('module.create', 'CourseModule', $module->id, $module->title);
 
         return response()->json([
             'success' => true,
@@ -56,7 +56,7 @@ class ModuleController extends Controller
         ]);
 
         $module->update($validated);
-        AuditService::log('module.update', 'CourseModule', $module->id);
+        AuditService::log('module.update', 'CourseModule', $module->id, $module->title);
 
         return response()->json([
             'success' => true,
@@ -72,7 +72,7 @@ class ModuleController extends Controller
             abort(403);
         }
 
-        AuditService::log('module.delete', 'CourseModule', $module->id);
+        AuditService::log('module.delete', 'CourseModule', $module->id, $module->title);
         $module->delete();
 
         return response()->json([

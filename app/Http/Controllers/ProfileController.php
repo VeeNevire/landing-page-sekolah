@@ -45,7 +45,7 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        AuditService::log('auth.logout', 'User', auth()->id(), auth()->id());
+        AuditService::log('auth.logout', 'User', auth()->id(), auth()->user()->name, auth()->id());
 
         // Revoke Google OAuth token jika user login via Google
         if ($user && $user->google_id) {

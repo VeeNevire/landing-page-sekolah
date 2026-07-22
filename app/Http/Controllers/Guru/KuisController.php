@@ -131,7 +131,7 @@ class KuisController extends Controller
             ]);
         }
 
-        AuditService::log('quiz.create', 'Quiz', $quiz->id);
+        AuditService::log('quiz.create', 'Quiz', $quiz->id, $quiz->title);
 
         return redirect()->route('guru.kuis.index', ['ta_id' => $validated['teaching_assignment_id']])
             ->with('success', 'Kuis berhasil dibuat.');
@@ -205,7 +205,7 @@ class KuisController extends Controller
             ]);
         }
 
-        AuditService::log('quiz.update', 'Quiz', $quiz->id);
+        AuditService::log('quiz.update', 'Quiz', $quiz->id, $quiz->title);
 
         return redirect()->route('guru.kuis.index', ['ta_id' => $quiz->teaching_assignment_id])
             ->with('success', 'Kuis berhasil diperbarui.');
@@ -218,7 +218,7 @@ class KuisController extends Controller
             abort(403);
         }
 
-        AuditService::log('quiz.delete', 'Quiz', $quiz->id);
+        AuditService::log('quiz.delete', 'Quiz', $quiz->id, $quiz->title);
         $quiz->delete();
 
         return back()->with('success', 'Kuis berhasil dihapus.');
@@ -236,7 +236,7 @@ class KuisController extends Controller
         ]);
 
         $status = $quiz->published_at ? 'dipublikasikan' : 'ditarik';
-        AuditService::log('quiz.publish', 'Quiz', $quiz->id);
+        AuditService::log('quiz.publish', 'Quiz', $quiz->id, $quiz->title);
 
         return back()->with('success', "Kuis berhasil {$status}.");
     }
@@ -324,7 +324,7 @@ class KuisController extends Controller
             ]
         );
 
-        AuditService::log('quiz.grade_essay', 'QuizAttempt', $attempt->id);
+        AuditService::log('quiz.grade_essay', 'QuizAttempt', $attempt->id, null);
 
         return back()->with('success', 'Nilai essay berhasil disimpan.');
     }

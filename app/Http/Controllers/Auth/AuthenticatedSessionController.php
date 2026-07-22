@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $role = $user->role ?? 'parent';
 
-        AuditService::log('auth.login', 'User', $user->id, $user->id);
+        AuditService::log('auth.login', 'User', $user->id, $user->name, $user->id);
 
         if ($role === 'admin') {
             return redirect()->route('admin.dashboard');
@@ -82,7 +82,7 @@ class AuthenticatedSessionController extends Controller
     {
         $user = Auth::user();
         
-        AuditService::log('auth.logout', 'User', auth()->id(), auth()->id());
+        AuditService::log('auth.logout', 'User', auth()->id(), auth()->user()->name, auth()->id());
         
         // Revoke Google OAuth token jika user login via Google
         if ($user && $user->google_id) {
