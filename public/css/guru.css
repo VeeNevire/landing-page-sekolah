@@ -12,29 +12,43 @@
 }
 .guru-body .portal-sidebar .brand{color:var(--primary);padding:0 6px 10px}
 .guru-body .portal-sidebar .brand-text small{color:var(--muted)}
-.guru-body .portal-menu a{color:#5f6f82;padding:8px 10px;border-radius:8px}
-.guru-body .portal-menu a:hover{background:color-mix(in srgb,var(--primary-4) 12%,transparent);color:var(--primary)}
-.guru-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 18%,transparent);color:var(--primary)}
+.guru-body .portal-menu a{color:#5f6f82;padding:8px 10px;border-radius:8px;transition:all .25s cubic-bezier(.4,0,.2,1);position:relative}
+.guru-body .portal-menu a::before{content:'';position:absolute;left:2px;top:50%;transform:translateY(-50%);width:3px;height:0;border-radius:0 2px 2px 0;background:var(--primary-4);transition:height .2s ease}
+.guru-body .portal-menu a.active::before{height:60%}
+.guru-body .portal-menu a:hover{background:color-mix(in srgb,var(--primary-4) 18%,transparent);color:var(--primary);transform:translateX(4px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.guru-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 22%,transparent);color:var(--primary);transform:translateX(3px)}
 .guru-body .portal-menu-icon{color:rgba(0,0,0,.2)}
 .guru-body .portal-menu a:hover .portal-menu-icon,
 .guru-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
 .guru-body .portal-menu-group{color:rgba(0,0,0,.2);padding:14px 10px 4px;font-size:.66rem}
 .guru-body .portal-menu-divider{height:1.5px;margin:5px 10px;border-radius:2px;background:rgba(95,111,130,.5)}
-.guru-body .portal-sidebar-footer a{color:var(--muted);padding:7px 10px;font-size:.82rem}
-.guru-body .portal-sidebar-footer a:hover{background:color-mix(in srgb,var(--primary-4) 10%,transparent);color:var(--primary)}
+.guru-body .portal-menu{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(95,111,130,.2) transparent;margin:0 -12px;padding:0 12px 4px}
+.guru-body .portal-menu::-webkit-scrollbar{width:5px}
+.guru-body .portal-menu::-webkit-scrollbar-track{background:transparent}
+.guru-body .portal-menu::-webkit-scrollbar-thumb{background:rgba(95,111,130,.2);border-radius:3px}
+.guru-body .portal-sidebar-footer a,
+.guru-body .portal-sidebar-footer .logout-btn{color:var(--muted);font-size:.82rem;padding:9px 10px;border-radius:8px;transition:all .25s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:10px}
+.guru-body .portal-sidebar-footer a:hover{background:color-mix(in srgb,var(--primary-4) 14%,transparent);color:var(--primary);transform:translateX(4px)}
+.guru-body .portal-sidebar-footer .logout-btn{width:100%;border:none;background:transparent;cursor:pointer;font-family:inherit}
+.guru-body .portal-sidebar-footer .logout-btn:hover{background:color-mix(in srgb,#ef4444 10%,transparent);color:#ef4444;transform:translateX(4px)}
+.guru-body .portal-sidebar-footer a svg,.guru-body .portal-sidebar-footer .logout-btn svg{transition:transform .2s ease}
+.guru-body .portal-sidebar-footer a:hover svg,.guru-body .portal-sidebar-footer .logout-btn:hover svg{transform:translateX(2px)}
 
 body.dark.guru-body .portal-sidebar{background:#0f2035;color:var(--ink);border-right:1px solid var(--line)}
 body.dark.guru-body .portal-sidebar .brand{color:var(--primary-2)}
 body.dark.guru-body .portal-sidebar .brand-text small{color:var(--muted)}
-body.dark.guru-body .portal-menu a{color:var(--muted)}
+body.dark.guru-body .portal-menu a{color:var(--muted);transition:all .25s cubic-bezier(.4,0,.2,1)}
+body.dark.guru-body .portal-menu a::before{background:var(--primary-3)}
 body.dark.guru-body .portal-menu-group{color:rgba(255,255,255,.2)}
-body.dark.guru-body .portal-menu a:hover{background:rgba(255,255,255,.06);color:white}
-body.dark.guru-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 15%,var(--card));color:var(--primary-2)}
+body.dark.guru-body .portal-menu a:hover{background:rgba(255,255,255,.1);color:white;transform:translateX(4px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+body.dark.guru-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 20%,var(--card));color:var(--primary-2);transform:translateX(3px)}
 body.dark.guru-body .portal-menu-icon{color:rgba(255,255,255,.25)}
 body.dark.guru-body .portal-menu a:hover .portal-menu-icon,
 body.dark.guru-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
-body.dark.guru-body .portal-sidebar-footer a{color:var(--muted);padding:7px 10px;font-size:.82rem}
-body.dark.guru-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,.06);color:white}
+body.dark.guru-body .portal-sidebar-footer a,
+body.dark.guru-body .portal-sidebar-footer .logout-btn{color:var(--muted);padding:7px 10px;font-size:.82rem}
+body.dark.guru-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,.1);color:white;transform:translateX(4px)}
+body.dark.guru-body .portal-sidebar-footer .logout-btn:hover{background:rgba(255,255,255,.1);color:#f87171;transform:translateX(4px)}
 
 /* ── Guru: Topbar User ── */
 .guru-body .topbar-user{display:flex;align-items:center;gap:10px;padding-right:14px;margin-right:6px;border-right:1px solid var(--line)}
@@ -44,8 +58,6 @@ body.dark.guru-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,.
 .guru-body .topbar-user-info span{display:block;font-size:.75rem;color:var(--muted);white-space:nowrap}
 
 /* ── Logout ── */
-.guru-body .logout-btn{background:none;border:none;cursor:pointer;font:inherit;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;transition:all .2s ease;width:100%;font-size:.82rem;color:var(--danger);margin-top:2px}
-.guru-body .logout-btn:hover{background:rgba(239,68,68,.1);color:#dc2626}
 .guru-body .btn-logout{color:var(--danger)!important;border-color:rgba(239,68,68,.25)!important}
 .guru-body .btn-logout:hover{background:rgba(239,68,68,.08)!important;border-color:var(--danger)!important;color:#dc2626!important}
 
