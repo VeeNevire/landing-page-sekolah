@@ -19,7 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             return match($role) {
                 'admin' => '/admin/dashboard',
                 'student' => '/siswa/dashboard',
-                'teacher', 'homeroom', 'principal' => '/guru/dashboard',
+                'teacher', 'homeroom' => '/guru/dashboard',
+                'principal' => '/admin/dashboard',
                 'applicant' => '/ppdb/status',
                 default => '/portal/dashboard',
             };

@@ -42,7 +42,11 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('siswa.dashboard');
         }
 
-        if (in_array($role, ['teacher', 'homeroom', 'principal'])) {
+        if ($role === 'principal') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if (in_array($role, ['teacher', 'homeroom'])) {
             return redirect()->route('guru.dashboard');
         }
 

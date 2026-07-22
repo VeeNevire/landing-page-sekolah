@@ -75,7 +75,7 @@ Route::middleware(['auth', 'verified', 'role:student'])->prefix('siswa')->name('
     Route::get('/profil', [SiswaController::class, 'profil'])->name('profil');
 });
 
-Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin,principal'])->prefix('guru')->name('guru.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin'])->prefix('guru')->name('guru.')->group(function () {
     Route::get('/dashboard', [GuruController::class, 'dashboard'])->name('dashboard');
     Route::get('/kelas', [GuruController::class, 'kelas'])->name('kelas');
     Route::get('/kelas/{className}/data', [GuruController::class, 'kelasData'])->name('kelas.data');

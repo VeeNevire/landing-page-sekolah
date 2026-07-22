@@ -10,7 +10,18 @@ class CheckRole
 {
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!in_array($request->user()?->role, $roles)) {
+        $user = $request->user();
+
+        if (!in_array($user?->role, $roles)) {
+            if ($user) {
+                return match($user->role) {
+                    'principal', 'admin' => redirect()->route('admin.dashboard'),
+                    'teacher', 'homeroom' => redirect()->route('guru.dashboard'),
+                    'student' => redirect()->route('siswa.dashboard'),
+                    default => redirect()->route('portal.dashboard'),
+                };
+            }
+
             abort(403, 'Akses ditolak. Anda tidak memiliki hak untuk membuka halaman ini.');
         }
 
