@@ -1,24 +1,28 @@
-@extends('layouts.siswa')
+@extends('layouts.kuis')
 @section('title', $quiz->title)
 @push('styles')
 <style>
-.quiz-nav-btn{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--s-line);background:var(--s-card);cursor:pointer;display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--s-muted);transition:all .15s}
+.quiz-nav-btn{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--s-line);background:var(--s-card);cursor:pointer;display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--s-muted);transition:all .15s;flex-shrink:0}
 .quiz-nav-btn:hover{border-color:var(--s-primary);color:var(--s-primary)}
 .quiz-nav-btn.active{background:var(--s-primary);border-color:var(--s-primary);color:#fff}
 .quiz-nav-btn.answered{background:color-mix(in srgb,var(--s-primary) 15%,transparent);border-color:var(--s-primary);color:var(--s-primary)}
 .quiz-nav-btn.flagged{position:relative}
 .quiz-nav-btn.flagged::after{content:'!';position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#f59e0b;color:#fff;font-size:.6rem;display:grid;place-items:center}
+.nav-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.nav-legend{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--s-line)}
+.nav-legend span{display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--s-muted)}
 </style>
 @endpush
 @section('content')
-<div style="margin-bottom:16px">
-  <h2 style="font-size:1.05rem;font-weight:700;color:var(--s-ink);margin:0">{{ $quiz->title }}</h2>
-  <p style="font-size:.78rem;color:var(--s-muted);margin:2px 0 0">{{ $quiz->teachingAssignment->subject->name ?? $quiz->teachingAssignment->customSubject->nama ?? '-' }}</p>
-</div>
+<div class="kuis-container">
 
-<div style="display:grid;gap:16px;grid-template-columns:1fr 220px">
-  {{-- Main: Question --}}
-  <div class="b-card" style="padding:20px">
+<div style="display:grid;gap:16px;grid-template-columns:1fr 260px;align-items:start">
+  <div class="b-card" style="padding:0">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--s-line)">
+      <h2 style="font-size:1.05rem;font-weight:700;color:var(--s-ink);margin:0">{{ $quiz->title }}</h2>
+      <p style="font-size:.78rem;color:var(--s-muted);margin:2px 0 0">{{ $quiz->teachingAssignment->subject->name ?? $quiz->teachingAssignment->customSubject->nama ?? '-' }}</p>
+    </div>
+    <div style="padding:20px">
     <div id="timer-bar" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--s-primary) 6%,transparent);font-size:.82rem;font-weight:600">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--s-primary)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span id="timer-display" style="flex:1">—</span>
@@ -35,7 +39,7 @@
             $qNum = $index + 1;
             $existing = $existingAnswers->get($question->id);
           @endphp
-          <div class="question-page" data-q="{{ $qNum }}" style="display:{{ $index === 0 ? 'block' : 'none' }}">
+          <div class="question-page" data-q="{{ $qNum }}" data-question-id="{{ $question->id }}" style="display:{{ $index === 0 ? 'block' : 'none' }}">
             <div style="margin-bottom:16px">
               <span style="font-size:.72rem;font-weight:600;color:var(--s-muted);text-transform:uppercase">Soal {{ $qNum }} dari {{ $questions->count() }}</span>
               <span style="font-size:.72rem;color:var(--s-muted);margin-left:8px">({{ $question->points }} poin)</span>
@@ -75,23 +79,23 @@
         <button type="button" onclick="navigateQuestion(1)" class="btn btn-primary" style="padding:8px 20px;font-size:.8rem" id="nextBtn">Selanjutnya →</button>
       </div>
 
-      <button type="submit" style="width:100%;margin-top:16px;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--s-primary),var(--s-primary-dark));color:#fff;font-weight:700;font-size:.9rem;cursor:pointer" onclick="return confirmSubmit()">Kumpulkan Jawaban</button>
+      <button type="button" style="width:100%;margin-top:16px;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--s-primary),var(--s-primary-dark));color:#fff;font-weight:700;font-size:.9rem;cursor:pointer" onclick="confirmSubmit()">Kumpulkan Jawaban</button>
     </form>
+    </div>
   </div>
 
-  {{-- Sidebar: Navigation --}}
-  <div class="b-card" style="padding:16px">
+  <div class="b-card" style="padding:16px;position:sticky;top:16px">
     <h4 style="font-size:.82rem;font-weight:700;color:var(--s-ink);margin:0 0 12px">Navigasi Soal</h4>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px" id="nav-grid">
+    <div class="nav-strip" id="nav-grid">
       @foreach ($questions as $index => $question)
         <button type="button" class="quiz-nav-btn {{ $index === 0 ? 'active' : '' }}" onclick="goToQuestion({{ $index + 1 }})" data-q="{{ $index + 1 }}">{{ $index + 1 }}</button>
       @endforeach
     </div>
-    <p style="font-size:.68rem;color:var(--s-muted);margin:12px 0 0;line-height:1.5">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--s-primary);vertical-align:text-bottom;margin-right:3px"></span> Aktif<br>
-      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:color-mix(in srgb,var(--s-primary) 30%,transparent);vertical-align:text-bottom;margin-right:3px"></span> Terjawab<br>
-      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f59e0b;vertical-align:text-bottom;margin-right:3px"></span> Ragu-ragu
-    </p>
+    <div class="nav-legend">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--s-primary)"></span> Aktif</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:color-mix(in srgb,var(--s-primary) 30%,transparent);border:1.5px solid var(--s-primary)"></span> Terjawab</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f59e0b"></span> Ragu-ragu</span>
+    </div>
   </div>
 </div>
 
@@ -101,12 +105,13 @@ let currentQ = 1;
 let flagged = new Set();
 
 @if ($endTime)
-  const endTime = new Date('{{ $endTime->format('Y-m-d H:i:s') }}').getTime();
+  const endTime = {{ $endTime->timestamp }}000;
   function updateTimer() {
     const now = Date.now();
     const diff = endTime - now;
     if (diff <= 0) {
       document.getElementById('timer-display').textContent = 'Waktu habis!';
+      clearInterval(timerInterval);
       document.getElementById('quizForm').submit();
       return;
     }
@@ -115,7 +120,7 @@ let flagged = new Set();
     document.getElementById('timer-display').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
   }
   updateTimer();
-  setInterval(updateTimer, 1000);
+  const timerInterval = setInterval(updateTimer, 1000);
 @else
   document.getElementById('timer-bar').style.display = 'none';
 @endif
@@ -136,7 +141,10 @@ function goToQuestion(n) {
 
 function navigateQuestion(dir) {
   const next = currentQ + dir;
-  if (next < 1 || next > totalQuestions) return;
+  if (next < 1 || next > totalQuestions) {
+    if (dir === 1 && currentQ === totalQuestions) { updateAnsweredStatus(currentQ); confirmSubmit(); }
+    return;
+  }
   updateAnsweredStatus(currentQ);
   goToQuestion(next);
 }
@@ -150,7 +158,9 @@ function flagQuestion() {
 
 function updateAnsweredStatus(q) {
   const page = document.querySelector('.question-page[data-q="' + q + '"]');
-  const hasInput = page.querySelector('input[type="radio"]:checked, textarea:not(:blank)');
+  const radio = page.querySelector('input[type="radio"]:checked');
+  const textarea = page.querySelector('textarea');
+  const hasInput = radio || (textarea && textarea.value.trim() !== '');
   const btn = document.querySelector('.quiz-nav-btn[data-q="' + q + '"]');
   if (hasInput) btn.classList.add('answered');
 }
@@ -158,19 +168,65 @@ function updateAnsweredStatus(q) {
 function updateNavStatus() {
   document.querySelectorAll('.question-page').forEach((page, i) => {
     const q = i + 1;
-    const hasInput = page.querySelector('input[type="radio"]:checked, textarea:not(:blank)');
+    const radio = page.querySelector('input[type="radio"]:checked');
+    const textarea = page.querySelector('textarea');
+    const hasInput = radio || (textarea && textarea.value.trim() !== '');
     const btn = document.querySelector('.quiz-nav-btn[data-q="' + q + '"]');
     if (hasInput) btn.classList.add('answered');
   });
 }
 
+function autoSave(questionId, data) {
+  const body = { quiz_question_id: questionId };
+  if (data.option !== undefined) body.selected_option = data.option;
+  if (data.text !== undefined) body.answer_text = data.text;
+  fetch('{{ route('siswa.kuis.auto-save', $attempt->id) }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+    body: JSON.stringify(body),
+  });
+}
+
+document.getElementById('question-container').addEventListener('change', e => {
+  const radio = e.target.closest('input[type="radio"]');
+  if (!radio) return;
+  const page = radio.closest('.question-page');
+  if (!page) return;
+  autoSave(page.dataset.questionId, { option: radio.value });
+});
+
+let saveTimer;
+document.getElementById('question-container').addEventListener('blur', e => {
+  const ta = e.target.closest('textarea');
+  if (!ta) return;
+  const page = ta.closest('.question-page');
+  if (!page) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    autoSave(page.dataset.questionId, { text: ta.value });
+  }, 500);
+}, true);
+
 function confirmSubmit() {
   const unanswered = document.querySelectorAll('.question-page').length - document.querySelectorAll('.quiz-nav-btn.answered').length;
-  let msg = 'Kumpulkan jawaban?';
-  if (unanswered > 0) msg = unanswered + ' soal belum dijawab. ' + msg;
-  return confirm(msg);
+  let text, icon = 'question', confirmText = 'Ya, kumpulkan';
+  @if ($endTime)
+  const remaining = (endTime - Date.now()) / 60000;
+  if (remaining > 10) {
+    text = 'Waktu masih tersisa ' + Math.floor(remaining) + ' menit. Cek kembali jawabanmu sebelum mengumpulkan.';
+    icon = 'info';
+  } else {
+    text = 'Waktu hampir habis (kurang dari 10 menit). Kumpulkan jawaban sekarang?';
+    icon = 'warning';
+  }
+  @else
+  text = 'Kumpulkan jawaban?';
+  @endif
+  if (unanswered > 0) { text = unanswered + ' soal belum dijawab. ' + text; icon = 'warning'; }
+  Swal.fire({ title: 'Konfirmasi', text, icon, showCancelButton: true, confirmButtonText: confirmText, cancelButtonText: 'Batal', confirmButtonColor: 'var(--s-primary)', width: 440 }).then(r => { if (r.isConfirmed) document.getElementById('quizForm').submit(); });
 }
 
 updateNavStatus();
 </script>
+</div>
 @endsection

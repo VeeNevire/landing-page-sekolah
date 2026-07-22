@@ -51,21 +51,32 @@
   padding:16px 12px 14px
 }
 .admin-body .portal-sidebar .brand{color:var(--primary);padding:0 6px 10px}
+.admin-body .portal-menu{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(95,111,130,.2) transparent;margin:0 -12px;padding:0 12px 4px}
+.admin-body .portal-menu::-webkit-scrollbar{width:5px}
+.admin-body .portal-menu::-webkit-scrollbar-track{background:transparent}
+.admin-body .portal-menu::-webkit-scrollbar-thumb{background:rgba(95,111,130,.2);border-radius:3px}
 .admin-body .portal-sidebar .brand-text small{color:var(--muted)}
 .admin-body .portal-user-card{margin:4px 0 2px;padding:8px 10px}
 .admin-body .portal-user-card{color:var(--ink)}
 .admin-body .portal-user-card span{color:var(--muted)}
-.admin-body .portal-menu a{color:#5f6f82;padding:8px 10px;border-radius:8px}
+.admin-body .portal-menu a{color:#5f6f82;padding:8px 10px;border-radius:8px;transition:all .25s cubic-bezier(.4,0,.2,1);position:relative}
+.admin-body .portal-menu a::before{content:'';position:absolute;left:2px;top:50%;transform:translateY(-50%);width:3px;height:0;border-radius:0 2px 2px 0;background:var(--primary-4);transition:height .2s ease}
+.admin-body .portal-menu a.active::before{height:60%}
 .admin-body .portal-menu-group{color:rgba(0,0,0,.2);padding:14px 10px 4px;font-size:.66rem}
-.admin-body .portal-menu a:hover{background:color-mix(in srgb,var(--primary-4) 12%,transparent);color:var(--primary)}
-.admin-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 18%,transparent);color:var(--primary)}
+.admin-body .portal-menu a:hover{background:color-mix(in srgb,var(--primary-4) 18%,transparent);color:var(--primary);transform:translateX(4px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.admin-body .portal-menu a.active{background:color-mix(in srgb,var(--primary-4) 22%,transparent);color:var(--primary);transform:translateX(3px)}
 .admin-body .portal-menu-icon{color:rgba(0,0,0,.2)}
 .admin-body .portal-menu a:hover .portal-menu-icon,
 .admin-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
 .admin-body .portal-menu-divider{height:1.5px;margin:5px 10px;border-radius:2px;background:rgba(95,111,130,.5)}
 body.dark.admin-body .portal-menu-divider{background:rgba(255,255,255,.12)}
-.admin-body .portal-sidebar-footer a{color:var(--muted);padding:8px 10px;font-size:.82rem}
-.admin-body .portal-sidebar-footer a:hover{background:color-mix(in srgb,var(--primary-4) 10%,transparent);color:var(--primary)}
+.admin-body .portal-sidebar-footer a,
+.admin-body .portal-sidebar-footer .logout-btn{color:var(--muted);font-size:.82rem;padding:9px 10px;border-radius:8px;transition:all .25s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:10px}
+.admin-body .portal-sidebar-footer a:hover{background:color-mix(in srgb,var(--primary-4) 14%,transparent);color:var(--primary);transform:translateX(4px)}
+.admin-body .portal-sidebar-footer .logout-btn{width:100%;border:none;background:transparent;cursor:pointer;font-family:inherit}
+.admin-body .portal-sidebar-footer .logout-btn:hover{background:color-mix(in srgb,#ef4444 10%,transparent);color:#ef4444;transform:translateX(4px)}
+.admin-body .portal-sidebar-footer a svg,.admin-body .portal-sidebar-footer .logout-btn svg{transition:transform .2s ease}
+.admin-body .portal-sidebar-footer a:hover svg,.admin-body .portal-sidebar-footer .logout-btn:hover svg{transform:translateX(2px)}
 .topbar-user{display:flex;align-items:center;gap:10px;padding-right:14px;margin-right:6px;border-right:1px solid var(--line)}
 .topbar-user-avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary-4),var(--primary-2));color:white;font-weight:800;font-size:.85rem;display:grid;place-items:center;flex-shrink:0}
 .topbar-user-info{line-height:1.2}
@@ -81,8 +92,10 @@ body.dark.admin-body .portal-menu a.active{background:color-mix(in srgb,var(--pr
 body.dark.admin-body .portal-menu-icon{color:rgba(255,255,255,.25)}
 body.dark.admin-body .portal-menu a:hover .portal-menu-icon,
 body.dark.admin-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
-body.dark.admin-body .portal-sidebar-footer a{color:var(--muted);padding:7px 10px;font-size:.82rem}
-body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,.06);color:white}
+body.dark.admin-body .portal-sidebar-footer a,
+body.dark.admin-body .portal-sidebar-footer .logout-btn{color:var(--muted);padding:7px 10px;font-size:.82rem}
+body.dark.admin-body .portal-sidebar-footer a:hover{background:rgba(255,255,255,.1);color:white;transform:translateX(4px)}
+body.dark.admin-body .portal-sidebar-footer .logout-btn:hover{background:rgba(255,255,255,.1);color:#f87171;transform:translateX(4px)}
 .logout-btn{background:none;border:none;cursor:pointer;font:inherit;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;transition:all .2s ease;width:100%;font-size:.82rem;color:var(--danger);margin-top:2px}
 .logout-btn:hover{background:rgba(239,68,68,.1);color:#dc2626}
 .btn-logout{color:var(--danger)!important;border-color:rgba(239,68,68,.25)!important}

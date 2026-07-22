@@ -157,6 +157,45 @@ class SiswaKuisController extends Controller
         ]);
     }
 
+    public function autoSave(Request $request, QuizAttempt $attempt)
+    {
+        $data = $this->resolve($request);
+        if (!$data) return response()->json(['error' => 'Unauthorized'], 401);
+
+        $student = $data['student'];
+
+        if ($attempt->student_id !== $student->id) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+        if ($attempt->status !== 'in_progress') {
+            return response()->json(['success' => false, 'reason' => 'expired']);
+        }
+
+        $request->validate([
+            'quiz_question_id' => 'required|exists:quiz_questions,id',
+            'selected_option' => 'nullable|string|max:255',
+            'answer_text' => 'nullable|string',
+        ]);
+
+        $dataToSave = [];
+        if ($request->filled('selected_option')) {
+            $dataToSave['selected_option'] = $request->selected_option;
+        }
+        if ($request->exists('answer_text')) {
+            $dataToSave['answer_text'] = $request->answer_text;
+        }
+
+        QuizAnswer::updateOrCreate(
+            [
+                'quiz_attempt_id' => $attempt->id,
+                'quiz_question_id' => $request->quiz_question_id,
+            ],
+            $dataToSave
+        );
+
+        return response()->json(['success' => true]);
+    }
+
     public function submit(Request $request, QuizAttempt $attempt)
     {
         $data = $this->resolve($request);

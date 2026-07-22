@@ -71,6 +71,7 @@ Route::middleware(['auth', 'verified', 'role:student'])->prefix('siswa')->name('
     Route::post('/kuis/{quiz}/mulai', [SiswaKuisController::class, 'mulai'])->name('kuis.mulai');
     Route::get('/kuis/{attempt}/kerjakan', [SiswaKuisController::class, 'kerjakan'])->name('kuis.kerjakan');
     Route::post('/kuis/{attempt}/submit', [SiswaKuisController::class, 'submit'])->name('kuis.submit');
+    Route::post('/kuis/{attempt}/auto-save', [SiswaKuisController::class, 'autoSave'])->name('kuis.auto-save');
     Route::get('/kuis/{attempt}/hasil', [SiswaKuisController::class, 'hasil'])->name('kuis.hasil');
     Route::get('/profil', [SiswaController::class, 'profil'])->name('profil');
 });

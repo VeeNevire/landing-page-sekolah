@@ -145,15 +145,15 @@
       </nav>
       <div class="portal-menu-divider"></div>
       <div class="portal-sidebar-footer">
-        <a href="{{ route('beranda') }}">
+        <a href="{{ route('beranda') }}" onclick="return confirmKembali(event)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m15 18-6-6 6-6" />
           </svg>
           <span>Kembali ke website</span>
         </a>
-        <form method="POST" action="{{ route('logout') }}">
+        <form id="logoutForm" method="POST" action="{{ route('logout') }}">
           @csrf
-          <button class="logout-btn" type="submit">
+          <button class="logout-btn" type="button" onclick="confirmLogout()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -228,6 +228,16 @@
   <script src="{{ asset('js/script.js') }}"></script>
   <script src="{{ asset('js/portal.js') }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+  function confirmKembali(e) {
+    e.preventDefault();
+    Swal.fire({ title:'Kembali ke website?', text:'Anda akan meninggalkan portal dan kembali ke halaman utama.', icon:'question', showCancelButton:true, confirmButtonText:'Ya, kembali', cancelButtonText:'Batal', width:420 }).then(r => { if (r.isConfirmed) window.location.href = e.currentTarget.href; });
+    return false;
+  }
+  function confirmLogout() {
+    Swal.fire({ title:'Keluar dari portal?', text:'Anda akan keluar dari sistem dan perlu login kembali.', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, keluar', cancelButtonText:'Batal', confirmButtonColor:'#ef4444', width:420 }).then(r => { if (r.isConfirmed) document.getElementById('logoutForm').submit(); });
+  }
+  </script>
   @stack('scripts')
 </body>
 

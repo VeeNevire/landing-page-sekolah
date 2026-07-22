@@ -77,14 +77,8 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 .portal-sidebar{
   position:sticky;top:0;height:100vh;background:#0a1a2e;color:#dbe8f8;
   padding:24px 16px 18px;display:flex;flex-direction:column;z-index:20;
-  overflow-y:auto;
-  scrollbar-width:thin;
-  scrollbar-color:rgba(255,255,255,.12) transparent
+  overflow-y:hidden
 }
-.portal-sidebar::-webkit-scrollbar{width:5px}
-.portal-sidebar::-webkit-scrollbar-track{background:transparent}
-.portal-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
-.portal-sidebar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
 .portal-sidebar .brand{padding:0 6px 20px;color:white;margin-bottom:2px}
 .portal-sidebar .brand-text small{color:#9fb7d5}
 .portal-user-card{
@@ -98,7 +92,15 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 }
 .portal-user-card strong,.portal-user-card span{display:block;font-size:.85rem}
 .portal-user-card span{font-size:.78rem;color:#9fb7d5;margin-top:1px}
-.portal-menu{display:grid;gap:2px}
+.portal-menu{
+  display:grid;gap:2px;flex:1;min-height:0;overflow-y:auto;margin:0 -16px;
+  padding:0 16px 4px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.12) transparent
+}
+.portal-menu::-webkit-scrollbar{width:5px}
+.portal-menu::-webkit-scrollbar-track{background:transparent}
+.portal-menu::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
 .portal-menu-group{
   font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
   color:rgba(255,255,255,.25);padding:14px 14px 4px
@@ -106,9 +108,12 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 .portal-menu a{
   display:flex;align-items:center;gap:12px;padding:10px 14px;
   border-radius:10px;color:#bdcfe5;font-weight:600;font-size:.9rem;
-  transition:all .2s ease
+  transition:all .25s cubic-bezier(.4,0,.2,1);position:relative
 }
-.portal-menu a:hover,.portal-menu a.active{background:rgba(255,255,255,.07);color:white}
+.portal-menu a::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:0;border-radius:0 3px 3px 0;background:var(--primary-4);transition:height .2s ease}
+.portal-menu a.active::before{height:60%}
+.portal-menu a:hover{background:rgba(255,255,255,.13);color:white;transform:translateX(5px);box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.portal-menu a.active{background:rgba(255,255,255,.1);color:white}
 .portal-menu-icon{
   width:20px;height:20px;display:grid;place-items:center;flex-shrink:0;
   color:rgba(255,255,255,.5);transition:color .2s ease
@@ -120,15 +125,20 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 }
 .portal-menu-divider{height:1px;background:rgba(255,255,255,.07);margin:8px 8px}
 .portal-sidebar-footer{
-  margin-top:auto;display:grid;gap:3px;padding-top:18px;
+  margin-top:auto;display:grid;gap:4px;padding-top:14px;
   border-top:1px solid rgba(255,255,255,.07)
 }
-.portal-sidebar-footer a{
-  color:#adc2dc;font-size:.85rem;padding:11px 14px;border-radius:12px;
-  transition:all .2s ease;display:flex;align-items:center;gap:10px
+.portal-sidebar-footer a,.portal-sidebar-footer .logout-btn{
+  color:#adc2dc;font-size:.82rem;padding:10px 14px;border-radius:10px;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  display:flex;align-items:center;gap:10px
 }
-.portal-sidebar-footer a:hover{background:rgba(255,255,255,.06);color:white}
-.portal-main{min-width:0;overflow:hidden}
+.portal-sidebar-footer a:hover{background:rgba(255,255,255,.1);color:white;transform:translateX(4px)}
+.portal-sidebar-footer .logout-btn{width:100%;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:.82rem}
+.portal-sidebar-footer .logout-btn:hover{background:rgba(255,255,255,.1);color:#f87171;transform:translateX(4px)}
+.portal-sidebar-footer a svg,.portal-sidebar-footer .logout-btn svg{transition:transform .2s ease}
+.portal-sidebar-footer a:hover svg,.portal-sidebar-footer .logout-btn:hover svg{transform:translateX(2px)}
+.portal-main{min-width:0}
 .portal-topbar{
   min-height:72px;background:color-mix(in srgb,var(--card) 94%,transparent);
   border-bottom:1px solid var(--line);

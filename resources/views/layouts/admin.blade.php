@@ -51,10 +51,9 @@
           @class(['active'=> request()->routeIs('admin.guru.*')])>
           <span class="portal-menu-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" />
+              <path d="M21 22c0-4.97-4.03-9-9-9s-9 4.03-9 9" />
+              <path d="M18 9l2 2 4-4" />
             </svg>
           </span>
           <span class="portal-menu-label">Guru</span>
@@ -63,10 +62,8 @@
           @class(['active'=> request()->routeIs('admin.students.*')])>
           <span class="portal-menu-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5" />
             </svg>
           </span>
           <span class="portal-menu-label">Siswa</span>
@@ -128,15 +125,15 @@
       </nav>
       <div class="portal-menu-divider"></div>
       <div class="portal-sidebar-footer">
-        <a href="{{ route('beranda') }}">
+        <a href="{{ route('beranda') }}" onclick="return confirmKembali(event)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m15 18-6-6 6-6" />
           </svg>
           <span>Kembali ke website</span>
         </a>
-        <form method="POST" action="{{ route('logout') }}">
+        <form id="logoutForm" method="POST" action="{{ route('logout') }}">
           @csrf
-          <button class="logout-btn" type="submit">
+          <button class="logout-btn" type="button" onclick="confirmLogout()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -221,6 +218,16 @@
   <script src="{{ asset('js/script.js') }}"></script>
   <script src="{{ asset('js/portal.js') }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+  function confirmKembali(e) {
+    e.preventDefault();
+    Swal.fire({ title:'Kembali ke website?', text:'Anda akan meninggalkan portal dan kembali ke halaman utama.', icon:'question', showCancelButton:true, confirmButtonText:'Ya, kembali', cancelButtonText:'Batal', width:420 }).then(r => { if (r.isConfirmed) window.location.href = e.currentTarget.href; });
+    return false;
+  }
+  function confirmLogout() {
+    Swal.fire({ title:'Keluar dari portal?', text:'Anda akan keluar dari sistem dan perlu login kembali.', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, keluar', cancelButtonText:'Batal', confirmButtonColor:'#ef4444', width:420 }).then(r => { if (r.isConfirmed) document.getElementById('logoutForm').submit(); });
+  }
+  </script>
   @stack('scripts')
 </body>
 
