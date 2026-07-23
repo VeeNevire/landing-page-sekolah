@@ -926,6 +926,8 @@ body.dark .nav-dropdown-menu a:hover {
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, var(--primary-4), var(--primary));
+    background-size: cover;
+    background-position: center;
 }
 .news-thumb::before {
     content: "";

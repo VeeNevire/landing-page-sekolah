@@ -201,7 +201,7 @@
 {{-- TENTANG SEKOLAH --}}
 <section class="section" style="background:var(--card)">
   <div class="container split">
-    <div class="about-visual reveal">
+    <div class="about-visual reveal" style="background:url('/img/tentang-sekolah.png') center/cover no-repeat">
       <div class="quote">“Setiap siswa memiliki potensi besar. Tugas sekolah adalah membantu mereka menemukan arah dan keberanian untuk bertumbuh.”</div>
     </div>
     <div class="reveal">
@@ -347,7 +347,7 @@
     <h2 class="section-title">Aktivitas terbaru di sekolah.</h2>
     <div class="grid grid-3 mt-8">
       <article class="card news-card reveal">
-        <div class="news-thumb"><span class="date">18 JUN 2026</span></div>
+        <div class="news-thumb" style="background-image:url('/img/si-menang.webp')"><span class="date">18 JUN 2026</span></div>
         <div class="news-body">
           <h3>Tim siswa meraih juara inovasi teknologi tingkat kota</h3>
           <p>Proyek sistem monitoring energi sekolah berhasil meraih penghargaan kategori solusi berkelanjutan.</p>
@@ -361,7 +361,7 @@
         </div>
       </article>
       <article class="card news-card reveal">
-        <div class="news-thumb" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"><span class="date">10 JUN 2026</span></div>
+        <div class="news-thumb" style="background-image:url('/img/si-menang.webp')"><span class="date">10 JUN 2026</span></div>
         <div class="news-body">
           <h3>Career Day mempertemukan siswa dengan profesional</h3>
           <p>Siswa memperoleh wawasan kuliah, karier, portofolio, dan kompetensi masa depan.</p>
@@ -375,7 +375,7 @@
         </div>
       </article>
       <article class="card news-card reveal">
-        <div class="news-thumb" style="background:linear-gradient(135deg,var(--primary-4),var(--primary-3))"><span class="date">02 JUN 2026</span></div>
+        <div class="news-thumb" style="background-image:url('/img/si-menang.webp')"><span class="date">02 JUN 2026</span></div>
         <div class="news-body">
           <h3>Pameran karya kreatif dan produk kewirausahaan</h3>
           <p>Karya desain, aplikasi, produk bisnis, dan penelitian siswa dipamerkan kepada publik.</p>
@@ -398,10 +398,10 @@
     <span class="kicker">Galeri</span>
     <h2 class="section-title">Suasana belajar yang aktif dan inspiratif.</h2>
     <div class="gallery mt-8">
-      <div class="g1" data-label="Pembelajaran kolaboratif"></div>
-      <div data-label="Laboratorium"></div>
-      <div data-label="Kegiatan olahraga"></div>
-      <div class="g4" data-label="Pameran karya siswa"></div>
+      <div class="g1" data-label="Pembelajaran kolaboratif" style="background:url('/img/si-menang.webp') center/cover no-repeat"></div>
+      <div data-label="Laboratorium" style="background:url('/img/si-menang.webp') center/cover no-repeat"></div>
+      <div data-label="Kegiatan olahraga" style="background:url('/img/si-menang.webp') center/cover no-repeat"></div>
+      <div class="g4" data-label="Pameran karya siswa" style="background:url('/img/si-menang.webp') center/cover no-repeat"></div>
     </div>
   </div>
 </section>
