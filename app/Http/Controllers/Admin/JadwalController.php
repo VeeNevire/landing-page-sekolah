@@ -76,7 +76,7 @@ class JadwalController extends Controller
             ->orderBy('tingkat')->orderBy('nama')
             ->get();
 
-        $guruList = User::whereIn('role', ['teacher', 'homeroom', 'principal'])
+        $guruList = User::whereIn('role', ['teacher', 'homeroom'])
             ->with(['teachingAssignments' => function ($q) use ($semesterId) {
                 $q->where('period_id', $semesterId)
                   ->with(['jadwals', 'subject', 'customSubject']);
