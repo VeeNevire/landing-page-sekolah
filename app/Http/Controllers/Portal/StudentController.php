@@ -85,7 +85,7 @@ class StudentController extends Controller
 
         $assignments = TeachingAssignment::where('class_name', $student->class_name)
             ->where('period_id', $period?->id)
-            ->with('subject', 'teacher')
+            ->with('subject', 'customSubject', 'teacher')
             ->get();
 
         $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
@@ -100,7 +100,7 @@ class StudentController extends Controller
                 $schedule[] = [
                     'day' => $day,
                     'time' => $times[$idx] ?? '07:30–09:00',
-                    'subject' => $ta->subject->name,
+                    'subject' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
                     'teacher' => $ta->teacher->full_name ?? '-',
                 ];
             }
