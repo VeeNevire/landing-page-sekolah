@@ -201,7 +201,7 @@
 {{-- TENTANG SEKOLAH --}}
 <section class="section" style="background:var(--card)">
   <div class="container split">
-    <div class="about-visual reveal" style="background:url('/img/tentang-sekolah.png') center/cover no-repeat">
+    <div class="about-visual reveal" style="background:url('/img/tentang-sekolah.webp') center/cover no-repeat">
       <div class="quote">“Setiap siswa memiliki potensi besar. Tugas sekolah adalah membantu mereka menemukan arah dan keberanian untuk bertumbuh.”</div>
     </div>
     <div class="reveal">

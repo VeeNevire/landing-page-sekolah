@@ -34,7 +34,7 @@
   <div class="container profile-highlight">
     <div class="principal-card reveal">
       <div class="principal-photo">
-        <img src="{{ asset('img/kepsek.png') }}" alt="Kepala Sekolah" loading="lazy">
+        <img src="{{ asset('img/kepsek.webp') }}" alt="Kepala Sekolah" loading="lazy">
       </div>
       <div class="mt-4">
         <h3 style="margin-bottom:2px">Dr. Rehan Maulana, S.KOM.M.PD.</h3>
