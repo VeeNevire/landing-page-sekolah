@@ -149,6 +149,8 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(6)],
             'role' => 'required|in:parent,teacher,homeroom,admin,principal,student',
+        ], [
+            'email.unique' => 'Email sudah terdaftar.',
         ]);
 
         $user = User::create([
@@ -195,6 +197,8 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:parent,teacher,homeroom,admin,principal,student',
             'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(6)],
+        ], [
+            'email.unique' => 'Email sudah terdaftar.',
         ]);
 
         $data = [

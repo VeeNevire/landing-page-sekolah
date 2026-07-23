@@ -297,6 +297,10 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
     const form = document.getElementById('userForm');
     const formData = new FormData(form);
     const isEdit = document.getElementById('formUserId').value !== '';
+    const btn = document.getElementById('modalSubmitBtn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = 'Menyimpan...';
 
     const pwd = document.getElementById('modal_password').value;
     if (isEdit && !pwd) {
@@ -321,11 +325,18 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
             .then(() => { location.reload(); });
         } else if (json.errors) {
           Object.entries(json.errors).forEach(([field, messages]) => { showFieldError(field, messages[0]); });
+          if (json.errors.email) {
+            Swal.fire({ icon: 'error', title: 'Email sudah terdaftar', text: json.errors.email[0], confirmButtonColor: '#ef4444', confirmButtonText: 'Tutup' });
+          }
         } else {
           Swal.fire('Gagal', json.message || 'Terjadi kesalahan.', 'error');
         }
       })
-      .catch(() => { Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'); });
+      .catch(() => { Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'); })
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      });
   }
 
   const ROLE_LABELS_MAP = {'teacher':'Guru','homeroom':'Wali Kelas','principal':'Kepala Sekolah'};
