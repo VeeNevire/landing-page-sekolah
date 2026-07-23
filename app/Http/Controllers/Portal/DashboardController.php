@@ -140,7 +140,7 @@ class DashboardController extends Controller
         $assignments = $student->class_name
             ? \App\Models\TeachingAssignment::where('class_name', $student->class_name)
                 ->where('period_id', $period?->id)
-                ->with('subject', 'teacher')
+                ->with('subject', 'customSubject', 'teacher')
                 ->get()
             : collect();
 
@@ -187,8 +187,8 @@ class DashboardController extends Controller
             }
 
             $result[] = [
-                'code' => $ta->subject->code,
-                'name' => $ta->subject->name,
+                'code' => $ta->subject?->code ?? $ta->customSubject?->kode ?? '-',
+                'name' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
                 'teacher' => $ta->teacher->full_name ?? '-',
                 'quiz' => $quizScores,
                 'homework' => $hwScores,
