@@ -136,14 +136,15 @@ Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')
     Route::middleware('role:admin')->group(function () {
         Route::get('/users', [AdminController::class, 'users'])->name('users.index');
         Route::get('/users/create', [AdminController::class, 'usersCreate'])->name('users.create');
-        Route::post('/users', [AdminController::class, 'usersStore'])->name('users.store');
         Route::get('/users/{user}/edit', [AdminController::class, 'usersEdit'])->name('users.edit');
-        Route::get('/users/{user}/data', [AdminController::class, 'userData'])->name('users.data');
-        Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('users.update');
-        Route::patch('/users/{user}/toggle', [AdminController::class, 'usersToggle'])->name('users.toggle');
         Route::post('/users/{user}/reset-password', [AdminController::class, 'usersResetPassword'])->name('users.reset-password');
         Route::delete('/users/{user}', [AdminController::class, 'usersDestroy'])->name('users.destroy');
     });
+
+    Route::post('/users', [AdminController::class, 'usersStore'])->name('users.store');
+    Route::get('/users/{user}/data', [AdminController::class, 'userData'])->name('users.data');
+    Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('users.update');
+    Route::patch('/users/{user}/toggle', [AdminController::class, 'usersToggle'])->name('users.toggle');
 
     Route::get('/guru', [AdminController::class, 'guru'])->name('guru.index');
     Route::get('/guru/{user}/data', [AdminController::class, 'guruData'])->name('guru.data');
