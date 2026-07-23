@@ -1103,6 +1103,22 @@ body.dark .nav-dropdown-menu a:hover {
 .gallery .g4 {
     grid-column: 2/4;
 }
+
+.skeleton-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: inherit;
+}
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 .cta {
     border-radius: 30px;
     padding: 48px;

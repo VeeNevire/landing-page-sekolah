@@ -496,6 +496,29 @@
     </div>
   </div>
 </section>
+
+@push('scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.news-thumb, .about-visual, .gallery > div').forEach(function(el) {
+      var bg = el.style.backgroundImage || getComputedStyle(el).backgroundImage;
+      if (!bg || bg === 'none') return;
+
+      el.style.position = 'relative';
+
+      var overlay = document.createElement('div');
+      overlay.className = 'skeleton-overlay';
+      el.appendChild(overlay);
+
+      var url = bg.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+      var img = new Image();
+      img.onload = function() { overlay.remove(); };
+      img.onerror = function() { overlay.remove(); };
+      img.src = url;
+    });
+  });
+</script>
+@endpush
 @endsection
 
 

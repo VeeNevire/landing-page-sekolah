@@ -37,7 +37,7 @@
         <img src="{{ asset('img/kepsek.png') }}" alt="Kepala Sekolah" loading="lazy">
       </div>
       <div class="mt-4">
-        <h3 style="margin-bottom:2px">Dr. Rehan Maulana, M.Pd.</h3>
+        <h3 style="margin-bottom:2px">Dr. Rehan Maulana, S.KOM.M.PD.</h3>
         <span style="color:var(--muted);font-weight:700;font-size:0.9rem">Kepala Sekolah</span>
       </div>
     </div>
