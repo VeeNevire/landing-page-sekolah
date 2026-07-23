@@ -74,11 +74,12 @@
       <div style="display:grid;gap:12px">
         @foreach ($classNames as $class)
           @php
+            $gradeLevel = explode(' ', $class)[0];
             $students = $studentsPerClass[$class] ?? collect();
             $subjectNames = $teachingAssignments->where('class_name', $class)->pluck('subject.name')->unique()->implode(', ');
           @endphp
           <div style="display:flex;align-items:center;gap:14px;padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--card)">
-            <span style="flex-shrink:0;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-2) 12%,var(--card));color:var(--primary-2);font-weight:900;font-size:.95rem">{{ $class }}</span>
+            <span style="flex-shrink:0;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-2) 12%,var(--card));color:var(--primary-2);font-weight:900;font-size:.95rem">{{ $gradeLevel }}</span>
             <div style="flex:1">
               <strong style="display:block">{{ $class }}</strong>
               <span style="color:var(--muted);font-size:.85rem">{{ $subjectNames }}</span>
