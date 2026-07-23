@@ -48,11 +48,11 @@
       <div class="table-wrap">
         <table class="grade-table">
           <thead>
-            <tr><th>Nama Tagihan</th><th>Jumlah</th><th>Jatuh Tempo</th><th>Status</th></tr>
+            <tr><th>Nama Tagihan</th><th>Jumlah</th><th>Jatuh Tempo</th><th>Status</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             @foreach ($billing as $item)
-              <tr>
+              <tr id="billing-row-{{ $item['id'] }}">
                 <td><strong>{{ $item['name'] }}</strong></td>
                 <td>Rp{{ number_format($item['amount'], 0, ',', '.') }}</td>
                 <td>{{ date('d M Y', strtotime($item['date'])) }}</td>
@@ -63,6 +63,13 @@
                     <span class="status-remedial">Belum Bayar</span>
                   @endif
                 </td>
+                <td>
+                  @if ($item['status'] !== 'lunas')
+                    <button type="button" class="btn btn-primary" onclick="bayar({{ $item['id'] }}, this)" style="min-height:32px;padding:0 14px;font-size:.82rem">Bayar Sekarang</button>
+                  @else
+                    <span style="color:var(--muted);font-size:.82rem">—</span>
+                  @endif
+                </td>
               </tr>
             @endforeach
           </tbody>
@@ -70,6 +77,55 @@
       </div>
     </section>
 @endif
+
+@push('scripts')
+<script>
+function bayar(id, btn) {
+  Swal.fire({
+    title: 'Bayar Tagihan?',
+    text: 'Lanjutkan pembayaran tagihan ini?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#1f8f62',
+    confirmButtonText: 'Ya, Bayar',
+    cancelButtonText: 'Batal'
+  }).then(result => {
+    if (!result.isConfirmed) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Memproses...';
+
+    fetch('/portal/tagihan/' + id + '/bayar', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+      }
+    })
+    .then(r => r.json().then(j => ({ ok: r.ok, json: j })))
+    .then(({ ok, json }) => {
+      if (ok && json.success) {
+        const row = document.getElementById('billing-row-' + id);
+        row.querySelector('.status-remedial')?.remove();
+        row.querySelector('td:nth-child(4)').innerHTML = '<span class="status-pass">Lunas</span>';
+        row.querySelector('td:nth-child(5)').innerHTML = '<span style="color:var(--muted);font-size:.82rem">—</span>';
+        Swal.fire({ icon: 'success', title: 'Pembayaran berhasil!', showConfirmButton: false, timer: 2000, toast: true, position: 'top-end' });
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Bayar Sekarang';
+        Swal.fire('Gagal', json.message || 'Terjadi kesalahan.', 'error');
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.textContent = 'Bayar Sekarang';
+      Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error');
+    });
+  });
+}
+</script>
+@endpush
 @endsection
 
 

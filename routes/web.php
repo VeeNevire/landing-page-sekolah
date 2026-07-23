@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified', 'role:parent'])->prefix('portal')->name('
     Route::get('/kehadiran', [StudentController::class, 'kehadiran'])->name('kehadiran');
     Route::get('/jadwal', [StudentController::class, 'jadwal'])->name('jadwal');
     Route::get('/tagihan', [StudentController::class, 'tagihan'])->name('tagihan');
+    Route::post('/tagihan/{billing}/bayar', [StudentController::class, 'tagihanBayar'])->name('tagihan.bayar');
     Route::get('/profil', [StudentController::class, 'profil'])->name('profil');
     Route::get('/notifikasi', [StudentController::class, 'notifikasi'])->name('notifikasi');
 });
@@ -201,6 +202,11 @@ Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')
     Route::post('/jadwal', [JadwalController::class, 'store'])->name('jadwal.store');
     Route::put('/jadwal/{jadwal}', [JadwalController::class, 'update'])->name('jadwal.update');
     Route::delete('/jadwal/{jadwal}', [JadwalController::class, 'destroy'])->name('jadwal.destroy');
+
+    Route::get('/billing', [AdminController::class, 'billing'])->name('billing.index');
+    Route::post('/billing', [AdminController::class, 'billingStore'])->name('billing.store');
+    Route::put('/billing/{billing}', [AdminController::class, 'billingUpdate'])->name('billing.update');
+    Route::delete('/billing/{billing}', [AdminController::class, 'billingDestroy'])->name('billing.destroy');
 
     Route::get('/parent-student', [AdminController::class, 'parentStudent'])->name('parent-student.index');
     Route::post('/parent-student', [AdminController::class, 'parentStudentStore'])->name('parent-student.store');

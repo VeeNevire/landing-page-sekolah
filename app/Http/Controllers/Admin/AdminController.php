@@ -7,6 +7,7 @@ use App\Models\AcademicPeriod;
 use App\Models\Applicant;
 use App\Models\Attendance;
 use App\Models\AuditLog;
+use App\Models\Billing;
 use App\Models\Student;
 use App\Models\Jurusan;
 use App\Models\JurusanCustomSubject;
@@ -1626,5 +1627,129 @@ class AdminController extends Controller
         $applicant->delete();
 
         return response()->json(['success' => true, 'message' => 'Pendaftar berhasil dihapus.']);
+    }
+
+    public function billing(Request $request)
+    {
+        $search = $request->get('search');
+        $classFilter = $request->get('class');
+        $statusFilter = $request->get('status');
+
+        $query = Billing::with('student')
+            ->orderBy('due_date')
+            ->orderBy('created_at', 'desc');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhereHas('student', fn($sq) => $sq->where('full_name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($classFilter) {
+            $query->whereHas('student', fn($sq) => $sq->where('class_name', $classFilter));
+        }
+
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        $billings = $query->paginate(20);
+        $classes = Student::where('status', 'active')->distinct()->orderBy('class_name')->pluck('class_name');
+        $students = Student::where('status', 'active')->orderBy('full_name')->get(['id', 'full_name', 'class_name', 'nisn']);
+
+        $totalAmount = $billings->sum('amount');
+        $paidAmount = $billings->where('status', 'lunas')->sum('amount');
+        $unpaidAmount = $totalAmount - $paidAmount;
+
+        return view('admin.billing', compact('billings', 'classes', 'students', 'totalAmount', 'paidAmount', 'unpaidAmount'));
+    }
+
+    public function billingStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:160',
+            'amount' => 'required|numeric|min:0',
+            'due_date' => 'required|date',
+            'status' => 'required|in:lunas,belum',
+            'paid_date' => 'nullable|date|required_if:status,lunas',
+            'target_type' => 'required|in:all,class',
+            'target_class' => 'required_if:target_type,class|nullable|string|max:60',
+        ]);
+
+        $query = Student::where('status', 'active');
+        if ($validated['target_type'] === 'class' && !empty($validated['target_class'])) {
+            $query->where('class_name', $validated['target_class']);
+        }
+
+        $students = $query->get();
+        if ($students->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada siswa yang sesuai dengan kriteria.']);
+        }
+
+        $now = now();
+        $data = [];
+        foreach ($students as $student) {
+            $data[] = [
+                'student_id' => $student->id,
+                'name' => $validated['name'],
+                'amount' => $validated['amount'],
+                'due_date' => $validated['due_date'],
+                'status' => $validated['status'],
+                'paid_date' => $validated['status'] === 'lunas' ? ($validated['paid_date'] ?? $now) : null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        Billing::insert($data);
+
+        AuditService::log('billing.create', 'Billing', null, $validated['name'] . ' (' . count($data) . ' siswa)');
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Tagihan berhasil dibuat untuk ' . count($data) . ' siswa.']);
+        }
+
+        return redirect()->route('admin.billing.index')->with('success', 'Tagihan berhasil dibuat untuk ' . count($data) . ' siswa.');
+    }
+
+    public function billingUpdate(Request $request, Billing $billing)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:160',
+            'amount' => 'required|numeric|min:0',
+            'due_date' => 'required|date',
+            'status' => 'required|in:lunas,belum',
+            'paid_date' => 'nullable|date|required_if:status,lunas',
+        ]);
+
+        $billing->update([
+            'name' => $validated['name'],
+            'amount' => $validated['amount'],
+            'due_date' => $validated['due_date'],
+            'status' => $validated['status'],
+            'paid_date' => $validated['status'] === 'lunas' ? ($validated['paid_date'] ?? now()) : null,
+        ]);
+
+        AuditService::log('billing.update', 'Billing', $billing->id, $billing->name);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Tagihan berhasil diperbarui.', 'billing' => $billing]);
+        }
+
+        return redirect()->route('admin.billing.index')->with('success', 'Tagihan berhasil diperbarui.');
+    }
+
+    public function billingDestroy(Request $request, Billing $billing)
+    {
+        $billing->delete();
+
+        AuditService::log('billing.delete', 'Billing', $billing->id, $billing->name);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Tagihan berhasil dihapus.']);
+        }
+
+        return redirect()->route('admin.billing.index')->with('success', 'Tagihan berhasil dihapus.');
     }
 }

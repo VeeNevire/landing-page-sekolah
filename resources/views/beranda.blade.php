@@ -70,7 +70,7 @@
             <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
           </svg>
         </div>
-        <div><strong>74 Prestasi</strong><small>Tingkat kota hingga nasional</small></div>
+        <div><strong>72 Prestasi</strong><small>Tingkat kota hingga nasional</small></div>
       </div>
       <div class="visual-card float-card float-2">
         <div class="mini-icon">

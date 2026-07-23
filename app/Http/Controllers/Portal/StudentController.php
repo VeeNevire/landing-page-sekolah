@@ -125,6 +125,7 @@ class StudentController extends Controller
         $billings = Billing::where('student_id', $student->id)->orderBy('due_date')->get();
 
         $billing = $billings->map(fn($b) => [
+            'id' => $b->id,
             'name' => $b->name,
             'amount' => (int) $b->amount,
             'date' => $b->due_date->format('Y-m-d'),
@@ -144,6 +145,30 @@ class StudentController extends Controller
             'paidAmount' => $paidAmount,
             'unpaidAmount' => $unpaidAmount,
         ]));
+    }
+
+    public function tagihanBayar(Request $request, Billing $billing)
+    {
+        $data = $this->resolve($request);
+        if (!$data) {
+            return response()->json(['success' => false, 'message' => 'Sesi tidak valid.'], 400);
+        }
+
+        $student = $data['selectedStudent'];
+        if ($billing->student_id !== $student->id) {
+            return response()->json(['success' => false, 'message' => 'Tagihan tidak ditemukan.'], 404);
+        }
+
+        if ($billing->status === 'lunas') {
+            return response()->json(['success' => false, 'message' => 'Tagihan ini sudah lunas.'], 400);
+        }
+
+        $billing->update([
+            'status' => 'lunas',
+            'paid_date' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Pembayaran berhasil.']);
     }
 
     public function profil(Request $request)
