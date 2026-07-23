@@ -114,11 +114,25 @@
           $existingForCS = $csAssignments->get($cs->id, collect());
         @endphp
         <div class="jurusan-cs-item" data-cs-id="{{ $cs->id }}" style="flex-direction:column;align-items:stretch;gap:6px;padding:8px 10px">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <span style="font-weight:600;font-size:.85rem"><strong>{{ $cs->kode }}</strong> — {{ $cs->nama }}@if($cs->kkm) <span style="font-weight:400;color:var(--muted);font-size:.78rem">(KKM {{ $cs->kkm }})</span>@endif</span>
-            <button type="button" onclick="confirmDeleteCS({{ $jurusan->id }}, {{ $cs->id }}, '{{ addslashes($cs->nama) }}')" class="btn btn-outline" style="min-height:28px;min-width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" title="Hapus">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
+              <span class="cs-view" style="font-weight:600;font-size:.85rem;white-space:nowrap"><strong>{{ $cs->kode }}</strong> — {{ $cs->nama }}@if($cs->kkm) <span style="font-weight:400;color:var(--muted);font-size:.78rem">(KKM {{ $cs->kkm }})</span>@endif</span>
+              <div class="cs-edit" style="display:none;align-items:center;gap:6px">
+                <input class="cs-edit-kode" value="{{ $cs->kode }}" style="width:80px;padding:.3rem .5rem;border-radius:6px;border:1.5px solid var(--line);font-size:.82rem;background:var(--card);color:var(--ink);font-family:inherit;text-transform:uppercase">
+                <input class="cs-edit-nama" value="{{ $cs->nama }}" style="width:160px;padding:.3rem .5rem;border-radius:6px;border:1.5px solid var(--line);font-size:.82rem;background:var(--card);color:var(--ink);font-family:inherit">
+                <input class="cs-edit-kkm" value="{{ $cs->kkm }}" style="width:60px;padding:.3rem .5rem;border-radius:6px;border:1.5px solid var(--line);font-size:.82rem;background:var(--card);color:var(--ink);font-family:inherit" step="0.01" min="0" max="100" type="number" placeholder="KKM">
+                <button type="button" class="btn btn-primary" onclick="saveEditCS(this)" style="min-height:30px;padding:0 10px;font-size:.8rem">Simpan</button>
+                <button type="button" class="btn btn-outline" onclick="cancelEditCS(this)" style="min-height:30px;padding:0 10px;font-size:.8rem">Batal</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0">
+              <button type="button" onclick="editCS(this)" class="btn btn-outline" style="min-height:28px;min-width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center" title="Edit">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+              </button>
+              <button type="button" onclick="confirmDeleteCS({{ $jurusan->id }}, {{ $cs->id }}, '{{ addslashes($cs->nama) }}')" class="btn btn-outline" style="min-height:28px;min-width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" title="Hapus">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
             @php $csKelasIds = $cs->kelas->pluck('id')->toArray(); @endphp
@@ -548,6 +562,59 @@ function cancelCSForm(btn) {
   form.style.display = 'none';
 }
 
+function editCS(btn) {
+  const item = btn.closest('.jurusan-cs-item');
+  item.querySelector('.cs-view').style.display = 'none';
+  const edit = item.querySelector('.cs-edit');
+  edit.style.display = 'flex';
+  edit.querySelector('.cs-edit-nama').focus();
+}
+
+function cancelEditCS(btn) {
+  const edit = btn.closest('.cs-edit');
+  const item = edit.closest('.jurusan-cs-item');
+  edit.style.display = 'none';
+  item.querySelector('.cs-view').style.display = '';
+}
+
+function saveEditCS(btn) {
+  const edit = btn.closest('.cs-edit');
+  const item = edit.closest('.jurusan-cs-item');
+  const csId = item.dataset.csId;
+  const kode = item.querySelector('.cs-edit-kode').value.trim();
+  const nama = item.querySelector('.cs-edit-nama').value.trim();
+  const kkm = item.querySelector('.cs-edit-kkm').value.trim();
+
+  if (!kode) { Swal.fire('', 'Kode mapel wajib diisi.', 'warning'); return; }
+  if (!nama) { Swal.fire('', 'Nama mapel wajib diisi.', 'warning'); return; }
+
+  fetch('/admin/jurusans/custom-subjects/' + csId, {
+    method: 'PUT',
+    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kode: kode, nama: nama, kkm: kkm || null })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      const view = item.querySelector('.cs-view');
+      view.innerHTML = '<strong>' + d.subject.kode + '</strong> — ' + d.subject.nama +
+        (d.subject.kkm ? ' <span style="font-weight:400;color:var(--muted);font-size:.78rem">(KKM ' + d.subject.kkm + ')</span>' : '');
+      edit.style.display = 'none';
+      view.style.display = '';
+      const group = item.closest('.jurusan-cs-group');
+      const jurusanId = group ? group.dataset.jurusanId : '';
+      const delBtn = item.querySelector('[onclick*="confirmDeleteCS"]');
+      if (delBtn) {
+        delBtn.setAttribute('onclick', "confirmDeleteCS(" + jurusanId + ", " + csId + ", '" + d.subject.nama.replace(/'/g, "\\'") + "')");
+      }
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 2000 });
+    } else {
+      Swal.fire('Gagal', d.message || 'Terjadi kesalahan.', 'error');
+    }
+  })
+  .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
+}
+
 function saveCS(btn) {
   const group = btn.closest('.jurusan-cs-group');
   const jurusanId = group.dataset.jurusanId;
@@ -578,9 +645,21 @@ function saveCS(btn) {
       const item = document.createElement('div');
       item.className = 'jurusan-cs-item';
       item.dataset.csId = d.subject.id;
-      item.innerHTML = '<span style="font-weight:600;font-size:.85rem"><strong>' + (d.subject.kode || '') + '</strong> — ' + d.subject.nama + kkmText + '</span>' +
+      item.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">' +
+        '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">' +
+        '<span class="cs-view" style="font-weight:600;font-size:.85rem;white-space:nowrap"><strong>' + (d.subject.kode || '') + '</strong> — ' + d.subject.nama + kkmText + '</span>' +
+        '<div class="cs-edit" style="display:none;align-items:center;gap:6px">' +
+        '<input class="cs-edit-kode" value="' + d.subject.kode + '" style="width:80px;padding:.3rem .5rem;border-radius:6px;border:1.5px solid var(--line);font-size:.82rem;background:var(--card);color:var(--ink);font-family:inherit;text-transform:uppercase">' +
+        '<input class="cs-edit-nama" value="' + d.subject.nama + '" style="width:160px;padding:.3rem .5rem;border-radius:6px;border:1.5px solid var(--line);font-size:.82rem;background:var(--card);color:var(--ink);font-family:inherit">' +
+        '<input class="cs-edit-kkm" value="' + (d.subject.kkm || '') + '" style="width:60px;padding:.3rem .5rem;border-radius:6px;border:1.5px solid var(--line);font-size:.82rem;background:var(--card);color:var(--ink);font-family:inherit" step="0.01" min="0" max="100" type="number" placeholder="KKM">' +
+        '<button type="button" class="btn btn-primary" onclick="saveEditCS(this)" style="min-height:30px;padding:0 10px;font-size:.8rem">Simpan</button>' +
+        '<button type="button" class="btn btn-outline" onclick="cancelEditCS(this)" style="min-height:30px;padding:0 10px;font-size:.8rem">Batal</button>' +
+        '</div></div>' +
+        '<div style="display:flex;gap:4px;flex-shrink:0">' +
+        '<button type="button" onclick="editCS(this)" class="btn btn-outline" style="min-height:28px;min-width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center" title="Edit">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>' +
         '<button type="button" onclick="confirmDeleteCS(' + jurusanId + ', ' + d.subject.id + ', \'' + d.subject.nama.replace(/'/g, "\\'") + '\')" class="btn btn-outline" style="min-height:28px;min-width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" title="Hapus">' +
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>';
       body.insertBefore(item, form);
       const header = group.querySelector('.jurusan-cs-header strong');
       const countSpan = group.querySelector('.jurusan-cs-header span[style*="font-weight:400"]');

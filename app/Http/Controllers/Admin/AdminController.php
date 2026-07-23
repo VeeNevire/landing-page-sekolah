@@ -1145,6 +1145,23 @@ class AdminController extends Controller
         return back()->with('success', 'Mata pelajaran jurusan berhasil ditambahkan.');
     }
 
+    public function jurusanCustomSubjectUpdate(Request $request, JurusanCustomSubject $customSubject)
+    {
+        $validated = $request->validate([
+            'kode' => 'required|string|max:20',
+            'nama' => 'required|string|max:120',
+            'kkm' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $customSubject->update($validated);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Mata pelajaran jurusan berhasil diperbarui.', 'subject' => $customSubject]);
+        }
+
+        return back()->with('success', 'Mata pelajaran jurusan berhasil diperbarui.');
+    }
+
     public function jurusanCustomSubjectDestroy(Request $request, JurusanCustomSubject $customSubject)
     {
         $customSubject->delete();

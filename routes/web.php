@@ -180,6 +180,7 @@ Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')
     Route::get('/jurusans/{jurusan}/detail', [AdminController::class, 'jurusanDetail'])->name('jurusans.detail');
     Route::post('/jurusans/{jurusan}/subjects', [AdminController::class, 'jurusansSubjectsSave'])->name('jurusans.subjects.save');
     Route::post('/jurusans/{jurusan}/custom-subjects', [AdminController::class, 'jurusanCustomSubjectStore'])->name('jurusans.custom-subjects.store');
+    Route::put('/jurusans/custom-subjects/{customSubject}', [AdminController::class, 'jurusanCustomSubjectUpdate'])->name('jurusans.custom-subjects.update');
     Route::delete('/jurusans/custom-subjects/{customSubject}', [AdminController::class, 'jurusanCustomSubjectDestroy'])->name('jurusans.custom-subjects.destroy');
 
     Route::get('/periods', [AdminController::class, 'periods'])->name('periods.index');

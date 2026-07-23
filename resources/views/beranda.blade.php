@@ -59,21 +59,8 @@
     <div class="visual reveal">
       <div class="visual-card visual-main">
         <div class="visual-label"><small>Selamat datang di</small><strong>InvestaSchool</strong></div>
-        <div class="school-illustration">
-          <div class="school-building">
-            <div class="block left"></div>
-            <div class="block center">
-              <div class="roof"></div>
-              <div class="door"></div>
-              <div class="window w5"></div>
-              <div class="window w6"></div>
-            </div>
-            <div class="block right"></div>
-            <div class="window w1"></div>
-            <div class="window w2"></div>
-            <div class="window w3"></div>
-            <div class="window w4"></div>
-          </div>
+        <div class="school-illustration reveal" style="background:url('/img/tentang-sekolah.webp') center/cover no-repeat">
+         
         </div>
       </div>
       <div class="visual-card float-card float-1">
