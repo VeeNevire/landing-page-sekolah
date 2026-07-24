@@ -6,7 +6,7 @@
   <p style="font-size:.82rem;color:var(--s-muted);margin:2px 0 0">Ringkasan nilai per mata pelajaran</p>
 </div>
 
-<div class="bento bento-3" style="margin-bottom:16px">
+<div class="bento bento-4" style="margin-bottom:16px">
   <div class="b-card-stat">
     <div class="b-flex-between">
       <div>
@@ -48,6 +48,19 @@
     </div>
     <div style="font-size:.72rem;color:var(--s-muted);margin-top:6px">di bawah KKM</div>
   </div>
+
+  <div class="b-card-stat">
+    <div class="b-flex-between">
+      <div>
+        <div class="b-stat-label">Nilai Tertinggi di Kelas</div>
+        <div class="b-stat-value" style="background:linear-gradient(135deg,#FF9F0A,#FFB340);-webkit-background-clip:text;-webkit-text-fill-color:transparent">{{ $classMaxScore }}</div>
+      </div>
+      <div class="b-stat-icon" style="background:linear-gradient(135deg,#FF9F0A,#FFB340);box-shadow:0 4px 12px rgba(255,159,10,0.25)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+    </div>
+    <div style="font-size:.72rem;color:var(--s-muted);margin-top:6px">skor tertinggi di kelas</div>
+  </div>
 </div>
 
 <div class="bento bento-2">
@@ -83,6 +96,9 @@
       </div>
       <div class="b-progress">
         <div class="b-progress-fill {{ $g['passed'] ? '' : '' }}" style="width:{{ min($g['final_score'], 100) }}%;background:{{ $g['passed'] ? 'linear-gradient(90deg,#34C759,#30D158)' : 'linear-gradient(90deg,#FF3B30,#FF453A)' }}"></div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--s-line);font-size:.78rem;color:var(--s-muted)">
+        <span>Rata-rata kelas: <strong style="color:var(--s-ink)">{{ $g['class_avg'] ?: '-' }}</strong></span>
       </div>
     </div>
   </div>

@@ -673,7 +673,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     document.getElementById('step1Indicator').classList.remove('active');
     document.getElementById('step1Indicator').classList.add('done');
     document.getElementById('step2Indicator').classList.add('active');
-    if (!isEditMode) loadParentsList();
+    loadParentsList();
   }
 
   function goToStep1() {
@@ -743,7 +743,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
 
     const form = document.getElementById('studentForm');
     const $ = id => document.getElementById(id);
-    const isEdit = !!$('formUserId')?.value;
+    const isEdit = !!$('formStudentId')?.value;
     const parentAction = $('parentAction')?.value || 'none';
     const parentRel = parentAction === 'new' ? ($('m_parent_relationship_new')?.value || '') : ($('m_parent_relationship')?.value || '');
 
