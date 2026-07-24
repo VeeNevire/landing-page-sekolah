@@ -9,6 +9,27 @@
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+  @push('styles')
+  <style>
+    .topbar-student-switcher { position:relative }
+    .tbs-current { display:flex; align-items:center; gap:8px; padding:6px 12px; border-radius:10px; cursor:pointer; transition:background .15s }
+    .tbs-current:hover { background:var(--bg) }
+    .tbs-avatar { width:28px; height:28px; border-radius:8px; display:grid; place-items:center; background:linear-gradient(135deg,var(--primary-2),var(--primary)); color:#fff; font-weight:800; font-size:.72rem; flex-shrink:0 }
+    .tbs-info { line-height:1.2 }
+    .tbs-info strong { display:block; font-size:.82rem; font-weight:600; color:var(--ink) }
+    .tbs-info small { font-size:.7rem; color:var(--muted) }
+    .tbs-chevron { font-size:.55rem; color:var(--muted); margin-left:2px }
+    .tbs-dropdown { display:none; position:absolute; top:calc(100% + 4px); right:0; min-width:220px; border-radius:12px; background:var(--card); border:1px solid var(--line); overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.1); z-index:50 }
+    .tbs-dropdown.open { display:block }
+    .tbs-item { display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; transition:background .1s; border-bottom:1px solid var(--line) }
+    .tbs-item:last-child { border-bottom:none }
+    .tbs-item:hover { background:var(--bg) }
+    .tbs-item.active { background:color-mix(in srgb,var(--primary-2) 6%,var(--card)) }
+    .tbs-check { color:var(--primary-2); font-weight:700; font-size:.85rem; margin-left:auto }
+    .ortu-body .portal-menu { flex:0 1 auto; overflow-y:visible }
+    .ortu-body .portal-sidebar { overflow-y:auto }
+  </style>
+  @endpush
   @stack('styles')
 </head>
 
@@ -19,6 +40,7 @@
         <span class="brand-mark"><img src="{{ asset('img/logo.svg') }}" alt="" width="28" height="28"></span>
         <span class="brand-text">Portal Orang Tua<small>InvestaSchool </small></span>
       </a>
+
       <nav class="portal-menu" aria-label="Menu Portal">
         <div class="portal-menu-group">Akademik</div>
         <a href="{{ route('portal.dashboard', ['student_id' => $selectedStudentId ?? '']) }}"
@@ -141,13 +163,32 @@
           </div>
         </div>
         <div class="portal-actions no-print">
-          <div class="topbar-user">
-            <div class="topbar-user-avatar">{{ substr(auth()->user()->name, 0, 1) }}</div>
-            <div class="topbar-user-info">
-              <strong>{{ auth()->user()->full_name ?? auth()->user()->name }}</strong>
-              <span>{{ auth()->user()->email }}</span>
+          @if (isset($students) && $students->count() > 1)
+          <div class="topbar-student-switcher">
+            <div class="tbs-current" onclick="toggleSwitcher()">
+              <span class="tbs-avatar">{{ substr($selectedStudent->full_name, 0, 1) }}</span>
+              <span class="tbs-info">
+                <strong>{{ $selectedStudent->full_name }}</strong>
+                <small>{{ $selectedStudent->class_name }}</small>
+              </span>
+              <span class="tbs-chevron">&#9660;</span>
+            </div>
+            <div class="tbs-dropdown" id="pswDropdown">
+              @foreach ($students as $s)
+              <div class="tbs-item {{ $s->id == $selectedStudentId ? 'active' : '' }}" onclick="switchStudent({{ $s->id }})">
+                <span class="tbs-avatar">{{ substr($s->full_name, 0, 1) }}</span>
+                <span class="tbs-info">
+                  <strong>{{ $s->full_name }}</strong>
+                  <small>{{ $s->class_name }}</small>
+                </span>
+                @if ($s->id == $selectedStudentId)
+                <span class="tbs-check">&#10003;</span>
+                @endif
+              </div>
+              @endforeach
             </div>
           </div>
+          @endif
           <button class="icon-btn" id="themeBtn" aria-label="Ubah tema">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5" />
@@ -192,6 +233,19 @@
   }
   function confirmLogout() {
     Swal.fire({ title:'Keluar dari portal?', text:'Anda akan keluar dari sistem dan perlu login kembali.', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, keluar', cancelButtonText:'Batal', confirmButtonColor:'#ef4444', width:420 }).then(r => { if (r.isConfirmed) document.getElementById('logoutForm').submit(); });
+  }
+  function toggleSwitcher() {
+    document.getElementById('pswDropdown').classList.toggle('open');
+  }
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.topbar-student-switcher')) {
+      document.getElementById('pswDropdown')?.classList.remove('open');
+    }
+  });
+  function switchStudent(studentId) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('student_id', studentId);
+    window.location.href = url.toString();
   }
   </script>
   @stack('scripts')

@@ -762,6 +762,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         parent_email: $('m_parent_email')?.value || '',
         parent_password: $('m_parent_password')?.value || '',
         parent_relationship: parentRel,
+        disconnect_parent_id: $('disconnect_parent_ids')?.value || '',
     };
 
     if (isEdit) data._method = 'PUT';
