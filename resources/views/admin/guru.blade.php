@@ -111,6 +111,13 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
                 </svg>
                 @endif
               </button>
+              <button type="button" class="btn btn-outline" title="Hapus" style="min-height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" onclick="confirmDelete({{ $user->id }}, '{{ addslashes($user->name) }}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </svg>
+              </button>
             </div>
           </td>
         </tr>
@@ -455,6 +462,35 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
         })
         .catch(() => { Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'); });
       }
+    });
+  }
+
+  function confirmDelete(userId, userName) {
+    Swal.fire({
+      title: 'Hapus Guru?',
+      html: 'Akun <strong>' + userName + '</strong> akan dihapus permanen.<br><br>Penugasan mapel guru ini akan menjadi <strong>kosong</strong> (tanpa guru pengampu).',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Ya, hapus',
+      cancelButtonText: 'Batal',
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      fetch('/admin/users/' + userId, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+      })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: json.message, showConfirmButton: false, timer: 3000 })
+            .then(() => { location.reload(); });
+        } else {
+          Swal.fire('Gagal', json.message, 'error');
+        }
+      })
+      .catch(() => { Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'); });
     });
   }
 

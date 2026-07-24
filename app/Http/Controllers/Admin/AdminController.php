@@ -259,11 +259,20 @@ class AdminController extends Controller
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
         }
 
+        $mapelCount = $user->teachingAssignments()->count();
+
+        $user->teachingAssignments()->update(['teacher_id' => null]);
+        $user->homeroomStudents()->update(['homeroom_teacher_id' => null]);
+
         AuditService::log('user.delete', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
         $user->delete();
 
         if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Pengguna berhasil dihapus.']);
+            $msg = 'Guru berhasil dihapus.';
+            if ($mapelCount > 0) {
+                $msg .= " {$mapelCount} penugasan mapel menjadi kosong.";
+            }
+            return response()->json(['success' => true, 'message' => $msg]);
         }
 
         return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil dihapus.');
