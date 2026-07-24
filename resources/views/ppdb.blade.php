@@ -36,25 +36,79 @@
 {{-- ALUR PENDAFTARAN --}}
 <section class="section">
   <div class="container">
-    <span class="kicker">Alur pendaftaran</span>
-    <h2 class="section-title">Daftar dalam empat langkah mudah.</h2>
-    <div class="grid grid-2 mt-8 steps">
-      <div class="card step card-hover reveal">
-        <h3>Isi formulir pendaftaran</h3>
-        <p style="color:var(--muted)">Lengkapi identitas calon siswa, orang tua, dan pilihan program.</p>
+    <div style="text-align:center">
+      <span class="kicker" style="justify-content:center">Alur pendaftaran</span>
+      <h2 class="section-title">Daftar dalam empat langkah mudah.</h2>
+      <p class="section-desc" style="margin-left:auto;margin-right:auto">Dari pendaftaran hingga daftar ulang, setiap langkah jelas dan terarah.</p>
+    </div>
+    <div class="step-flow mt-10">
+      <div class="step-flow-item reveal" style="transition-delay:0s">
+        <div class="step-flow-marker">
+          <span class="step-flow-circle" style="background:#185FA5;color:#fff">1</span>
+        </div>
+        <div class="step-flow-icon" style="background:#e3edf5;color:#185FA5">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="14" x="2" y="3" rx="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+            <path d="M8 7h8" /><path d="M8 11h6" />
+          </svg>
+        </div>
+        <div class="step-flow-body">
+          <h3>Isi Formulir Pendaftaran</h3>
+          <p>Lengkapi data dan pilih program.</p>
+        </div>
       </div>
-      <div class="card step card-hover reveal">
-        <h3>Unggah dokumen</h3>
-        <p style="color:var(--muted)">Siapkan rapor, kartu keluarga, akta lahir, dan pas foto.</p>
+      <div class="step-flow-item reveal" style="transition-delay:0.12s">
+        <div class="step-flow-marker">
+          <span class="step-flow-circle" style="background:#3D8BAF;color:#fff">2</span>
+        </div>
+        <div class="step-flow-icon" style="background:#e4eef5;color:#3D8BAF">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+        </div>
+        <div class="step-flow-body">
+          <h3>Unggah Dokumen</h3>
+          <p>Siapkan rapor, KK, dan akta.</p>
+        </div>
       </div>
-      <div class="card step card-hover reveal">
-        <h3>Seleksi dan wawancara</h3>
-        <p style="color:var(--muted)">Ikuti tes pemetaan akademik dan sesi wawancara.</p>
+      <div class="step-flow-item reveal" style="transition-delay:0.24s">
+        <div class="step-flow-marker">
+          <span class="step-flow-circle" style="background:#6BB5CE;color:#fff">3</span>
+        </div>
+        <div class="step-flow-icon" style="background:#e8f2f7;color:#6BB5CE">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        </div>
+        <div class="step-flow-body">
+          <h3>Seleksi & Wawancara</h3>
+          <p>Tes akademik dan wawancara motivasi.</p>
+        </div>
       </div>
-      <div class="card step card-hover reveal">
-        <h3>Daftar ulang</h3>
-        <p style="color:var(--muted)">Konfirmasi kelulusan dan selesaikan administrasi.</p>
+      <div class="step-flow-item reveal" style="transition-delay:0.36s">
+        <div class="step-flow-marker">
+          <span class="step-flow-circle" style="background:#B5D4F4;color:#132238">4</span>
+        </div>
+        <div class="step-flow-icon" style="background:#f0f6fa;color:#95CCDD">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <polyline points="16 11 18 13 22 9" />
+          </svg>
+        </div>
+        <div class="step-flow-body">
+          <h3>Daftar Ulang</h3>
+          <p>Konfirmasi dan selesaikan administrasi.</p>
+        </div>
       </div>
+    </div>
+    <div style="text-align:center;margin-top:48px">
+      <a class="btn btn-primary" href="{{ route('ppdb.start') }}">Mulai Pendaftaran</a>
     </div>
   </div>
 </section>

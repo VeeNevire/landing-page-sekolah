@@ -219,110 +219,149 @@
   <div class="container">
     <span class="kicker">Program pendidikan</span>
     <h2 class="section-title">Pilih jalur sesuai potensi dan cita-cita.</h2>
-    <div class="grid grid-3 mt-8">
-      <article class="card card-hover program-card reveal">
-        <span class="tag tag-is">IS</span>
-        <div class="icon-box">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v8" />
-            <path d="M8 12h8" />
+    <div class="grid-jurusan mt-8">
+      <article class="jurusan-card reveal" data-jurusan="rpl">
+        <div class="jurusan-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6" />
+            <polyline points="8 6 2 12 8 18" />
           </svg>
         </div>
-        <h3>SMA Sains & Teknologi</h3>
-        <p>Penguatan matematika, sains, riset, coding, dan persiapan perguruan tinggi.</p>
-        <div class="program-meta"><span>3 tahun</span><span>Proyek riset</span></div>
+        <h3>RPL</h3>
+        <p>Rekayasa Perangkat Lunak — Web, aplikasi, basis data, UI/UX, cloud, serta proyek nyata bersama mitra.</p>
+        <div class="jurusan-info">
+          <span class="jurusan-pill">3 Tahun</span>
+          <span class="jurusan-pill">Sertifikasi</span>
+        </div>
       </article>
-      <article class="card card-hover program-card reveal">
-        <span class="tag tag-is">IS</span>
-        <div class="icon-box">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M2 12h20" />
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      <article class="jurusan-card reveal" data-jurusan="bdp">
+        <div class="jurusan-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
           </svg>
         </div>
-        <h3>SMA Sosial & Humaniora</h3>
-        <p>Ekonomi, sosiologi, geografi, komunikasi, kewirausahaan, dan kepemimpinan.</p>
-        <div class="program-meta"><span>3 tahun</span><span>Debat & proyek sosial</span></div>
+        <h3>BDP</h3>
+        <p>Bisnis Digital — E-commerce, pemasaran digital, analitik, penjualan, dan kewirausahaan berbasis teknologi.</p>
+        <div class="jurusan-info">
+          <span class="jurusan-pill">3 Tahun</span>
+          <span class="jurusan-pill">Proyek Usaha</span>
+        </div>
       </article>
-      <article class="card card-hover program-card reveal">
-        <span class="tag tag-is">IS</span>
-        <div class="icon-box">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="20" height="14" x="2" y="3" rx="2" />
-            <line x1="8" y1="21" x2="16" y2="21" />
-            <line x1="12" y1="17" x2="12" y2="21" />
+      <article class="jurusan-card reveal" data-jurusan="otkp">
+        <div class="jurusan-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+            <line x1="9" y1="6" x2="15" y2="6" />
+            <line x1="9" y1="10" x2="15" y2="10" />
+            <line x1="9" y1="14" x2="15" y2="14" />
+            <line x1="9" y1="18" x2="13" y2="18" />
           </svg>
         </div>
-        <h3>Rekayasa Perangkat Lunak</h3>
-        <p>Web, aplikasi, basis data, UI/UX, cloud, serta proyek nyata bersama mitra.</p>
-        <div class="program-meta"><span>3 tahun</span><span>Sertifikasi kompetensi</span></div>
+        <h3>OTKP</h3>
+        <p>Otomatisasi Tata Kelola Perkantoran — Administrasi, korespondensi, kehumasan, arsip digital, dan layanan bisnis.</p>
+        <div class="jurusan-info">
+          <span class="jurusan-pill">3 Tahun</span>
+          <span class="jurusan-pill">Teaching Factory</span>
+        </div>
       </article>
-      <article class="card card-hover program-card reveal">
-        <span class="tag tag-is">IS</span>
-        <div class="icon-box">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+      <article class="jurusan-card reveal" data-jurusan="akl">
+        <div class="jurusan-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2" />
+            <line x1="8" y1="6" x2="16" y2="6" />
+            <line x1="8" y1="10" x2="16" y2="10" />
+            <line x1="8" y1="14" x2="16" y2="14" />
+            <line x1="8" y1="18" x2="16" y2="18" />
           </svg>
         </div>
-        <h3>Desain Komunikasi Visual</h3>
-        <p>Branding, ilustrasi, fotografi, video, animasi, dan produksi konten digital.</p>
-        <div class="program-meta"><span>3 tahun</span><span>Studio kreatif</span></div>
+        <h3>AKL</h3>
+        <p>Akuntansi Keuangan Lembaga — Akuntansi, perpajakan, aplikasi keuangan, administrasi, dan simulasi bisnis.</p>
+        <div class="jurusan-info">
+          <span class="jurusan-pill">3 Tahun</span>
+          <span class="jurusan-pill">Kompetensi</span>
+        </div>
       </article>
-      <article class="card card-hover program-card reveal">
-        <span class="tag tag-is">IS</span>
-        <div class="icon-box">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="20" x2="12" y2="10" />
-            <line x1="18" y1="20" x2="18" y2="4" />
-            <line x1="6" y1="20" x2="6" y2="16" />
+      <article class="jurusan-card reveal" data-jurusan="dkv">
+        <div class="jurusan-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+            <path d="M15 5l4 4" />
           </svg>
         </div>
-        <h3>Akuntansi & Keuangan</h3>
-        <p>Akuntansi, perpajakan, aplikasi keuangan, administrasi, dan simulasi bisnis.</p>
-        <div class="program-meta"><span>3 tahun</span><span>Teaching factory</span></div>
-      </article>
-      <article class="card card-hover program-card reveal">
-        <span class="tag tag-is">IS</span>
-        <div class="icon-box">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
+        <h3>DKV</h3>
+        <p>Desain Komunikasi Visual — Branding, ilustrasi, fotografi, video, animasi, dan produksi konten digital.</p>
+        <div class="jurusan-info">
+          <span class="jurusan-pill">3 Tahun</span>
+          <span class="jurusan-pill">Portofolio</span>
         </div>
-        <h3>Bisnis Digital</h3>
-        <p>E-commerce, pemasaran digital, analitik, penjualan, dan kewirausahaan.</p>
-        <div class="program-meta"><span>3 tahun</span><span>Proyek usaha siswa</span></div>
       </article>
     </div>
   </div>
 </section>
 
 {{-- PENGALAMAN BELAJAR --}}
-<section class="section accent-section">
-  <div class="container split">
-    <div class="reveal">
-      <span class="kicker kicker-white">Pengalaman belajar</span>
+<section class="section">
+  <div class="container">
+    <div class="reveal" style="text-align:center">
+      <span class="kicker" style="justify-content:center">Pengalaman belajar</span>
       <h2 class="section-title">Belajar tidak berhenti di ruang kelas.</h2>
-      <p class="section-desc">Siswa mengembangkan portofolio melalui klub, kompetisi, proyek sosial, kunjungan industri, praktik kerja, dan kegiatan kepemimpinan.</p>
-      <a class="btn btn-accent mt-6" href="{{ route('akademik') }}">Lihat Semua Program</a>
+      <p class="section-desc" style="margin-left:auto;margin-right:auto">Siswa mengembangkan portofolio melalui klub, kompetisi, proyek sosial, kunjungan industri, praktik kerja, dan kegiatan kepemimpinan.</p>
     </div>
-    <div class="grid grid-2 reveal">
-      <div class="card" style="color:var(--ink)"><strong class="text-2xl">15+</strong>
-        <p style="color:var(--muted)">Ekstrakurikuler akademik, olahraga, seni, dan teknologi.</p>
-      </div>
-      <div class="card" style="color:var(--ink)"><strong class="text-2xl">2×</strong>
-        <p style="color:var(--muted)">Career day dan pameran karya siswa setiap tahun.</p>
-      </div>
-      <div class="card" style="color:var(--ink)"><strong class="text-2xl">100%</strong>
-        <p style="color:var(--muted)">Siswa SMK mengikuti praktik kerja lapangan.</p>
-      </div>
-      <div class="card" style="color:var(--ink)"><strong class="text-2xl">1:15</strong>
-        <p style="color:var(--muted)">Rasio pendampingan guru terhadap kelompok siswa.</p>
-      </div>
+    <div class="grid grid-3 mt-10">
+      <article class="card experience-card reveal">
+        <div class="experience-icon" style="background:#e8f4f8;color:var(--primary)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+            <line x1="12" y1="12" x2="12" y2="17" />
+            <polyline points="8 15 12 12 16 15" />
+          </svg>
+        </div>
+        <h3>Praktik Kerja Lapangan</h3>
+        <p>"Rivan, siswa RPL, magang di PT Infosys dan membangun sistem inventaris yang masih dipakai perusahaan hingga sekarang."</p>
+        <div class="experience-meta">
+          <span class="experience-tag">SMK</span>
+          <span class="experience-tag">RPL</span>
+          <span class="experience-tag">Mitra Industri</span>
+        </div>
+      </article>
+      <article class="card experience-card reveal">
+        <div class="experience-icon" style="background:#fef3e2;color:#c9760d">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="6" />
+            <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+          </svg>
+        </div>
+        <h3>Kompetisi & Prestasi</h3>
+        <p>"Tim DKV meraih Juara 1 lomba desain logo tingkat provinsi—proyek nyata yang jadi portofolio mereka ke perguruan tinggi."</p>
+        <div class="experience-meta">
+          <span class="experience-tag">DKV</span>
+          <span class="experience-tag">Prestasi</span>
+          <span class="experience-tag">Portofolio</span>
+        </div>
+      </article>
+      <article class="card experience-card reveal">
+        <div class="experience-icon" style="background:#e6f7ee;color:var(--success)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        </div>
+        <h3>Proyek Sosial</h3>
+        <p>"Bakti lingkungan bersama siswa OTKP: program daur ulang sampah plastik menjadi produk bernilai jual untuk masyarakat sekitar."</p>
+        <div class="experience-meta">
+          <span class="experience-tag">OTKP</span>
+          <span class="experience-tag">Sosial</span>
+          <span class="experience-tag">Kewirausahaan</span>
+        </div>
+      </article>
+    </div>
+    <div style="text-align:center;margin-top:48px">
+      <a class="btn btn-primary" href="{{ route('akademik') }}">Lihat Semua Program</a>
     </div>
   </div>
 </section>
