@@ -27,13 +27,12 @@ $jurusanIcons = [
 </div>
 
 <div class="admin-toolbar">
-  <form method="GET" style="display:flex;gap:10px;flex:1;flex-wrap:wrap">
+  <form method="GET" class="auto-submit" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center">
     <div class="field" style="flex:1;min-width:250px">
-      <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau kode jurusan...">
+      <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau kode jurusan..." data-debounce="400">
     </div>
-    <button class="btn btn-primary" type="submit" style="min-height:42px">Cari</button>
     @if (request('search'))
-      <a href="{{ route('admin.jurusans.index') }}" class="btn btn-outline" style="min-height:42px">Reset</a>
+      <a href="{{ route('admin.jurusans.index') }}" class="btn btn-outline btn-sm" style="min-height:36px;padding:0 12px;font-size:.82rem">Reset</a>
     @endif
   </form>
 </div>

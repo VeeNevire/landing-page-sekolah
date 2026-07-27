@@ -48,16 +48,15 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
 </div>
 
 <div class="admin-toolbar">
-  <form method="GET" style="display:flex;gap:10px;flex:1;flex-wrap:wrap">
+  <form method="GET" class="auto-submit" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center">
     @if ($currentRole)
     <input type="hidden" name="role" value="{{ $currentRole }}">
     @endif
     <div class="field" style="flex:1;min-width:200px">
-      <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, email...">
+      <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, email..." data-debounce="400">
     </div>
-    <button class="btn btn-primary" type="submit" style="min-height:42px">Cari</button>
     @if (request('search'))
-    <a href="{{ route('admin.users.index', array_filter(['role' => $currentRole])) }}" class="btn btn-outline" style="min-height:42px">Reset</a>
+    <a href="{{ route('admin.users.index', array_filter(['role' => $currentRole])) }}" class="btn btn-outline btn-sm" style="min-height:36px;padding:0 12px;font-size:.82rem">Reset</a>
     @endif
   </form>
 </div>

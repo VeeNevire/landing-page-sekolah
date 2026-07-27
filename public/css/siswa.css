@@ -226,20 +226,21 @@
 }
 
 /* ===== TOPBAR ===== */
-.siswa-main { min-width: 0; overflow: hidden; }
+.siswa-main { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; }
 
 .siswa-topbar {
   position: sticky;
   top: 0;
   z-index: 30;
-  height: 56px;
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  gap: 18px;
+  padding: 13px clamp(18px,3vw,38px);
   background: rgba(255,255,255,0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--s-line);
   flex-shrink: 0;
 }
@@ -263,7 +264,7 @@
 
 .siswa-topbar-title { font-size: .92rem; font-weight: 600; color: var(--s-ink); margin: 0; }
 
-.siswa-topbar-date { font-size: .72rem; color: var(--s-muted); }
+.siswa-topbar-date { font-size: .72rem; color: var(--s-muted); white-space: nowrap; }
 
 .siswa-topbar-right { display: flex; align-items: center; gap: 12px; }
 
@@ -291,6 +292,9 @@
   color: #fff;
   flex-shrink: 0;
 }
+
+.siswa-body .btn-logout { color: var(--s-danger); border-color: rgba(255,59,48,0.25); }
+.siswa-body .btn-logout:hover { background: rgba(255,59,48,0.08); border-color: var(--s-danger); color: var(--s-danger); }
 
 /* ===== CONTENT ===== */
 .siswa-content {

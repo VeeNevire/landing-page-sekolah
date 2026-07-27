@@ -45,12 +45,12 @@
 </section>
 
 <div class="admin-toolbar">
-  <form method="GET" style="display:flex;gap:10px;flex:1;flex-wrap:wrap">
+  <form method="GET" class="auto-submit" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center">
     <div class="field" style="flex:1;min-width:200px">
-      <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama tagihan atau siswa...">
+      <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama tagihan atau siswa..." data-debounce="400">
     </div>
     <div class="field" style="min-width:160px">
-      <select name="class">
+      <select name="class" data-auto-submit>
         <option value="">Semua Kelas</option>
         @foreach ($classes as $c)
         <option value="{{ $c }}" {{ request('class') === $c ? 'selected' : '' }}>{{ $c }}</option>
@@ -58,15 +58,14 @@
       </select>
     </div>
     <div class="field" style="min-width:140px">
-      <select name="status">
+      <select name="status" data-auto-submit>
         <option value="">Semua Status</option>
         <option value="belum" {{ request('status') === 'belum' ? 'selected' : '' }}>Belum Dibayar</option>
         <option value="lunas" {{ request('status') === 'lunas' ? 'selected' : '' }}>Lunas</option>
       </select>
     </div>
-    <button class="btn btn-primary" type="submit" style="min-height:42px">Filter</button>
     @if (request('search') || request('class') || request('status'))
-    <a href="{{ route('admin.billing.index') }}" class="btn btn-outline" style="min-height:42px">Reset</a>
+    <a href="{{ route('admin.billing.index') }}" class="btn btn-outline btn-sm" style="min-height:36px;padding:0 12px;font-size:.82rem">Reset</a>
     @endif
   </form>
 </div>

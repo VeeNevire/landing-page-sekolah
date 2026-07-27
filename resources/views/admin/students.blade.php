@@ -87,16 +87,16 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
 </div>
 
 <div class="admin-toolbar">
-  <form method="GET" style="display:flex;gap:10px;flex:1;flex-wrap:wrap">
+  <form method="GET" class="auto-submit" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center">
     <input type="hidden" name="tab" value="students">
     @if ($studentStatus)
     <input type="hidden" name="status" value="{{ $studentStatus }}">
     @endif
     <div class="field" style="flex:2;min-width:200px">
-      <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau NISN...">
+      <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau NISN..." data-debounce="400">
     </div>
     <div class="field" style="flex:1;min-width:140px">
-      <select name="jurusan_id" id="filterJurusan">
+      <select name="jurusan_id" id="filterJurusan" data-auto-submit>
         <option value="">Semua Jurusan</option>
         @foreach ($jurusans as $j)
         <option value="{{ $j->id }}" {{ (int) request('jurusan_id') === $j->id ? 'selected' : '' }}>{{ $j->kode }} — {{ $j->nama }}</option>
@@ -104,7 +104,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       </select>
     </div>
     <div class="field" style="flex:1;min-width:140px">
-      <select name="kelas_id" id="filterKelas">
+      <select name="kelas_id" id="filterKelas" data-auto-submit>
         <option value="">Semua Kelas</option>
         @foreach ($kelasList as $k)
         @php $romawi = [10 => 'X', 11 => 'XI', 12 => 'XII']; @endphp
@@ -112,9 +112,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         @endforeach
       </select>
     </div>
-    <button class="btn btn-primary" type="submit" style="min-height:42px">Cari</button>
     @if (request('search') || request('jurusan_id') || request('kelas_id'))
-    <a href="{{ route('admin.students.index', array_merge(['tab' => 'students'], array_filter(['status' => $studentStatus]))) }}" class="btn btn-outline" style="min-height:42px">Reset</a>
+    <a href="{{ route('admin.students.index', array_merge(['tab' => 'students'], array_filter(['status' => $studentStatus]))) }}" class="btn btn-outline btn-sm" style="min-height:36px;padding:0 12px;font-size:.82rem">Reset</a>
     @endif
   </form>
 </div>
@@ -320,15 +319,9 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     </a>
     @endforeach
   </div>
-  <form method="GET" class="search-box">
+  <form method="GET" class="search-box auto-submit">
     <input type="hidden" name="tab" value="applicants">
-    <input type="text" name="search" class="search-input" placeholder="Cari nama atau asal sekolah..." value="{{ request('search') }}">
-    <button class="btn btn-outline btn-sm" type="submit">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.35-4.35" />
-      </svg>
-    </button>
+    <input type="text" name="search" class="search-input" placeholder="Cari nama atau asal sekolah..." value="{{ request('search') }}" data-debounce="400">
   </form>
 </div>
 
