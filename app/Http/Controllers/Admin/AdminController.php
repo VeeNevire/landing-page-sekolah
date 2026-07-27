@@ -620,8 +620,6 @@ class AdminController extends Controller
         AuditService::log('student.reset-password', 'Student', $student->id, $student->full_name);
 
         return response()->json(['success' => true, 'message' => 'Password berhasil direset. Kredensial baru terkirim ke email ' . $student->user->email . '.']);
-
-        return back()->with('success', 'Password berhasil direset. Kredensial baru terkirim ke email.');
     }
 
     public function studentImportForm()
@@ -685,14 +683,12 @@ class AdminController extends Controller
 
         $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
 
-        $jurusans = \App\Models\Jurusan::with(['customSubjects' => fn($q) => $q->with('kelas')])
+        $jurusans = \App\Models\Jurusan::with([
+                'customSubjects' => fn($q) => $q->with('kelas'),
+                'kelas' => fn($q) => $q->orderBy('tingkat')->orderBy('nama'),
+            ])
             ->orderBy('kode')
             ->get();
-
-        // Load all kelas per jurusan (buat checkbox centang)
-        foreach ($jurusans as $j) {
-            $j->load(['kelas' => fn($q) => $q->orderBy('tingkat')->orderBy('nama')]);
-        }
 
         $csAssignments = collect();
         if ($activePeriod) {
@@ -1570,52 +1566,13 @@ class AdminController extends Controller
         $ids = explode(',', $validated['ids']);
         $applicants = Applicant::whereIn('id', $ids)->get();
 
+        $service = app(\App\Services\StudentRegistrationService::class);
+
         foreach ($applicants as $applicant) {
             $applicant->update(['status' => $validated['status']]);
 
             if ($validated['status'] === 'accepted') {
-                $student = Student::create([
-                    'user_id' => $applicant->user_id,
-                    'nisn' => $applicant->nisn ?? ('PPDB-' . str_pad($applicant->id, 5, '0', STR_PAD_LEFT)),
-                    'full_name' => $applicant->full_name,
-                    'birth_date' => $applicant->birth_date,
-                    'class_name' => $applicant->jenjang === 'SMK' ? 'X ' . ($applicant->program_diminati ?? 'Baru') : 'X ' . ($applicant->program_diminati ?? 'Baru'),
-                    'program_name' => $applicant->program_diminati ?? ($applicant->jenjang ?? ''),
-                    'status' => 'active',
-                ]);
-
-                if ($applicant->user_id) {
-                    $applicant->user->update(['role' => 'student']);
-                }
-
-                foreach (['ayah', 'ibu'] as $parentType) {
-                    $email = $applicant->{$parentType . '_email'};
-                    $name = $applicant->{$parentType . '_name'};
-                    if ($email && $name) {
-                        $parent = User::where('email', $email)->first();
-
-                        if (!$parent) {
-                            $password = (string) random_int(10000000, 99999999);
-                            $parent = User::create([
-                                'name' => $name,
-                                'full_name' => $name,
-                                'email' => $email,
-                                'password' => Hash::make($password),
-                                'role' => 'parent',
-                            ]);
-
-                            Mail::to($email)->send(new ParentAccountMail(
-                                parentName: $name,
-                                parentEmail: $email,
-                                password: $password,
-                                studentName: $applicant->full_name,
-                            ));
-                        }
-
-                        $student->parents()->syncWithoutDetaching([$parent->id => ['relationship' => $parentType === 'ayah' ? 'Ayah' : 'Ibu', 'is_primary' => $parentType === 'ayah']]);
-                    }
-                }
-
+                $service->createFromApplicant($applicant);
                 AuditService::log('applicant.bulk-accept', 'Applicant', $applicant->id, $applicant->full_name);
             } else {
                 AuditService::log('applicant.bulk-status', 'Applicant', $applicant->id, $applicant->full_name);

@@ -77,7 +77,7 @@
               @php
                 $scores = \App\Helpers\PortalHelper::componentScores($subject);
                 $final = \App\Helpers\PortalHelper::finalScore($subject);
-                $pass = $final >= (float)$demoStudent['kkm'];
+                $pass = $final >= (float)($subject['kkm'] ?? 75);
               @endphp
               <tr data-subject-row="{{ $subject['code'] }}">
                 <td><strong>{{ $subject['name'] }}</strong><br><small style="color:var(--muted)">{{ $subject['teacher'] }}</small></td>

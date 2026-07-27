@@ -25,6 +25,7 @@ class PortalHelper
             'quiz' => static::average($subject['quiz'] ?? []),
             'homework' => static::average($subject['homework'] ?? []),
             'project' => static::average($subject['project'] ?? []),
+            'assignment' => static::average($subject['assignment'] ?? []),
             'uts' => (float) ($subject['uts'] ?? 0),
             'uas' => (float) ($subject['uas'] ?? 0),
         ];

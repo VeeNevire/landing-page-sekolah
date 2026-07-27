@@ -85,26 +85,29 @@ class StudentController extends Controller
 
         $assignments = TeachingAssignment::where('class_name', $student->class_name)
             ->where('period_id', $period?->id)
-            ->with('subject', 'customSubject', 'teacher')
+            ->with(['subject', 'customSubject', 'teacher', 'jadwals'])
             ->get();
 
-        $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
-        $times = ['07:30–09:00', '09:15–10:45', '11:00–12:30'];
+        $dayMap = ['senin' => 'Senin', 'selasa' => 'Selasa', 'rabu' => 'Rabu', 'kamis' => 'Kamis', 'jumat' => 'Jumat'];
+        $timeSlots = [
+            1 => '07:00 – 08:30', 2 => '08:30 – 10:00', 3 => '10:15 – 11:45',
+            4 => '12:30 – 14:00', 5 => '14:00 – 15:30',
+        ];
         $schedule = [];
 
-        $grouped = $assignments->groupBy(fn($ta, $i) => $i % count($days));
-
-        foreach ($days as $dayIndex => $day) {
-            $dayAssignments = $grouped[$dayIndex] ?? collect();
-            foreach ($dayAssignments as $idx => $ta) {
+        foreach ($assignments as $ta) {
+            foreach ($ta->jadwals as $jadwal) {
                 $schedule[] = [
-                    'day' => $day,
-                    'time' => $times[$idx] ?? '07:30–09:00',
+                    'day' => $dayMap[$jadwal->day] ?? ucfirst($jadwal->day),
+                    'time' => $timeSlots[$jadwal->time_slot] ?? '-',
                     'subject' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
                     'teacher' => $ta->teacher->full_name ?? '-',
                 ];
             }
         }
+
+        $dayOrder = ['Senin' => 0, 'Selasa' => 1, 'Rabu' => 2, 'Kamis' => 3, 'Jumat' => 4];
+        usort($schedule, fn($a, $b) => ($dayOrder[$a['day']] ?? 99) - ($dayOrder[$b['day']] ?? 99) ?: strcmp($a['time'], $b['time']));
 
         return view('portal.jadwal', array_merge($data, [
             'schedule' => $schedule,

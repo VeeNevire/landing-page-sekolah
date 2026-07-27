@@ -57,12 +57,51 @@ class SiswaKuisController extends Controller
             ->get()
             ->keyBy('quiz_id');
 
+        $now = now();
+        $filter = $request->query('filter', 'semua');
+
+        $quizCards = $quizzes->map(function ($quiz) use ($attemptCounts, $now) {
+            $attemptData = $attemptCounts->get($quiz->id);
+            $attemptCount = $attemptData ? $attemptData->count : 0;
+            $bestScore = $attemptData ? $attemptData->best_score : null;
+            $canTake = $attemptCount < $quiz->max_attempts;
+            $hasStarted = !$quiz->start_date || $now->gte($quiz->start_date);
+            $hasEnded = $quiz->end_date && $now->gt($quiz->end_date);
+            $isAvailable = $hasStarted && !$hasEnded;
+
+            $status = 'closed';
+            if ($bestScore !== null && !$canTake) {
+                $status = 'completed';
+            } elseif (!$canTake) {
+                $status = 'exhausted';
+            } elseif (!$hasStarted) {
+                $status = 'upcoming';
+            } elseif ($hasEnded) {
+                $status = 'closed';
+            } elseif ($isAvailable) {
+                $status = 'open';
+            }
+
+            return (object) [
+                'quiz' => $quiz,
+                'attemptCount' => $attemptCount,
+                'bestScore' => $bestScore,
+                'canTake' => $canTake,
+                'isAvailable' => $isAvailable,
+                'status' => $status,
+                'hasStarted' => $hasStarted,
+                'hasEnded' => $hasEnded,
+                'questionCount' => $quiz->questions->count(),
+                'subjectName' => $quiz->teachingAssignment->subject->name ?? $quiz->teachingAssignment->customSubject->nama ?? '-',
+            ];
+        });
+
         return view('siswa.kuis.index', [
             'student' => $student,
             'period' => $period,
             'initials' => $data['initials'],
-            'quizzes' => $quizzes,
-            'attemptCounts' => $attemptCounts,
+            'quizCards' => $quizCards,
+            'currentFilter' => $filter,
         ]);
     }
 

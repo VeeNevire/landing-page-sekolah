@@ -25,13 +25,13 @@ class DashboardController extends Controller
         $studentId = $request->query('student_id', $students->first()->id);
         $selectedStudent = $students->firstWhere('id', $studentId) ?? $students->first();
 
-        $demoStudent = $this->buildDemoStudent($selectedStudent);
-        $subjects = $demoStudent['subjects'];
-        $average = $demoStudent['average'];
-        $attendanceRate = $demoStudent['attendanceRate'];
-        $completion = $demoStudent['completion'];
+        $studentReport = $this->buildStudentReport($selectedStudent);
+        $subjects = $studentReport['subjects'];
+        $average = $studentReport['average'];
+        $attendanceRate = $studentReport['attendanceRate'];
+        $completion = $studentReport['completion'];
 
-        $history = $demoStudent['history'];
+        $history = $studentReport['history'];
         $chartValues = array_map(fn($r) => (float) ($r['score'] ?? 0), $history);
         $minValue = $chartValues ? min($chartValues) - 4 : 70;
         $maxValue = $chartValues ? max($chartValues) + 3 : 100;
@@ -52,7 +52,7 @@ class DashboardController extends Controller
             'selectedStudent' => $selectedStudent,
             'selectedStudentId' => $selectedStudent->id,
             'selectedStudentInitials' => strtoupper(mb_substr($selectedStudent->full_name ?? 'S', 0, 1)),
-            'demoStudent' => $demoStudent,
+            'studentReport' => $studentReport,
             'subjects' => $subjects,
             'average' => $average,
             'attendanceRate' => $attendanceRate,
@@ -67,7 +67,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function buildDemoStudent($student): array
+    private function buildStudentReport($student): array
     {
         $period = AcademicPeriod::where('is_active', true)->first();
 
@@ -77,6 +77,9 @@ class DashboardController extends Controller
         $attendanceRate = $attendanceData['rate'];
         $completion = $this->computeCompletion($subjects);
         $history = $this->computeHistory($student);
+
+        $allKkms = array_map(fn($s) => (float) ($s['kkm'] ?? 75), $subjects);
+        $averageKkm = $allKkms ? round(array_sum($allKkms) / count($allKkms), 1) : 75;
 
         $note = TeacherNote::where('student_id', $student->id)
             ->where('visible_to_parent', true)
@@ -121,7 +124,7 @@ class DashboardController extends Controller
             'homeroom_teacher' => $student->homeroomTeacher?->full_name ?? '-',
             'academic_year' => $period?->academic_year ?? '-',
             'semester' => $period?->semester === 'ganjil' ? 'Ganjil' : 'Genap',
-            'kkm' => 75,
+            'kkm' => $averageKkm,
             'subjects' => $subjects,
             'average' => $average,
             'attendanceRate' => $attendanceRate,
@@ -186,7 +189,10 @@ class DashboardController extends Controller
                 $projScores = array_merge($projScores, $item['scores']);
             }
 
+            $subjectKkm = (float) ($ta->subject?->kkm ?? $ta->customSubject?->kkm ?? 75);
+
             $result[] = [
+                'kkm' => $subjectKkm,
                 'code' => $ta->subject?->code ?? $ta->customSubject?->kode ?? '-',
                 'name' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
                 'teacher' => $ta->teacher->full_name ?? '-',
@@ -198,7 +204,7 @@ class DashboardController extends Controller
                 'final' => round($finalScore, 1),
                 'mastery' => match (true) {
                     $finalScore >= 85 => 'Sangat Baik',
-                    $finalScore >= 75 => 'Baik',
+                    $finalScore >= $subjectKkm => 'Baik',
                     $finalScore >= 65 => 'Cukup',
                     default => 'Perlu Remedial',
                 },
@@ -284,7 +290,7 @@ class DashboardController extends Controller
     private function emptyData(): array
     {
         return [
-            'demoStudent' => null,
+            'studentReport' => null,
             'subjects' => [],
             'average' => 0,
             'attendanceRate' => 0,

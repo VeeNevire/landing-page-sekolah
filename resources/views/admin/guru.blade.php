@@ -110,6 +110,7 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
                 </svg>
                 @endif
               </button>
+              @if (auth()->user()->role === 'admin' || auth()->user()->role === 'principal')
               <button type="button" class="btn btn-outline" title="Hapus" style="min-height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" onclick="confirmDelete({{ $user->id }}, '{{ addslashes($user->name) }}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3 6h18" />
@@ -117,6 +118,7 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
                   <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                 </svg>
               </button>
+              @endif
             </div>
           </td>
         </tr>

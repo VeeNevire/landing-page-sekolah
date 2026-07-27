@@ -21,10 +21,25 @@ use Illuminate\Support\Facades\Storage;
 
 class GuruController extends Controller
 {
+    const TIME_SLOTS = [
+        1 => '07:00 – 08:30',
+        2 => '08:30 – 10:00',
+        3 => '10:15 – 11:45',
+        4 => '12:30 – 14:00',
+        5 => '14:00 – 15:30',
+    ];
+
+    const DAY_NAMES = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+
+    const DAY_MAP = [
+        'senin' => 'Senin', 'selasa' => 'Selasa', 'rabu' => 'Rabu',
+        'kamis' => 'Kamis', 'jumat' => 'Jumat',
+    ];
+
     private function getAssignments($user)
     {
         return $user->teachingAssignments()
-            ->with('subject', 'customSubject', 'period')
+            ->with('subject', 'customSubject', 'period', 'jadwals')
             ->whereHas('period', fn($q) => $q->where('is_active', true))
             ->get();
     }
@@ -72,9 +87,8 @@ class GuruController extends Controller
         $totalStudents = collect($studentsPerClass)->flatten()->unique('id')->count();
         $activePeriod = $this->getActivePeriod();
 
-        $schedule = $this->generateSchedule($teachingAssignments);
-        $dayNames = ['Senin','Selasa','Rabu','Kamis','Jumat'];
-        $today = date('N') <= 5 ? $dayNames[date('N') - 1] : '';
+        $schedule = $this->buildScheduleFromAssignments($teachingAssignments);
+        $today = date('N') <= 5 ? self::DAY_NAMES[date('N') - 1] : '';
         $todaySchedule = collect($schedule)->where('day', $today)->values();
 
         return view('guru.dashboard', [
@@ -100,9 +114,37 @@ class GuruController extends Controller
         $classNames = $teachingAssignments->pluck('class_name')->unique()->values();
         $activePeriod = $this->getActivePeriod();
 
+        $allStudents = Student::whereIn('class_name', $classNames->toArray())
+            ->where('status', 'active')
+            ->orderBy('full_name')
+            ->get()
+            ->groupBy('class_name');
+
+        $allAttendance = Attendance::whereIn('student_id', $allStudents->flatten()->pluck('id'))
+            ->selectRaw('student_id, status, count(*) as total')
+            ->groupBy('student_id', 'status')
+            ->get()
+            ->groupBy('student_id');
+
+        $allTaIds = $teachingAssignments->pluck('id');
+
+        $assessmentsByTa = Assessment::whereIn('teaching_assignment_id', $allTaIds)
+            ->get(['id', 'teaching_assignment_id'])
+            ->groupBy('teaching_assignment_id')
+            ->map(fn($group) => $group->pluck('id'));
+
+        $allAssessmentIds = $assessmentsByTa->flatten();
+        $allScoresByAssessment = $allAssessmentIds->isNotEmpty()
+            ? AssessmentScore::whereIn('assessment_id', $allAssessmentIds)
+                ->get(['assessment_id', 'score'])
+                ->groupBy('assessment_id')
+                ->map(fn($group) => $group->pluck('score')->filter())
+            : collect();
+
         $classList = [];
         foreach ($classNames as $class) {
-            $students = Student::where('class_name', $class)->where('status', 'active')->get();
+            $students = $allStudents->get($class, collect());
+
             $subjects = $teachingAssignments->where('class_name', $class)
                 ->map(fn($a) => $a->subject_id || $a->custom_subject_id ? [
                     'id' => $this->subjectRouteId($a),
@@ -116,20 +158,25 @@ class GuruController extends Controller
             foreach ($subjects as $subject) {
                 $subjectId = is_numeric($subject['id']) ? $subject['id'] : null;
                 $csId = !is_numeric($subject['id']) ? str_replace('cs_', '', $subject['id']) : null;
-                $scores = AssessmentScore::whereHas('assessment.teachingAssignment', function ($q) use ($class, $subjectId, $csId, $activePeriod) {
-                    $q->where('class_name', $class)->where('period_id', $activePeriod?->id);
-                    if ($subjectId) $q->where('subject_id', $subjectId);
-                    if ($csId) $q->where('custom_subject_id', $csId);
-                })->pluck('score')->filter()->toArray();
+                $taIds = $teachingAssignments->where('class_name', $class)
+                    ->when($subjectId, fn($q) => $q->where('subject_id', $subjectId))
+                    ->when($csId, fn($q) => $q->where('custom_subject_id', $csId))
+                    ->pluck('id');
+
+                $assessmentIds = $assessmentsByTa->only($taIds)->flatten();
+                $scores = $assessmentIds->flatMap(fn($aid) => $allScoresByAssessment->get($aid, collect()))->toArray();
                 $subjectAverages[$subject['id']] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
             }
 
             $studentIds = $students->pluck('id');
-            $attendance = Attendance::whereIn('student_id', $studentIds)
-                ->selectRaw('status, count(*) as total')
-                ->groupBy('status')->pluck('total', 'status')->toArray();
-            $totalDays = array_sum($attendance);
-            $attendanceRate = $totalDays > 0 ? round(($attendance['present'] ?? 0) / $totalDays * 100, 1) : 0;
+            $attendanceCounts = [];
+            foreach ($studentIds as $sid) {
+                foreach ($allAttendance->get($sid, collect()) as $record) {
+                    $attendanceCounts[$record->status] = ($attendanceCounts[$record->status] ?? 0) + $record->total;
+                }
+            }
+            $totalDays = array_sum($attendanceCounts);
+            $attendanceRate = $totalDays > 0 ? round(($attendanceCounts['present'] ?? 0) / $totalDays * 100, 1) : 0;
 
             $classList[] = [
                 'name' => $class,
@@ -138,7 +185,7 @@ class GuruController extends Controller
                 'subjects' => $subjects,
                 'subject_averages' => $subjectAverages,
                 'attendance_rate' => $attendanceRate,
-                'attendance' => $attendance,
+                'attendance' => $attendanceCounts,
                 'total_attendance_days' => $totalDays,
             ];
         }
@@ -395,10 +442,12 @@ class GuruController extends Controller
     {
         $user = $request->user();
         $teachingAssignments = $this->getAssignments($user);
-        $schedule = $this->generateSchedule($teachingAssignments);
+        $schedule = $this->buildScheduleFromAssignments($teachingAssignments);
 
         return view('guru.jadwal', [
             'schedule' => $schedule,
+            'timeSlots' => self::TIME_SLOTS,
+            'dayNames' => self::DAY_NAMES,
         ]);
     }
 
@@ -600,31 +649,25 @@ class GuruController extends Controller
         return back()->with('success', 'Materi berhasil dihapus.');
     }
 
-    private function generateSchedule($assignments): array
+    private function buildScheduleFromAssignments($assignments): array
     {
-        $days = ['Senin','Selasa','Rabu','Kamis','Jumat'];
-        $times = [
-            '07:30 - 08:50',
-            '09:00 - 10:20',
-            '10:30 - 11:50',
-            '13:00 - 14:20',
-            '14:30 - 15:50',
-        ];
-
         $schedule = [];
-        $assignments->each(function ($a) use (&$schedule, $days, $times) {
-            $hash = crc32(($a->subject_id ?? 'cs_' . $a->custom_subject_id) . $a->class_name);
-            $schedule[] = [
-                'day' => $days[$hash % count($days)],
-                'time' => $times[($hash >> 4) % count($times)],
-                'subject' => $this->subjectName($a),
-                'class_name' => $a->class_name,
-                'subject_id' => $a->subject_id,
-            ];
-        });
+        foreach ($assignments as $a) {
+            foreach ($a->jadwals as $jadwal) {
+                $dayName = self::DAY_MAP[$jadwal->day] ?? ucfirst($jadwal->day);
+                $schedule[] = [
+                    'day' => $dayName,
+                    'time' => self::TIME_SLOTS[$jadwal->time_slot] ?? '-',
+                    'subject' => $this->subjectName($a),
+                    'class_name' => $a->class_name,
+                    'subject_id' => $a->subject_id,
+                ];
+            }
+        }
 
-        usort($schedule, function ($a, $b) use ($days) {
-            $d = array_search($a['day'], $days) - array_search($b['day'], $days);
+        $dayOrder = array_flip(self::DAY_NAMES);
+        usort($schedule, function ($a, $b) use ($dayOrder) {
+            $d = ($dayOrder[$a['day']] ?? 99) - ($dayOrder[$b['day']] ?? 99);
             return $d !== 0 ? $d : strcmp($a['time'], $b['time']);
         });
 

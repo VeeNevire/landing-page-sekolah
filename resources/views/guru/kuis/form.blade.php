@@ -138,12 +138,9 @@
 function toggleSoal(checkbox) {
   const card = checkbox.closest('.card');
   const pointsDiv = card.querySelector('.soal-points');
+  const inputs = pointsDiv.querySelectorAll('input');
   pointsDiv.style.display = checkbox.checked ? 'flex' : 'none';
-  if (!checkbox.checked) {
-    card.querySelector('.soal-points input[type="number"]').value = '';
-  }
+  inputs.forEach(el => el.disabled = !checkbox.checked);
 }
-
-document.querySelector('.soal-checkbox')?.addEventListener('change', function() {});
 </script>
 @endsection

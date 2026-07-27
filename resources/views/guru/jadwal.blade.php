@@ -12,14 +12,6 @@
 </div>
 
 @php
-  $days = ['Senin','Selasa','Rabu','Kamis','Jumat'];
-  $times = [
-    '07:30 - 08:50',
-    '09:00 - 10:20',
-    '10:30 - 11:50',
-    '13:00 - 14:20',
-    '14:30 - 15:50',
-  ];
   $grid = [];
   foreach ($schedule as $item) {
       $grid[$item['day']][$item['time']] = $item;
@@ -35,16 +27,16 @@
       <thead>
         <tr>
           <th style="width:100px">Jam</th>
-          @foreach ($days as $day)
+          @foreach ($dayNames as $day)
             <th style="text-align:center">{{ $day }}</th>
           @endforeach
         </tr>
       </thead>
       <tbody>
-        @foreach ($times as $time)
+        @foreach ($timeSlots as $time)
           <tr>
             <td style="font-size:.82rem;font-weight:700;color:var(--muted)">{{ $time }}</td>
-            @foreach ($days as $day)
+            @foreach ($dayNames as $day)
               <td style="text-align:center">
                 @if (isset($grid[$day][$time]))
                   @php $item = $grid[$day][$time] @endphp

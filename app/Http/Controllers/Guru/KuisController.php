@@ -98,10 +98,15 @@ class KuisController extends Controller
             'show_result_immediately' => 'boolean',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'questions' => 'required|array|min:1',
-            'questions.*.id' => 'required|exists:question_banks,id',
-            'questions.*.points' => 'required|numeric|min:0.5|max:999',
+            'questions' => 'nullable|array',
+            'questions.*.id' => 'required_with:questions.*.points|exists:question_banks,id',
+            'questions.*.points' => 'nullable|numeric|min:0.5|max:999',
         ]);
+
+        $validated['questions'] = array_values(array_filter($validated['questions'] ?? [], fn($q) => !empty($q['points'])));
+        if (empty($validated['questions'])) {
+            return back()->withInput()->with('error', 'Pilih minimal satu soal untuk kuis.');
+        }
 
         $user = $request->user();
         if (!$user->teachingAssignments()->where('id', $validated['teaching_assignment_id'])->exists()) {
@@ -177,10 +182,15 @@ class KuisController extends Controller
             'show_result_immediately' => 'boolean',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'questions' => 'required|array|min:1',
-            'questions.*.id' => 'required|exists:question_banks,id',
-            'questions.*.points' => 'required|numeric|min:0.5|max:999',
+            'questions' => 'nullable|array',
+            'questions.*.id' => 'required_with:questions.*.points|exists:question_banks,id',
+            'questions.*.points' => 'nullable|numeric|min:0.5|max:999',
         ]);
+
+        $validated['questions'] = array_values(array_filter($validated['questions'] ?? [], fn($q) => !empty($q['points'])));
+        if (empty($validated['questions'])) {
+            return back()->withInput()->with('error', 'Pilih minimal satu soal untuk kuis.');
+        }
 
         $quiz->update([
             'module_id' => $validated['module_id'] ?? null,
@@ -280,9 +290,23 @@ class KuisController extends Controller
             'answers.*.feedback' => 'nullable|string|max:1000',
         ]);
 
-        $totalScore = 0;
-        $maxPoints = 0;
+        $attempt->load('answers.quizQuestion.questionBank');
 
+        $nonEssayScore = 0;
+        $nonEssayMax = 0;
+        $essayMax = 0;
+
+        foreach ($attempt->answers as $answer) {
+            $isEssay = $answer->quizQuestion->questionBank->question_type === 'essay';
+            if ($isEssay) {
+                $essayMax += $answer->quizQuestion->points;
+            } else {
+                $nonEssayScore += $answer->score;
+                $nonEssayMax += $answer->quizQuestion->points;
+            }
+        }
+
+        $newEssayScore = 0;
         foreach ($validated['answers'] as $data) {
             $answer = QuizAnswer::findOrFail($data['id']);
             $answer->update([
@@ -290,11 +314,11 @@ class KuisController extends Controller
                 'feedback' => $data['feedback'] ?? null,
                 'is_correct' => $data['score'] > 0,
             ]);
-            $totalScore += $data['score'];
-            $maxPoints += $answer->quizQuestion->points;
+            $newEssayScore += $data['score'];
         }
 
-        $finalScore = $maxPoints > 0 ? ($totalScore / $maxPoints) * 100 : 0;
+        $totalPoints = $nonEssayMax + $essayMax;
+        $finalScore = $totalPoints > 0 ? (($nonEssayScore + $newEssayScore) / $totalPoints) * 100 : 0;
         $attempt->update([
             'total_score' => $finalScore,
             'status' => 'graded',

@@ -134,7 +134,7 @@ Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin'])->prefix('
 Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('role:admin,principal')->group(function () {
         Route::get('/users', [AdminController::class, 'users'])->name('users.index');
         Route::get('/users/create', [AdminController::class, 'usersCreate'])->name('users.create');
         Route::get('/users/{user}/edit', [AdminController::class, 'usersEdit'])->name('users.edit');

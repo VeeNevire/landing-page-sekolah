@@ -42,32 +42,42 @@ class SiswaController extends Controller
 
         $assignments = TeachingAssignment::where('period_id', $period->id)
             ->where('class_name', $student->class_name)
-            ->with('subject', 'customSubject')
+            ->with(['subject', 'customSubject', 'assessments' => fn($q) => $q->whereNotNull('published_at')->orderBy('assessment_date')])
             ->get();
 
+        $allAssessmentIds = $assignments->flatMap->assessments->pluck('id');
+
+        $allMyScores = $allAssessmentIds->isNotEmpty()
+            ? AssessmentScore::whereIn('assessment_id', $allAssessmentIds)
+                ->where('student_id', $student->id)
+                ->get()
+                ->keyBy('assessment_id')
+            : collect();
+
         $classStudentIds = null;
+        $allClassScores = collect();
         if ($includeClassStats) {
             $classStudentIds = \App\Models\Student::where('class_name', $student->class_name)
                 ->where('status', 'active')
                 ->pluck('id');
+
+            $allClassScores = $allAssessmentIds->isNotEmpty()
+                ? AssessmentScore::whereIn('assessment_id', $allAssessmentIds)
+                    ->whereIn('student_id', $classStudentIds)
+                    ->get()
+                    ->groupBy('student_id')
+                : collect();
         }
 
         $grades = [];
 
         foreach ($assignments as $assignment) {
-            $assessments = Assessment::where('teaching_assignment_id', $assignment->id)
-                ->whereNotNull('published_at')
-                ->orderBy('assessment_date')
-                ->get();
+            $assessments = $assignment->assessments;
 
             $raw = ['quiz' => [], 'homework' => [], 'project' => [], 'uts' => 0, 'uas' => 0];
 
             foreach ($assessments as $assessment) {
-                $scoreRecord = AssessmentScore::where('assessment_id', $assessment->id)
-                    ->where('student_id', $student->id)
-                    ->first();
-
-                $score = $scoreRecord?->score;
+                $score = $allMyScores->get($assessment->id)?->score;
 
                 if ($score === null) continue;
 
@@ -89,15 +99,10 @@ class SiswaController extends Controller
             $classMax = 0;
 
             if ($includeClassStats && $classStudentIds->isNotEmpty()) {
-                $allScores = AssessmentScore::whereIn('assessment_id', $assessments->pluck('id'))
-                    ->whereIn('student_id', $classStudentIds)
-                    ->get()
-                    ->groupBy('student_id');
-
                 $studentFinals = [];
                 foreach ($classStudentIds as $sid) {
                     $r = ['quiz' => [], 'homework' => [], 'project' => [], 'uts' => 0, 'uas' => 0];
-                    $studentScores = $allScores->get($sid, collect());
+                    $studentScores = $allClassScores->get($sid, collect());
 
                     foreach ($assessments as $a) {
                         $sc = $studentScores->firstWhere('assessment_id', $a->id)?->score;
@@ -158,21 +163,28 @@ class SiswaController extends Controller
 
         $todaySchedule = collect();
         if ($period) {
-            $assignments = TeachingAssignment::where('period_id', $period->id)
-                ->where('class_name', $student->class_name)
-                ->with('subject', 'customSubject')
-                ->get();
+            $dayMap = ['Monday' => 'senin', 'Tuesday' => 'selasa', 'Wednesday' => 'rabu', 'Thursday' => 'kamis', 'Friday' => 'jumat'];
+            $todayKey = $dayMap[now()->format('l')] ?? null;
 
-            $dayMap = ['Monday' => 0, 'Tuesday' => 1, 'Wednesday' => 2, 'Thursday' => 3, 'Friday' => 4];
-            $dayIndex = $dayMap[now()->format('l')] ?? null;
-            $times = ['07:30–09:00', '09:15–10:45', '11:00–12:30'];
+            if ($todayKey) {
+                $timeSlots = [
+                    1 => '07:00–08:30', 2 => '08:30–10:00', 3 => '10:15–11:45',
+                    4 => '12:30–14:00', 5 => '14:00–15:30',
+                ];
 
-            if ($dayIndex !== null) {
-                $dayAssignments = $assignments->filter(fn($ta, $i) => ($i % 5) === $dayIndex);
-                $todaySchedule = $dayAssignments->values()->map(fn($ta, $i) => [
-                    'subject' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
-                    'slot' => $times[$i] ?? '-'
-                ]);
+                $assignments = TeachingAssignment::where('period_id', $period->id)
+                    ->where('class_name', $student->class_name)
+                    ->with(['subject', 'customSubject', 'jadwals'])
+                    ->get();
+
+                $todaySchedule = $assignments->flatMap(function ($ta) use ($todayKey, $timeSlots) {
+                    $jadwal = $ta->jadwals->firstWhere('day', $todayKey);
+                    if (!$jadwal) return [];
+                    return [[
+                        'subject' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
+                        'slot' => $timeSlots[$jadwal->time_slot] ?? '-',
+                    ]];
+                })->values();
             }
         }
 

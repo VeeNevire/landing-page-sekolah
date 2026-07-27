@@ -26,17 +26,17 @@ class ReportController extends Controller
         $studentId = $request->query('student_id', $students->first()->id);
         $selectedStudent = $students->firstWhere('id', $studentId) ?? $students->first();
 
-        $demoStudent = $this->buildDemoStudent($selectedStudent);
+        $studentReport = $this->buildStudentReport($selectedStudent);
 
         return view('portal.laporan', [
             'students' => $students,
             'selectedStudent' => $selectedStudent,
             'selectedStudentId' => $selectedStudent->id,
             'selectedStudentInitials' => strtoupper(mb_substr($selectedStudent->full_name ?? 'S', 0, 1)),
-            'demoStudent' => $demoStudent,
-            'subjects' => $demoStudent['subjects'],
-            'average' => $demoStudent['average'],
-            'attendanceRate' => $demoStudent['attendanceRate'],
+            'demoStudent' => $studentReport,
+            'subjects' => $studentReport['subjects'],
+            'average' => $studentReport['average'],
+            'attendanceRate' => $studentReport['attendanceRate'],
         ]);
     }
 
@@ -46,8 +46,8 @@ class ReportController extends Controller
         $studentId = $request->query('student_id');
         $student = $user->students()->where('status', 'active')->findOrFail($studentId);
 
-        $demoStudent = $this->buildDemoStudent($student);
-        $subjects = $demoStudent['subjects'];
+        $studentReport = $this->buildStudentReport($student);
+        $subjects = $studentReport['subjects'];
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -65,8 +65,9 @@ class ReportController extends Controller
             fputcsv($output, ['Mata Pelajaran', 'Kuis', 'PR/Tugas', 'Proyek', 'UTS', 'UAS', 'Nilai Akhir', 'Grade', 'KKM', 'Status']);
             foreach ($subjects as $subject) {
                 $final = $subject['final'] ?? 0;
+                $kkm = $subject['kkm'] ?? 75;
                 $grade = $this->gradeLetter($final);
-                $pass = $final >= 75;
+                $pass = $final >= $kkm;
                 fputcsv($output, [
                     $subject['name'],
                     number_format($this->avg($subject['quiz']), 1, ',', '.'),
@@ -76,7 +77,7 @@ class ReportController extends Controller
                     number_format($subject['uas'], 1, ',', '.'),
                     number_format($final, 1, ',', '.'),
                     $grade,
-                    75,
+                    $kkm,
                     $pass ? 'Tuntas' : 'Perlu Remedial',
                 ]);
             }
@@ -87,12 +88,14 @@ class ReportController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    private function buildDemoStudent($student): array
+    private function buildStudentReport($student): array
     {
         $period = AcademicPeriod::where('is_active', true)->first();
 
         $subjects = $this->computeSubjects($student, $period);
         $average = $this->computeAverage($subjects);
+        $allKkms = array_map(fn($s) => (float) ($s['kkm'] ?? 75), $subjects);
+        $averageKkm = $allKkms ? round(array_sum($allKkms) / count($allKkms), 1) : 75;
 
         $attendanceData = Attendance::where('student_id', $student->id)
             ->selectRaw('status, count(*) as total')
@@ -130,7 +133,7 @@ class ReportController extends Controller
             'homeroom_teacher' => $student->homeroomTeacher?->full_name ?? '-',
             'academic_year' => $period?->academic_year ?? '-',
             'semester' => $period?->semester === 'ganjil' ? 'Ganjil' : 'Genap',
-            'kkm' => 75,
+            'kkm' => $averageKkm,
             'subjects' => $subjects,
             'average' => $average,
             'attendanceRate' => $attendanceRate,
@@ -185,7 +188,10 @@ class ReportController extends Controller
             foreach ($grouped['homework'] ?? [] as $s) { $hwScores = array_merge($hwScores, $s); }
             foreach ($grouped['project'] ?? [] as $s) { $projScores = array_merge($projScores, $s); }
 
+            $subjectKkm = (float) ($ta->subject?->kkm ?? $ta->customSubject?->kkm ?? 75);
+
             $result[] = [
+                'kkm' => $subjectKkm,
                 'code' => $ta->subject?->code ?? $ta->customSubject?->kode ?? '-',
                 'name' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
                 'teacher' => $ta->teacher->full_name ?? '-',
@@ -197,7 +203,7 @@ class ReportController extends Controller
                 'final' => round($finalScore, 1),
                 'mastery' => match (true) {
                     $finalScore >= 85 => 'Sangat Baik',
-                    $finalScore >= 75 => 'Baik',
+                    $finalScore >= $subjectKkm => 'Baik',
                     $finalScore >= 65 => 'Cukup',
                     default => 'Perlu Remedial',
                 },

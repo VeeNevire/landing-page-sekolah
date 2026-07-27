@@ -13,7 +13,7 @@
   <div>
     <span class="kicker">Ringkasan semester</span>
     <h1>Halo, {{ auth()->user()->full_name ?? auth()->user()->name }}.</h1>
-    <p>Berikut perkembangan terbaru {{ $demoStudent['name'] }} pada Semester {{ $demoStudent['semester'] }} Tahun Ajaran {{ $demoStudent['academic_year'] }}.</p>
+    <p>Berikut perkembangan terbaru {{ $studentReport['name'] }} pada Semester {{ $studentReport['semester'] }} Tahun Ajaran {{ $studentReport['academic_year'] }}.</p>
   </div>
   <div class="portal-actions no-print">
     <a class="btn btn-outline" href="{{ route('portal.laporan', ['student_id' => $selectedStudentId]) }}">
@@ -44,7 +44,7 @@
           <line x1="2" y1="20" x2="17" y2="20" />
         </svg></span></div>
     <strong class="portal-kpi-value">{{ number_format($average, 1, ',', '.') }}</strong>
-    <span class="portal-kpi-note good">Predikat {{ \App\Helpers\PortalHelper::gradeLetter($average) }} • di atas KKM {{ $demoStudent['kkm'] }}</span>
+    <span class="portal-kpi-note good">Predikat {{ \App\Helpers\PortalHelper::gradeLetter($average) }} • di atas KKM {{ $studentReport['kkm'] }}</span>
   </article>
   <article class="portal-kpi">
     <div class="portal-kpi-label"><span>Kehadiran</span><span class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -54,7 +54,7 @@
           <line x1="3" y1="10" x2="21" y2="10" />
         </svg></span></div>
     <strong class="portal-kpi-value">{{ number_format($attendanceRate, 1, ',', '.') }}%</strong>
-    <span class="portal-kpi-note good">{{ $demoStudent['attendance']['present'] }} hari hadir</span>
+    <span class="portal-kpi-note good">{{ $studentReport['attendance']['present'] }} hari hadir</span>
   </article>
   <article class="portal-kpi">
     <div class="portal-kpi-label"><span>Ketuntasan Tugas</span><span class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -68,7 +68,7 @@
     <div class="portal-kpi-label"><span>Karakter</span><span class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg></span></div>
-    <strong class="portal-kpi-value">{{ $demoStudent['behavior']['discipline'] ?? '-' }}</strong>
+    <strong class="portal-kpi-value">{{ $studentReport['behavior']['discipline'] ?? '-' }}</strong>
     <span class="portal-kpi-note">Disiplin dan tanggung jawab sangat baik</span>
   </article>
 </section>
@@ -111,14 +111,14 @@
     <div class="portal-panel-header">
       <div>
         <h3>Catatan Wali Kelas</h3>
-        <p>{{ $demoStudent['homeroom_teacher'] }}</p>
+        <p>{{ $studentReport['homeroom_teacher'] }}</p>
       </div><span class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
         </svg></span>
     </div>
     <div class="portal-note">
       <strong>Evaluasi perkembangan</strong>
-      <p>{{ $demoStudent['teacher_note'] }}</p>
+      <p>{{ $studentReport['teacher_note'] }}</p>
     </div>
     <a class="text-link" style="display:inline-block;margin-top:17px" href="{{ route('portal.laporan', ['student_id' => $selectedStudentId]) }}#catatan">Lihat tindak lanjut &rarr;</a>
   </aside>
@@ -160,10 +160,10 @@
           </svg></span>
       </div>
       <div class="attendance-grid">
-        <div class="attendance-box"><strong>{{ $demoStudent['attendance']['present'] }}</strong><span>Hadir</span></div>
-        <div class="attendance-box"><strong>{{ $demoStudent['attendance']['sick'] }}</strong><span>Sakit</span></div>
-        <div class="attendance-box"><strong>{{ $demoStudent['attendance']['excused'] }}</strong><span>Izin</span></div>
-        <div class="attendance-box"><strong>{{ $demoStudent['attendance']['unexcused'] }}</strong><span>Tanpa Keterangan</span></div>
+        <div class="attendance-box"><strong>{{ $studentReport['attendance']['present'] }}</strong><span>Hadir</span></div>
+        <div class="attendance-box"><strong>{{ $studentReport['attendance']['sick'] }}</strong><span>Sakit</span></div>
+        <div class="attendance-box"><strong>{{ $studentReport['attendance']['excused'] }}</strong><span>Izin</span></div>
+        <div class="attendance-box"><strong>{{ $studentReport['attendance']['unexcused'] }}</strong><span>Tanpa Keterangan</span></div>
       </div>
     </section>
 
@@ -175,7 +175,7 @@
         </div>
       </div>
       <div class="activity-feed">
-        @foreach ($demoStudent['activities'] as $activity)
+        @foreach ($studentReport['activities'] as $activity)
         <div class="activity-item">
           @php $icons = ['check'=>'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />

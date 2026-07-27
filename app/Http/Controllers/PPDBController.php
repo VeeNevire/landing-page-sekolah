@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\ParentAccountMail;
 use App\Mail\StudentAcceptedMail;
 use App\Models\Applicant;
 use App\Models\ApplicantDocument;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\StudentRegistrationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class PPDBController extends Controller
@@ -470,60 +469,17 @@ class PPDBController extends Controller
         $existingStudent = Student::where('nisn', $applicant->nisn)->first();
 
         if (!$existingStudent) {
-            $student = Student::create([
-                'user_id' => Auth::id(),
-                'nisn' => $applicant->nisn ?? ('PPDB-' . str_pad($applicant->id, 5, '0', STR_PAD_LEFT)),
-                'full_name' => $applicant->full_name,
-                'birth_date' => $applicant->birth_date,
-                'class_name' => 'X ' . ($applicant->program_diminati ?? 'Baru'),
-                'program_name' => $applicant->program_diminati ?? '',
-                'status' => 'active',
-            ]);
-
-            Auth::user()->update(['role' => 'student']);
-
-            $year = now()->format('Y');
-            $lastNis = Student::where('nis', 'like', $year.'%')->max('nis');
-            $nextNumber = $lastNis ? intval(substr($lastNis, -4)) + 1 : 1;
-            $nis = $year . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-            $student->update(['nis' => $nis]);
+            $service = app(StudentRegistrationService::class);
+            $student = $service->createFromApplicant($applicant);
 
             $newPassword = (string) random_int(100000, 999999);
             Auth::user()->update(['password' => Hash::make($newPassword)]);
-
-            foreach (['ayah', 'ibu'] as $parentType) {
-                $email = $applicant->{$parentType . '_email'};
-                $name = $applicant->{$parentType . '_name'};
-                if ($email && $name) {
-                    $parent = User::where('email', $email)->first();
-
-                    if (!$parent) {
-                        $password = (string) random_int(10000000, 99999999);
-                        $parent = User::create([
-                            'name' => $name,
-                            'full_name' => $name,
-                            'email' => $email,
-                            'password' => Hash::make($password),
-                            'role' => 'parent',
-                        ]);
-
-                        Mail::to($email)->send(new ParentAccountMail(
-                            parentName: $name,
-                            parentEmail: $email,
-                            password: $password,
-                            studentName: $applicant->full_name,
-                        ));
-                    }
-
-                    $student->parents()->syncWithoutDetaching([$parent->id => ['relationship' => $parentType === 'ayah' ? 'Ayah' : 'Ibu', 'is_primary' => $parentType === 'ayah']]);
-                }
-            }
 
             Mail::to(Auth::user()->email)->send(new StudentAcceptedMail(
                 studentName: $applicant->full_name,
                 className: '',
                 programName: $applicant->program_diminati ?? '',
-                nis: $nis,
+                nis: $student->nis,
                 password: $newPassword,
             ));
         }
@@ -531,26 +487,4 @@ class PPDBController extends Controller
         return redirect()->route('ppdb.success')->with('success', 'Pembayaran berhasil! Selamat, Anda telah resmi diterima sebagai siswa.');
     }
 
-    private function createParentAccount(string $name, string $email, string $studentName): void
-    {
-        $parent = User::where('email', $email)->first();
-
-        if (!$parent) {
-            $password = (string) random_int(10000000, 99999999);
-            $parent = User::create([
-                'name' => $name,
-                'full_name' => $name,
-                'email' => $email,
-                'password' => Hash::make($password),
-                'role' => 'parent',
-            ]);
-
-            Mail::to($email)->send(new ParentAccountMail(
-                parentName: $name,
-                parentEmail: $email,
-                password: $password,
-                studentName: $studentName,
-            ));
-        }
-    }
 }
