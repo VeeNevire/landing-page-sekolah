@@ -197,12 +197,12 @@ class AdminController extends Controller
 
     public function usersUpdate(Request $request, User $user)
     {
-        $validated = $request->validate([
+$validated = $request->validate([
             'name' => 'required|string|max:255',
             'full_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:parent,teacher,homeroom,admin,principal,student',
-            'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(6)],
+            'email' => 'required|email|unique:users,email',
+            'role' => 'required|in:parent,teacher,homeroom,admin,principal,student,alumni',
+            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(6)],
         ], [
             'email.unique' => 'Email sudah terdaftar.',
         ]);
@@ -565,6 +565,10 @@ $applicantStatusCounts = [
                     ? (int) now()->format('Y') : $student->graduation_year,
             ]);
 
+            if ($validated['status'] === 'graduated' && $student->user) {
+                $student->user->update(['role' => 'alumni']);
+            }
+
             if (!empty($validated['student_email']) && $student->user) {
                 $student->user->update(['email' => $validated['student_email']]);
             }
@@ -632,9 +636,13 @@ $applicantStatusCounts = [
             return response()->json(['success' => false, 'message' => 'Tidak ada siswa aktif di tingkat ini.'], 400);
         }
 
-        Student::whereIn('kelas_id', $kelasIds)
-            ->where('status', 'active')
-            ->update(['status' => 'graduated', 'graduation_year' => (int) now()->format('Y')]);
+        $studentsToGraduate = Student::whereIn('kelas_id', $kelasIds)->where('status', 'active')->get();
+        foreach ($studentsToGraduate as $student) {
+            $student->update(['status' => 'graduated', 'graduation_year' => (int) now()->format('Y')]);
+            if ($student->user) {
+                $student->user->update(['role' => 'alumni']);
+            }
+        }
 
         $label = array_search($tingkat, $romawiMap);
         AuditService::log('student.bulk_graduate', 'Student', 0, "Meluluskan {$count} siswa dari tingkat {$label}");

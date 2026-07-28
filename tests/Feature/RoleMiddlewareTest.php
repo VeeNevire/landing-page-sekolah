@@ -17,6 +17,7 @@ class RoleMiddlewareTest extends TestCase
     private User $homeroom;
     private User $student;
     private User $parent;
+    private User $alumni;
 
     protected function setUp(): void
     {
@@ -36,6 +37,19 @@ class RoleMiddlewareTest extends TestCase
             'class_name' => 'X RPL 1',
             'program_name' => 'RPL',
             'status' => 'active',
+        ]);
+
+        $alumniUser = User::factory()->create(['role' => 'alumni']);
+        $this->alumni = $alumniUser;
+
+        Student::create([
+            'user_id' => $alumniUser->id,
+            'full_name' => 'Alumni User',
+            'nisn' => '9876543210',
+            'class_name' => 'XII RPL 1',
+            'program_name' => 'RPL',
+            'status' => 'graduated',
+            'graduation_year' => 2026,
         ]);
 
         $parentUser = User::factory()->create(['role' => 'parent']);
@@ -133,5 +147,23 @@ class RoleMiddlewareTest extends TestCase
 
         $response = $this->get(route('profil'));
         $response->assertStatus(200);
+    }
+
+    public function test_alumni_can_access_alumni_dashboard(): void
+    {
+        $response = $this->actingAs($this->alumni)->get(route('alumni.dashboard'));
+        $response->assertStatus(200);
+    }
+
+    public function test_student_cannot_access_alumni_dashboard(): void
+    {
+        $response = $this->actingAs($this->student)->get(route('alumni.dashboard'));
+        $response->assertRedirect(route('siswa.dashboard'));
+    }
+
+    public function test_alumni_cannot_access_student_dashboard(): void
+    {
+        $response = $this->actingAs($this->alumni)->get(route('siswa.dashboard'));
+        $response->assertRedirect(route('alumni.dashboard'));
     }
 }

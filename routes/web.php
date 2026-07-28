@@ -12,7 +12,7 @@ use App\Http\Controllers\Guru\GuruController;
 use App\Http\Controllers\Guru\KuisController;
 use App\Http\Controllers\Guru\ModuleController;
 use App\Http\Controllers\Guru\TugasController;
-use App\Http\Controllers\Lms\DownloadController;
+use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\Siswa\SiswaController;
 use App\Http\Controllers\Siswa\SiswaKuisController;
 use App\Http\Controllers\Siswa\SiswaTugasController;
@@ -131,6 +131,21 @@ Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin'])->prefix('
     Route::get('/kuis/{quiz}/hasil', [KuisController::class, 'hasil'])->name('kuis.hasil');
     Route::get('/kuis/{attempt}/nilai-essay-data', [KuisController::class, 'nilaiEssayData'])->name('kuis.nilai-essay-data');
     Route::post('/kuis/{attempt}/nilai-essay', [KuisController::class, 'nilaiEssay'])->name('kuis.nilai-essay');
+});
+
+Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('alumni')->name('alumni.')->group(function () {
+    Route::get('/dashboard', [AlumniController::class, 'dashboard'])->name('dashboard');
+    Route::get('/profil', [AlumniController::class, 'profil'])->name('profil');
+    Route::put('/profil', [AlumniController::class, 'profilUpdate'])->name('profil.update');
+    Route::post('/profil/cv', [AlumniController::class, 'cvUpload'])->name('cv.upload');
+    Route::get('/sertifikat', [AlumniController::class, 'sertifikat'])->name('sertifikat');
+    Route::post('/sertifikat', [AlumniController::class, 'sertifikatStore'])->name('sertifikat.store');
+    Route::put('/sertifikat/{certificate}', [AlumniController::class, 'sertifikatUpdate'])->name('sertifikat.update');
+    Route::delete('/sertifikat/{certificate}', [AlumniController::class, 'sertifikatDestroy'])->name('sertifikat.destroy');
+    Route::get('/proyek', [AlumniController::class, 'proyek'])->name('proyek');
+    Route::post('/proyek', [AlumniController::class, 'proyekStore'])->name('proyek.store');
+    Route::put('/proyek/{project}', [AlumniController::class, 'proyekUpdate'])->name('proyek.update');
+    Route::delete('/proyek/{project}', [AlumniController::class, 'proyekDestroy'])->name('proyek.destroy');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')->name('admin.')->group(function () {

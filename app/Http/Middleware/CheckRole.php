@@ -22,6 +22,7 @@ class CheckRole
                     'principal', 'admin' => redirect()->route('admin.dashboard'),
                     'teacher', 'homeroom' => redirect()->route('guru.dashboard'),
                     'student' => redirect()->route('siswa.dashboard'),
+                    'alumni' => redirect()->route('alumni.dashboard'),
                     default => redirect()->route('portal.dashboard'),
                 };
             }

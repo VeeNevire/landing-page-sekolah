@@ -38,16 +38,20 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
-        if ($role === 'student') {
-            return redirect()->route('siswa.dashboard');
-        }
-
         if ($role === 'principal') {
             return redirect()->route('admin.dashboard');
         }
 
+        if ($role === 'student') {
+            return redirect()->route('siswa.dashboard');
+        }
+
         if (in_array($role, ['teacher', 'homeroom'])) {
             return redirect()->route('guru.dashboard');
+        }
+
+        if ($role === 'alumni') {
+            return redirect()->route('alumni.dashboard');
         }
 
         if ($role === 'applicant') {

@@ -60,6 +60,11 @@
           </td>
           <td>
             <div style="display:flex;gap:6px">
+              @if($s->user && $s->user->role === 'alumni')
+              <a href="{{ route('alumni.dashboard') }}" onclick="event.preventDefault(); window.open(this.href, '_blank');" title="Buka Portal Alumni" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#059669;text-decoration:none" onmouseover="this.style.background='color-mix(in srgb,#059669 10%,var(--card))'" onmouseout="this.style.background='var(--card)'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"/></svg>
+              </a>
+              @endif
               <button type="button" onclick="editAlumni({{ $s->id }})" title="Edit Status" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--primary-2)" onmouseover="this.style.background='color-mix(in srgb,var(--primary-2) 10%,var(--card))'" onmouseout="this.style.background='var(--card)'">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
               </button>

@@ -3,6 +3,7 @@ $roleParam = request()->query('role');
 $isAdmin = $roleParam === 'admin';
 $isGuru = $roleParam === 'guru';
 $isStudent = $roleParam === 'student';
+$isAlumni = $roleParam === 'alumni';
 @endphp
 <!doctype html>
 <html lang="id">
@@ -11,7 +12,7 @@ $isStudent = $roleParam === 'student';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Portal Siswa InvestaSchool ">
-  <title>Masuk | {{ $isAdmin ? 'Portal Admin' : ($isGuru ? 'Portal Guru' : ($isStudent ? 'Portal Siswa' : 'Portal Orang Tua')) }}</title>
+  <title>Masuk | {{ $isAdmin ? 'Portal Admin' : ($isGuru ? 'Portal Guru' : ($isStudent ? 'Portal Siswa' : ($isAlumni ? 'Portal Alumni' : 'Portal Orang Tua'))) }}</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
@@ -29,9 +30,9 @@ $isStudent = $roleParam === 'student';
         <span class="brand-text">InvestaSchool<small>UNGGUL • TERAMPIL • BERKARAKTER</small></span>
       </a>
       <div class="portal-login-copy">
-        <span class="hero-badge">{{ $isAdmin ? 'Portal Administrator' : ($isGuru ? 'Portal Guru & Wali Kelas' : ($isStudent ? 'Portal Siswa' : 'Portal Perkembangan Siswa')) }}</span>
-        <h1>{{ $isAdmin ? 'Kelola data sekolah, pengguna, dan konfigurasi sistem.' : ($isGuru ? 'Kelola kelas, input nilai, dan pantau perkembangan siswa.' : ($isStudent ? 'Akses nilai, jadwal, kehadiran, dan materi pelajaran.' : 'Pantau proses belajar anak dengan lebih dekat.')) }}</h1>
-        <p>{{ $isAdmin ? 'Akses aman bagi administrator untuk mengelola siswa, guru, mata pelajaran, periode akademik, dan penugasan.' : ($isGuru ? 'Akses aman bagi guru untuk mengelola penilaian, input nilai, mencatat kehadiran, memberikan catatan perkembangan, dan mempublikasikan rapor.' : ($isStudent ? 'Akses aman bagi siswa untuk melihat nilai, jadwal pelajaran, materi, dan profil akademik.' : 'Akses aman bagi orang tua untuk melihat nilai, kehadiran, ketuntasan tugas, catatan guru, karakter, dan kegiatan siswa.')) }}</p>
+        <span class="hero-badge">{{ $isAdmin ? 'Portal Administrator' : ($isGuru ? 'Portal Guru & Wali Kelas' : ($isStudent ? 'Portal Siswa' : ($isAlumni ? 'Portal Alumni' : 'Portal Perkembangan Siswa'))) }}</span>
+        <h1>{{ $isAdmin ? 'Kelola data sekolah, pengguna, dan konfigurasi sistem.' : ($isGuru ? 'Kelola kelas, input nilai, dan pantau perkembangan siswa.' : ($isStudent ? 'Akses nilai, jadwal, kehadiran, dan materi pelajaran.' : ($isAlumni ? 'Kelola profil alumni, sertifikat, dan portofolio proyek.' : 'Pantau proses belajar anak dengan lebih dekat.'))) }}</h1>
+        <p>{{ $isAdmin ? 'Akses aman bagi administrator untuk mengelola siswa, guru, mata pelajaran, periode akademik, dan penugasan.' : ($isGuru ? 'Akses aman bagi guru untuk mengelola penilaian, input nilai, mencatat kehadiran, memberikan catatan perkembangan, dan mempublikasikan rapor.' : ($isStudent ? 'Akses aman bagi siswa untuk melihat nilai, jadwal pelajaran, materi, dan profil akademik.' : ($isAlumni ? 'Akses aman bagi alumni untuk melihat data kelulusan, mengelola sertifikat keahlian, dan portofolio proyek.' : 'Akses aman bagi orang tua untuk melihat nilai, kehadiran, ketuntasan tugas, catatan guru, karakter, dan kegiatan siswa.'))) }}</p>
         <div class="portal-feature-list">
           @if ($isAdmin)
           <div class="portal-feature"><strong>Kelola pengguna</strong><span>CRUD akun guru, orang tua, admin.</span></div>
@@ -48,6 +49,11 @@ $isStudent = $roleParam === 'student';
           <div class="portal-feature"><strong>Nilai detail</strong><span>Skor per komponen: kuis, PR, proyek, UTS, UAS.</span></div>
           <div class="portal-feature"><strong>Jadwal & materi</strong><span>Jadwal pelajaran dan materi dari guru.</span></div>
           <div class="portal-feature"><strong>Profil siswa</strong><span>Data diri, sikap, dan ekstrakurikuler.</span></div>
+          @elseif ($isAlumni)
+          <div class="portal-feature"><strong>Profil alumni</strong><span>Data kelulusan dan nilai akhir.</span></div>
+          <div class="portal-feature"><strong>Sertifikat</strong><span>Kelola sertifikat keahlian dan keterampilan.</span></div>
+          <div class="portal-feature"><strong>Portofolio proyek</strong><span>Tambahkan dan kelola proyek yang pernah dikerjakan.</span></div>
+          <div class="portal-feature"><strong>Update status</strong><span>Perbarui status kerja/pendidikan saat ini.</span></div>
           @else
           <div class="portal-feature"><strong>Nilai terperinci</strong><span>Kuis, PR, proyek, UTS, dan UAS.</span></div>
           <div class="portal-feature"><strong>Tren perkembangan</strong><span>Perbandingan hasil antarsemester.</span></div>
@@ -68,11 +74,13 @@ $isStudent = $roleParam === 'student';
         <input type="hidden" name="role" value="guru">
         @elseif ($isStudent)
         <input type="hidden" name="role" value="student">
+        @elseif ($isAlumni)
+        <input type="hidden" name="role" value="alumni">
         @endif
 
-        <span class="kicker">{{ $isAdmin ? 'Akses admin' : ($isGuru ? 'Akses guru' : ($isStudent ? 'Akses siswa' : 'Akses orang tua')) }}</span>
-        <h2>Masuk ke {{ $isAdmin ? 'portal admin' : ($isGuru ? 'portal guru' : ($isStudent ? 'portal siswa' : 'portal')) }}</h2>
-        <p class="section-desc">{{ $isAdmin ? 'Gunakan akun administrator yang terdaftar.' : ($isGuru ? 'Gunakan akun guru yang terdaftar pada administrasi sekolah.' : ($isStudent ? 'Gunakan email dan password saat mendaftar PPDB.' : 'Gunakan akun orang tua yang terdaftar pada administrasi sekolah.')) }}</p>
+        <span class="kicker">{{ $isAdmin ? 'Akses admin' : ($isGuru ? 'Akses guru' : ($isStudent ? 'Akses siswa' : ($isAlumni ? 'Akses alumni' : 'Akses orang tua'))) }}</span>
+        <h2>Masuk ke {{ $isAdmin ? 'portal admin' : ($isGuru ? 'portal guru' : ($isStudent ? 'portal siswa' : ($isAlumni ? 'portal alumni' : 'portal'))) }}</h2>
+        <p class="section-desc">{{ $isAdmin ? 'Gunakan akun administrator yang terdaftar.' : ($isGuru ? 'Gunakan akun guru yang terdaftar pada administrasi sekolah.' : ($isStudent ? 'Gunakan email dan password saat mendaftar PPDB.' : ($isAlumni ? 'Gunakan akun alumni yang terdaftar di sistem sekolah.' : 'Gunakan akun orang tua yang terdaftar pada administrasi sekolah.'))) }}</p>
 
         @if ($errors->any())
         <div class="portal-error">{{ $errors->first() }}</div>
@@ -83,7 +91,7 @@ $isStudent = $roleParam === 'student';
         @endif
 
         <div class="field" style="margin-top:17px">
-          <label for="email">{{ $isAdmin ? 'Email admin' : ($isGuru ? 'Email guru' : ($isStudent ? 'NIS / Email' : 'Email orang tua')) }}</label>
+          <label for="email">{{ $isAdmin ? 'Email admin' : ($isGuru ? 'Email guru' : ($isStudent ? 'NIS / Email' : ($isAlumni ? 'Email alumni' : 'Email orang tua'))) }}</label>
           <input id="email" name="email" type="text" required value="{{ old('email') }}" placeholder="{{ $isStudent ? 'NIS atau email' : 'nama@email.com' }}" autofocus autocomplete="username">
         </div>
 
@@ -95,7 +103,7 @@ $isStudent = $roleParam === 'student';
           </div>
         </div>
 
-        <button class="btn btn-primary" type="submit">Masuk ke {{ $isAdmin ? 'Portal Admin' : ($isGuru ? 'Portal Guru' : ($isStudent ? 'Portal Siswa' : 'Dashboard')) }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px">
+        <button class="btn btn-primary" type="submit">Masuk ke {{ $isAdmin ? 'Portal Admin' : ($isGuru ? 'Portal Guru' : ($isStudent ? 'Portal Siswa' : ($isAlumni ? 'Portal Alumni' : 'Dashboard'))) }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px">
             <path d="M5 12h14" />
             <path d="m12 5 7 7-7 7" />
           </svg></button>
@@ -108,17 +116,26 @@ $isStudent = $roleParam === 'student';
         <p style="margin-top:14px;font-size:.85rem;color:var(--muted)">
           @if ($isAdmin)
           <a class="text-link" href="{{ route('login') }}">Masuk sebagai Orang Tua</a> &middot;
-          <a class="text-link" href="{{ route('login') }}?role=guru">Masuk sebagai Guru</a>
+          <a class="text-link" href="{{ route('login') }}?role=guru">Masuk sebagai Guru</a> &middot;
+          <a class="text-link" href="{{ route('login') }}?role=alumni">Masuk sebagai Alumni</a>
           @elseif ($isGuru)
           <a class="text-link" href="{{ route('login') }}">Masuk sebagai Orang Tua</a> &middot;
-          <a class="text-link" href="{{ route('login') }}?role=admin">Masuk sebagai Admin</a>
+          <a class="text-link" href="{{ route('login') }}?role=admin">Masuk sebagai Admin</a> &middot;
+          <a class="text-link" href="{{ route('login') }}?role=alumni">Masuk sebagai Alumni</a>
           @elseif ($isStudent)
           <a class="text-link" href="{{ route('login') }}">Masuk sebagai Orang Tua</a> &middot;
-          <a class="text-link" href="{{ route('login') }}?role=guru">Masuk sebagai Guru</a>
-          @else
+          <a class="text-link" href="{{ route('login') }}?role=guru">Masuk sebagai Guru</a> &middot;
+          <a class="text-link" href="{{ route('login') }}?role=alumni">Masuk sebagai Alumni</a>
+          @elseif ($isAlumni)
+          <a class="text-link" href="{{ route('login') }}">Masuk sebagai Orang Tua</a> &middot;
           <a class="text-link" href="{{ route('login') }}?role=student">Masuk sebagai Siswa</a> &middot;
           <a class="text-link" href="{{ route('login') }}?role=guru">Masuk sebagai Guru</a> &middot;
           <a class="text-link" href="{{ route('login') }}?role=admin">Masuk sebagai Admin</a>
+          @else
+          <a class="text-link" href="{{ route('login') }}?role=student">Masuk sebagai Siswa</a> &middot;
+          <a class="text-link" href="{{ route('login') }}?role=guru">Masuk sebagai Guru</a> &middot;
+          <a class="text-link" href="{{ route('login') }}?role=admin">Masuk sebagai Admin</a> &middot;
+          <a class="text-link" href="{{ route('login') }}?role=alumni">Masuk sebagai Alumni</a>
           @endif
         </p>
       </form>
