@@ -47,7 +47,7 @@ Route::prefix('ppdb')->name('ppdb.')->group(function () {
     });
 });
 
-Route::middleware(['auth', 'verified', 'role:parent'])->prefix('portal')->name('portal.')->group(function () {
+Route::middleware(['auth', 'role:parent'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/laporan', [ReportController::class, 'index'])->name('laporan');
     Route::get('/laporan/csv', [ReportController::class, 'exportCsv'])->name('laporan.csv');
@@ -59,7 +59,7 @@ Route::middleware(['auth', 'verified', 'role:parent'])->prefix('portal')->name('
     Route::get('/notifikasi', [StudentController::class, 'notifikasi'])->name('notifikasi');
 });
 
-Route::middleware(['auth', 'verified', 'role:student'])->prefix('siswa')->name('siswa.')->group(function () {
+Route::middleware(['auth', 'role:student'])->prefix('siswa')->name('siswa.')->group(function () {
     Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('dashboard');
     Route::get('/nilai', [SiswaController::class, 'nilai'])->name('nilai');
     Route::get('/kehadiran', [SiswaController::class, 'kehadiran'])->name('kehadiran');
@@ -77,7 +77,7 @@ Route::middleware(['auth', 'verified', 'role:student'])->prefix('siswa')->name('
     Route::get('/profil', [SiswaController::class, 'profil'])->name('profil');
 });
 
-Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin'])->prefix('guru')->name('guru.')->group(function () {
+Route::middleware(['auth', 'role:teacher,homeroom,admin'])->prefix('guru')->name('guru.')->group(function () {
     Route::get('/dashboard', [GuruController::class, 'dashboard'])->name('dashboard');
     Route::get('/kelas', [GuruController::class, 'kelas'])->name('kelas');
     Route::get('/kelas/{className}/data', [GuruController::class, 'kelasData'])->name('kelas.data');
@@ -133,7 +133,7 @@ Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin'])->prefix('
     Route::post('/kuis/{attempt}/nilai-essay', [KuisController::class, 'nilaiEssay'])->name('kuis.nilai-essay');
 });
 
-Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('alumni')->name('alumni.')->group(function () {
+Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->name('alumni.')->group(function () {
     Route::get('/dashboard', [AlumniController::class, 'dashboard'])->name('dashboard');
     Route::get('/profil', [AlumniController::class, 'profil'])->name('profil');
     Route::put('/profil', [AlumniController::class, 'profilUpdate'])->name('profil.update');
@@ -148,7 +148,7 @@ Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('alumni')->name('
     Route::delete('/proyek/{project}', [AlumniController::class, 'proyekDestroy'])->name('proyek.destroy');
 });
 
-Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     Route::middleware('role:admin,principal')->group(function () {
