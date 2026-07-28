@@ -84,6 +84,8 @@ Route::middleware(['auth', 'verified', 'role:teacher,homeroom,admin'])->prefix('
     Route::get('/nilai', [GuruController::class, 'nilai'])->name('nilai');
     Route::get('/nilai/{class}/{subject}', [GuruController::class, 'nilaiDetail'])->name('nilai.detail');
     Route::post('/nilai/{class}/{subject}', [GuruController::class, 'nilaiStore'])->name('nilai.store');
+    Route::put('/nilai/{class}/{subject}/assessment/{assessment}', [GuruController::class, 'nilaiUpdate'])->name('nilai.update');
+    Route::delete('/nilai/{class}/{subject}/assessment/{assessment}', [GuruController::class, 'nilaiDestroy'])->name('nilai.destroy');
     Route::get('/absensi', [GuruController::class, 'absensi'])->name('absensi');
     Route::post('/absensi', [GuruController::class, 'absensiStore'])->name('absensi.store');
     Route::get('/jadwal', [GuruController::class, 'jadwal'])->name('jadwal');
@@ -160,8 +162,15 @@ Route::middleware(['auth', 'verified', 'role:admin,principal'])->prefix('admin')
     Route::put('/students/{student}', [AdminController::class, 'studentsUpdate'])->name('students.update');
     Route::delete('/students/{student}', [AdminController::class, 'studentsDestroy'])->name('students.destroy');
     Route::post('/students/{student}/reset-password', [AdminController::class, 'studentResetPassword'])->name('students.reset-password');
+    Route::post('/students/bulk-graduate', [AdminController::class, 'studentsBulkGraduate'])->name('students.bulk-graduate');
     Route::get('/parents/list', [AdminController::class, 'parentsList'])->name('parents.list');
     Route::get('/check-email', [AdminController::class, 'checkEmail'])->name('check-email');
+
+    Route::get('/alumni', [AdminController::class, 'alumni'])->name('alumni.index');
+    Route::get('/alumni/{student}/data', [AdminController::class, 'alumniData'])->name('alumni.data');
+    Route::put('/alumni/{student}', [AdminController::class, 'alumniUpdate'])->name('alumni.update');
+    Route::post('/alumni/{student}/cv', [AdminController::class, 'alumniCvUpload'])->name('alumni.cv');
+    Route::get('/alumni/{student}/report', [AdminController::class, 'alumniReport'])->name('alumni.report');
     Route::get('/jurusans/{jurusan}/kelas', [AdminController::class, 'kelasByJurusan'])->name('jurusans.kelas');
 
     Route::get('/subjects', [AdminController::class, 'subjects'])->name('subjects.index');

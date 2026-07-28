@@ -16,6 +16,9 @@ class Student extends Model
         'program_name',
         'homeroom_teacher_id',
         'status',
+        'graduation_year',
+        'alumni_status',
+        'cv_path',
         'jurusan_id',
         'kelas_id',
     ];
@@ -24,6 +27,7 @@ class Student extends Model
     {
         return [
             'birth_date' => 'date',
+            'graduation_year' => 'integer',
         ];
     }
 

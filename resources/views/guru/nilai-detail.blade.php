@@ -21,6 +21,10 @@
 <section class="portal-panel" style="margin-bottom:20px">
   <div class="portal-panel-header">
     <div><h2>Tambah Penilaian Baru</h2><p>Isi data penilaian, lalu input nilai per siswa di bawah.</p></div>
+    <span style="font-size:.78rem;font-weight:700;padding:5px 12px;border-radius:8px;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2);white-space:nowrap;display:inline-flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      {{ now()->isoFormat('D MMM YYYY') }}
+    </span>
   </div>
   <form method="POST" action="{{ route('guru.nilai.store', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id]) }}">
     @csrf
@@ -80,7 +84,7 @@
   <div class="table-wrap">
     <table class="grade-table">
       <thead>
-        <tr><th>Judul</th><th>Komponen</th><th>Tanggal</th><th>Publish</th></tr>
+        <tr><th>Judul</th><th>Komponen</th><th>Tanggal</th><th>Publish</th><th>Aksi</th></tr>
       </thead>
       <tbody>
         @foreach ($assessments as $assess)
@@ -94,6 +98,16 @@
               @else
                 <span style="color:var(--muted)">Draft</span>
               @endif
+            </td>
+            <td>
+              <div style="display:flex;gap:6px">
+                <button type="button" onclick="event.stopPropagation();openEditModal({{ $assess->id }})" title="Edit" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--primary-2);transition:.1s" onmouseover="this.style.background='color-mix(in srgb,var(--primary-2) 10%,var(--card))'" onmouseout="this.style.background='var(--card)'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button type="button" onclick="event.stopPropagation();confirmDelete({{ $assess->id }}, '{{ addslashes($assess->title) }}')" title="Hapus" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#ef4444;transition:.1s" onmouseover="this.style.background='color-mix(in srgb,#ef4444 10%,var(--card))'" onmouseout="this.style.background='var(--card)'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
             </td>
           </tr>
         @endforeach
@@ -131,6 +145,9 @@ const ASSESSMENTS = @json($assessmentsData);
 const SCORES = @json($scores);
 const STUDENTS = @json($studentsData);
 const KKM = {{ $subject->kkm ?? 75 }};
+const CSRF = '{{ csrf_token() }}';
+const UPDATE_URL = '{{ route('guru.nilai.update', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id, 'assessment' => '__ID__']) }}';
+const DELETE_URL = '{{ route('guru.nilai.destroy', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id, 'assessment' => '__ID__']) }}';
 
 const ICON_CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 const ICON_CROSS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
@@ -168,7 +185,10 @@ function openNilaiDetail(assessmentId) {
     : '<span style="display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-weight:600">' + ICON_CLIPBOARD + ' Draft</span>';
 
   Swal.fire({
-    title: '<span style="display:inline-flex;align-items:center;gap:8px">' + ICON_CLIPBOARD + ' ' + ass.title + '</span>',
+    title: '<div style="display:flex;align-items:center;justify-content:space-between;width:100%">' +
+      '<span style="display:inline-flex;align-items:center;gap:8px">' + ICON_CLIPBOARD + ' ' + ass.title + '</span>' +
+      '<span style="font-size:.78rem;font-weight:700;padding:4px 10px;border-radius:8px;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2);white-space:nowrap">' + ICON_CALENDAR + ' ' + ass.date + '</span>' +
+      '</div>',
     html: `<div>
       <div class="nilai-summary">
         <div class="nilai-summary-item">
@@ -209,6 +229,114 @@ function openNilaiDetail(assessmentId) {
     confirmButtonText: 'Tutup',
     confirmButtonColor: '#6b7280',
     width: 520,
+  });
+}
+
+function openEditModal(assessmentId) {
+  const ass = ASSESSMENTS.find(a => a.id === assessmentId);
+  if (!ass) return;
+  const scoresMap = SCORES[assessmentId] || {};
+
+  let scoreRows = '';
+  STUDENTS.forEach(s => {
+    const val = scoresMap[s.id] !== undefined ? scoresMap[s.id] : '';
+    scoreRows += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)">
+      <span style="flex:1;font-size:.85rem;font-weight:600">${s.name}</span>
+      <input type="number" id="edit-score-${s.id}" min="0" max="100" step="1" value="${val}" placeholder="—" style="width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-weight:700;font-size:.85rem;text-align:center">
+    </div>`;
+  });
+
+  const componentOptions = {quiz:'Quiz',homework:'Tugas Rumah',project:'Proyek',uts:'UTS',uas:'UAS'};
+  const compOpts = Object.entries(componentOptions).map(([v,l]) =>
+    `<option value="${v}" ${ass.component === v ? 'selected' : ''}>${l}</option>`
+  ).join('');
+
+  Swal.fire({
+    title: 'Edit Penilaian',
+    html: `<form id="editForm" style="text-align:left">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label style="display:block;font-size:.82rem;font-weight:700;margin-bottom:4px;color:var(--ink)">Judul Penilaian</label>
+          <input id="edit-title" type="text" value="${ass.title}" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:.9rem;outline:none;background:var(--bg)">
+        </div>
+        <div>
+          <label style="display:block;font-size:.82rem;font-weight:700;margin-bottom:4px;color:var(--ink)">Komponen</label>
+          <select id="edit-component" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:.9rem;outline:none;background:var(--bg)">${compOpts}</select>
+        </div>
+      </div>
+      <label style="display:block;font-size:.82rem;font-weight:700;margin-bottom:8px;color:var(--ink)">Nilai Siswa</label>
+      <div style="max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:0 12px">
+        ${scoreRows}
+      </div>
+    </form>`,
+    confirmButtonText: 'Simpan',
+    confirmButtonColor: '#0b3b75',
+    showCancelButton: true,
+    cancelButtonText: 'Batal',
+    cancelButtonColor: '#6b7280',
+    reverseButtons: true,
+    width: 520,
+    preConfirm: () => {
+      const title = document.getElementById('edit-title').value.trim();
+      const component = document.getElementById('edit-component').value;
+      if (!title) { Swal.showValidationMessage('Judul harus diisi'); return false; }
+      const scores = {};
+      STUDENTS.forEach(s => {
+        const input = document.getElementById('edit-score-' + s.id);
+        if (input && input.value !== '') scores[s.id] = input.value;
+      });
+      return { title, component, scores };
+    }
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+    const data = result.value;
+    const url = UPDATE_URL.replace('__ID__', assessmentId);
+    fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
+      body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: d.message, timer: 1500, showConfirmButton: false })
+          .then(() => location.reload());
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: d.message || 'Terjadi kesalahan' });
+      }
+    })
+    .catch(() => Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan server.' }));
+  });
+}
+
+function confirmDelete(assessmentId, title) {
+  Swal.fire({
+    title: 'Hapus Penilaian?',
+    html: `Penilaian <strong>${title}</strong> akan dihapus beserta seluruh nilai siswanya.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, hapus',
+    confirmButtonColor: '#dc2626',
+    cancelButtonText: 'Batal',
+    cancelButtonColor: '#6b7280',
+    reverseButtons: true
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+    const url = DELETE_URL.replace('__ID__', assessmentId);
+    fetch(url, {
+      method: 'DELETE',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: d.message, timer: 1500, showConfirmButton: false })
+          .then(() => location.reload());
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: d.message || 'Terjadi kesalahan' });
+      }
+    })
+    .catch(() => Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan server.' }));
   });
 }
 </script>

@@ -14,34 +14,34 @@ class TeachingAssignment extends Model
         'class_name',
     ];
 
-    public function period()
-    {
-        return $this->belongsTo(AcademicPeriod::class);
-    }
-
     public function subject()
     {
-        return $this->belongsTo(Subject::class);
+        return $this->belongsTo(Subject::class, 'subject_id');
     }
 
     public function customSubject()
     {
-        return $this->belongsTo(JurusanCustomSubject::class);
+        return $this->belongsTo(JurusanCustomSubject::class, 'custom_subject_id');
     }
 
     public function teacher()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    public function period()
+    {
+        return $this->belongsTo(AcademicPeriod::class, 'period_id');
     }
 
     public function assessments()
     {
-        return $this->hasMany(Assessment::class);
+        return $this->hasMany(Assessment::class, 'teaching_assignment_id');
     }
 
     public function jadwals()
     {
-        return $this->hasMany(Jadwal::class);
+        return $this->hasMany(Jadwal::class, 'teaching_assignment_id');
     }
 
     public function modules()

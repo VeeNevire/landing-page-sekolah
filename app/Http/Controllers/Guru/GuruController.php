@@ -210,7 +210,7 @@ class GuruController extends Controller
             ]);
 
         $assignments = TeachingAssignment::where('class_name', $className)
-            ->where('period_id', $activePeriod?->id)
+            ->when($activePeriod, fn($q) => $q->where('period_id', $activePeriod->id))
             ->with('subject', 'customSubject')
             ->get();
 
@@ -385,6 +385,50 @@ class GuruController extends Controller
         AuditService::log('assessment.create', 'Assessment', $assessment->id, $assessment->title);
 
         return back()->with('success', "Nilai \"{$validated['title']}\" berhasil disimpan.");
+    }
+
+    public function nilaiUpdate(Request $request, $class, $subject, $assessmentId)
+    {
+        $assessment = Assessment::findOrFail($assessmentId);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:160',
+            'component' => 'required|in:quiz,homework,project,uts,uas',
+            'scores' => 'required|array',
+        ]);
+
+        $assessment->update([
+            'title' => $validated['title'],
+            'component' => $validated['component'],
+        ]);
+
+        foreach ($validated['scores'] as $studentId => $score) {
+            if ($score !== null && $score !== '') {
+                AssessmentScore::updateOrCreate(
+                    ['assessment_id' => $assessment->id, 'student_id' => $studentId],
+                    ['score' => $score, 'graded_at' => now()]
+                );
+            } else {
+                AssessmentScore::where('assessment_id', $assessment->id)
+                    ->where('student_id', $studentId)->delete();
+            }
+        }
+
+        AuditService::log('assessment.update', 'Assessment', $assessment->id, $assessment->title);
+
+        return response()->json(['success' => true, 'message' => 'Nilai berhasil diperbarui.']);
+    }
+
+    public function nilaiDestroy(Request $request, $class, $subject, $assessmentId)
+    {
+        $assessment = Assessment::findOrFail($assessmentId);
+
+        AuditService::log('assessment.delete', 'Assessment', $assessment->id, $assessment->title);
+
+        $assessment->scores()->delete();
+        $assessment->delete();
+
+        return response()->json(['success' => true, 'message' => 'Penilaian berhasil dihapus.']);
     }
 
     public function absensi(Request $request)

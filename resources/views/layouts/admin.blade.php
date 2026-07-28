@@ -68,6 +68,17 @@
           </span>
           <span class="portal-menu-label">Siswa</span>
         </a>
+        <a href="{{ route('admin.alumni.index') }}"
+          @class(['active'=> request()->routeIs('admin.alumni.*')])>
+          <span class="portal-menu-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
+              <path d="M18 9l2 2 4-4"/>
+            </svg>
+          </span>
+          <span class="portal-menu-label">Alumni</span>
+        </a>
 
         <div class="portal-menu-group">Akademik</div>
         <a href="{{ route('admin.subjects.index') }}"

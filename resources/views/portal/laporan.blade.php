@@ -94,6 +94,87 @@
           </tbody>
         </table>
       </div>
+</section>
+
+    <section class="portal-panel" style="margin-top:20px">
+      <div class="portal-panel-header">
+        <div><h2>Jadwal Penilaian Bulanan</h2><p>Kalender aktivitas penilaian (kuis, PR, proyek, ujian).</p></div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <a href="{{ request()->fullUrlWithQuery(['bulan' => $prevBulan]) }}" class="btn btn-outline" style="min-height:36px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;font-size:.82rem">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          {{ $calendarMonth->copy()->subMonth()->isoFormat('MMMM') }}
+        </a>
+        <strong style="font-size:1.05rem">{{ $calendarMonth->isoFormat('MMMM YYYY') }}</strong>
+        <a href="{{ request()->fullUrlWithQuery(['bulan' => $nextBulan]) }}" class="btn btn-outline" style="min-height:36px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;font-size:.82rem">
+          {{ $calendarMonth->copy()->addMonth()->isoFormat('MMMM') }}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+
+      @php
+        $daysInMonth = $calendarMonth->daysInMonth;
+        $hariNama = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        $today = now()->format('Y-m-d');
+        $firstCol = $calendarMonth->dayOfWeek;
+      @endphp
+
+      <div class="table-wrap">
+        <table class="grade-table" style="min-width:700px">
+          <thead>
+            <tr>
+              <th style="min-width:40px;text-align:center">Pekan</th>
+              @foreach ($hariNama as $nama)
+                <th style="text-align:center;min-width:90px;font-size:.82rem">{{ $nama }}</th>
+              @endforeach
+            </tr>
+          </thead>
+          <tbody>
+            @php
+              $dayNum = 1;
+              $weekIdx = 0;
+            @endphp
+            @while ($dayNum <= $daysInMonth)
+              <tr>
+                <td style="text-align:center;font-size:.78rem;font-weight:700;color:var(--muted)">{{ $calendarMonth->format('F') }} W{{ $weekIdx + 1 }}</td>
+                @for ($col = 0; $col < 7; $col++)
+                  @php
+                    $isBlank = ($weekIdx === 0 && $col < $firstCol) || $dayNum > $daysInMonth;
+                  @endphp
+                  @if ($isBlank)
+                    <td style="text-align:center;color:var(--line);font-size:.75rem;min-height:60px;vertical-align:top;padding:6px 4px">—</td>
+                  @else
+                    @php
+                      $dateKey = $calendarMonth->format('Y-m') . '-' . str_pad($dayNum, 2, '0', STR_PAD_LEFT);
+                      $dayAssessments = $jadwalBulan->get($dateKey, collect());
+                      $isToday = $dateKey === $today;
+                    @endphp
+                    <td style="text-align:center;vertical-align:top;padding:6px 4px;min-height:60px;{{ $isToday ? 'background:color-mix(in srgb,var(--primary-2) 6%,var(--card));border-radius:8px' : '' }}">
+                      <div style="font-size:.78rem;font-weight:700;margin-bottom:4px;{{ $isToday ? 'color:var(--primary-2)' : 'color:var(--ink)' }}">{{ $dayNum }}</div>
+                      @foreach ($dayAssessments as $assessment)
+                        @php
+                          $subjectName = $assessment->teachingAssignment?->subject?->name ?? $assessment->teachingAssignment?->customSubject?->nama ?? '-';
+                          $teacherName = $assessment->teachingAssignment?->teacher?->full_name ?? $assessment->teachingAssignment?->teacher?->name ?? '-';
+                          $compLabels = ['quiz'=>'Kuis','homework'=>'PR/Tugas','project'=>'Proyek','uts'=>'UTS','uas'=>'UAS','remedial'=>'Remedial','assignment'=>'Tugas','other'=>'Lainnya'];
+                          $compColors = ['quiz'=>'#34C759','homework'=>'#007AFF','project'=>'#FF9F0A','uts'=>'#AF52DE','uas'=>'#FF3B30','remedial'=>'#FF6482','assignment'=>'#5856D6','other'=>'#86868B'];
+                          $compLabel = $compLabels[$assessment->component] ?? $assessment->component;
+                          $compColor = $compColors[$assessment->component] ?? '#86868B';
+                        @endphp
+                        <div onclick="showAssessmentDetail('{{ addslashes($assessment->title) }}', '{{ addslashes($subjectName) }}', '{{ $compLabel }}', '{{ $assessment->assessment_date->isoFormat('D MMM YYYY') }}', '{{ addslashes($teacherName) }}', '{{ $compColor }}')" style="cursor:pointer;padding:3px 5px;margin:2px 0;border-radius:5px;font-size:.7rem;font-weight:600;background:color-mix(in srgb,{{ $compColor }} 12%,var(--card));color:{{ $compColor }};border:1px solid color-mix(in srgb,{{ $compColor }} 20%,transparent);transition:.1s" onmouseover="this.style.background='color-mix(in srgb,{{ $compColor }} 22%,var(--card))'" onmouseout="this.style.background='color-mix(in srgb,{{ $compColor }} 12%,var(--card))'">
+                          {{ $assessment->title }}
+                        </div>
+                      @endforeach
+                    </td>
+                    @php $dayNum++; @endphp
+                  @endif
+                @endfor
+              </tr>
+              @php $weekIdx++; @endphp
+            @endwhile
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section class="portal-panel" style="margin-top:20px">
@@ -175,6 +256,35 @@ document.getElementById('subjectFilter')?.addEventListener('change', function() 
     detail.style.display = (val === 'all' || detail.dataset.subjectDetail === val) ? '' : 'none';
   });
 });
+
+function showAssessmentDetail(title, subject, component, date, teacher, color) {
+  Swal.fire({
+    title: title,
+    html: '<div style="display:grid;gap:10px;text-align:left">' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">' +
+        '<span style="font-weight:600;min-width:80px;color:var(--muted);font-size:.85rem">Mata Pelajaran</span>' +
+        '<span style="font-weight:700;font-size:.9rem">' + subject + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">' +
+        '<span style="font-weight:600;min-width:80px;color:var(--muted);font-size:.85rem">Komponen</span>' +
+        '<span style="font-weight:700;font-size:.9rem;color:' + color + '">' + component + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">' +
+        '<span style="font-weight:600;min-width:80px;color:var(--muted);font-size:.85rem">Tanggal</span>' +
+        '<span style="font-weight:700;font-size:.9rem">' + date + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)">' +
+        '<span style="font-weight:600;min-width:80px;color:var(--muted);font-size:.85rem">Guru</span>' +
+        '<span style="font-weight:700;font-size:.9rem">' + teacher + '</span>' +
+      '</div>' +
+    '</div>',
+    showConfirmButton: true,
+    confirmButtonText: 'Tutup',
+    confirmButtonColor: color,
+    width: 460,
+    padding: '24px',
+  });
+}
 </script>
 @endpush
 

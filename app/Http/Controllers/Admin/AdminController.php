@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
 use App\Models\Applicant;
+use App\Models\AssessmentScore;
 use App\Models\Attendance;
 use App\Models\AuditLog;
 use App\Models\Billing;
@@ -43,11 +44,15 @@ class AdminController extends Controller
         $totalSubjects = Subject::count();
         $recentAudit = AuditLog::with('user')->latest()->take(5)->get();
         $todayAttendance = Attendance::whereDate('attendance_date', today())->count();
+        $todayAttendanceByStatus = Attendance::whereDate('attendance_date', today())
+            ->with('student:id,full_name,nisn,class_name')
+            ->get()
+            ->groupBy('status');
 
         return view('admin.dashboard', compact(
             'totalStudents', 'totalTeachers', 'totalParents',
             'totalClasses', 'activePeriod', 'totalSubjects',
-            'recentAudit', 'todayAttendance'
+            'recentAudit', 'todayAttendance', 'todayAttendanceByStatus'
         ));
     }
 
@@ -323,16 +328,26 @@ class AdminController extends Controller
         }
         $applicants = $applicantQuery->latest()->paginate(15, ['*'], 'applicants_page')->withQueryString();
 
-        $applicantStatusCounts = [
-            'all' => Applicant::count(),
-            'draft' => Applicant::where('status', 'draft')->count(),
-            'submitted' => Applicant::where('status', 'submitted')->count(),
-            'verified' => Applicant::where('status', 'verified')->count(),
-            'paid' => Applicant::where('status', 'paid')->count(),
-            'rejected' => Applicant::where('status', 'rejected')->count(),
-        ];
+$applicantStatusCounts = [
+        'all' => Applicant::count(),
+        'draft' => Applicant::where('status', 'draft')->count(),
+        'submitted' => Applicant::where('status', 'submitted')->count(),
+        'verified' => Applicant::where('status', 'verified')->count(),
+        'paid' => Applicant::where('status', 'paid')->count(),
+        'rejected' => Applicant::where('status', 'rejected')->count(),
+    ];
 
-        return view('admin.students', compact('students', 'jurusans', 'kelasList', 'teachers', 'tabCounts', 'applicants', 'applicantStatusCounts'));
+    $classNames = Student::where('status', 'active')
+        ->whereNotNull('class_name')
+        ->distinct()
+        ->pluck('class_name')
+        ->sort()
+        ->values();
+
+    return view('admin.students', compact(
+        'students', 'jurusans', 'kelasList', 'teachers',
+        'tabCounts', 'applicants', 'applicantStatusCounts', 'classNames'
+    ));
     }
 
     public function studentsCreate()
@@ -546,6 +561,8 @@ class AdminController extends Controller
                 'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama ?? $student->program_name ?? '-',
                 'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? $kelas?->homeroom_teacher_id ?? $student->homeroom_teacher_id,
                 'status' => $validated['status'],
+                'graduation_year' => $validated['status'] === 'graduated' && !$student->graduation_year
+                    ? (int) now()->format('Y') : $student->graduation_year,
             ]);
 
             if (!empty($validated['student_email']) && $student->user) {
@@ -594,6 +611,35 @@ class AdminController extends Controller
         $student->delete();
 
         return response()->json(['success' => true, 'message' => 'Siswa berhasil dihapus.']);
+    }
+
+    public function studentsBulkGraduate(Request $request)
+    {
+        $romawiMap = ['X' => 10, 'XI' => 11, 'XII' => 12];
+        $tingkat = $romawiMap[$request->input('tingkat')] ?? null;
+
+        if (!$tingkat) {
+            return response()->json(['success' => false, 'message' => 'Pilih tingkat (X/XI/XII) terlebih dahulu.'], 400);
+        }
+
+        $kelasIds = Kelas::where('tingkat', $tingkat)->pluck('id');
+        if ($kelasIds->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada kelas ditemukan untuk tingkat tersebut.'], 400);
+        }
+
+        $count = Student::whereIn('kelas_id', $kelasIds)->where('status', 'active')->count();
+        if ($count === 0) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada siswa aktif di tingkat ini.'], 400);
+        }
+
+        Student::whereIn('kelas_id', $kelasIds)
+            ->where('status', 'active')
+            ->update(['status' => 'graduated', 'graduation_year' => (int) now()->format('Y')]);
+
+        $label = array_search($tingkat, $romawiMap);
+        AuditService::log('student.bulk_graduate', 'Student', 0, "Meluluskan {$count} siswa dari tingkat {$label}");
+
+        return response()->json(['success' => true, 'message' => "{$count} siswa dari tingkat {$label} berhasil diluluskan."]);
     }
 
     public function studentResetPassword(Request $request, Student $student)
@@ -1717,5 +1763,126 @@ class AdminController extends Controller
         }
 
         return redirect()->route('admin.billing.index')->with('success', 'Tagihan berhasil dihapus.');
+    }
+
+    public function alumni()
+    {
+        $alumni = Student::where('status', 'graduated')
+            ->with('jurusan')
+            ->orderBy('full_name')
+            ->get()
+            ->map(function ($s) {
+                $scores = AssessmentScore::whereHas('assessment', fn($q) =>
+                    $q->whereHas('teachingAssignment', fn($ta) =>
+                        $ta->where('class_name', $s->class_name)
+                    )
+                )->where('student_id', $s->id)->pluck('score')->filter();
+                $finalScore = $scores->isNotEmpty() ? round($scores->avg(), 1) : null;
+                $s->final_score = $finalScore;
+                return $s;
+            });
+
+        return view('admin.alumni', compact('alumni'));
+    }
+
+    public function alumniData(Student $student)
+    {
+        $scores = AssessmentScore::where('student_id', $student->id)
+            ->with('assessment:id,title,component,teaching_assignment_id',
+                  'assessment.teachingAssignment:id,subject_id,custom_subject_id',
+                  'assessment.teachingAssignment.subject:id,name,code',
+                  'assessment.teachingAssignment.customSubject:id,nama,kode')
+            ->get()
+            ->groupBy(fn($s) => $s->assessment->teachingAssignment?->subject?->name
+                ?? $s->assessment->teachingAssignment?->customSubject?->nama
+                ?? 'Unknown');
+
+        $subjects = [];
+        foreach ($scores as $subjectName => $items) {
+            $vals = $items->pluck('score')->filter();
+            $subjects[] = [
+                'name' => $subjectName,
+                'avg' => $vals->isNotEmpty() ? round($vals->avg(), 1) : '-',
+                'count' => $items->count(),
+            ];
+        }
+
+        return response()->json([
+            'student' => [
+                'full_name' => $student->full_name,
+                'nisn' => $student->nisn,
+                'program_name' => $student->program_name,
+                'class_name' => $student->class_name,
+                'graduation_year' => $student->graduation_year,
+                'alumni_status' => $student->alumni_status,
+                'cv_path' => $student->cv_path,
+            ],
+            'subjects' => $subjects,
+        ]);
+    }
+
+    public function alumniUpdate(Request $request, Student $student)
+    {
+        $validated = $request->validate([
+            'alumni_status' => 'nullable|in:working,studying',
+            'graduation_year' => 'nullable|integer|min:2000|max:2099',
+        ]);
+
+        $student->update($validated);
+
+        AuditService::log('alumni.update', 'Student', $student->id, $student->full_name);
+
+        return response()->json(['success' => true, 'message' => 'Data alumni berhasil diperbarui.']);
+    }
+
+    public function alumniCvUpload(Request $request, Student $student)
+    {
+        $request->validate(['cv' => 'required|file|mimes:pdf,doc,docx|max:2048']);
+
+        if ($student->cv_path) {
+            Storage::disk('public')->delete($student->cv_path);
+        }
+
+        $path = $request->file('cv')->store('alumni-cv', 'public');
+        $student->update(['cv_path' => $path]);
+
+        AuditService::log('alumni.cv_upload', 'Student', $student->id, $student->full_name);
+
+        return response()->json(['success' => true, 'message' => 'CV berhasil diunggah.', 'path' => Storage::url($path)]);
+    }
+
+    public function alumniReport(Student $student)
+    {
+        $scores = AssessmentScore::where('student_id', $student->id)
+            ->with('assessment:id,title,component,teaching_assignment_id',
+                  'assessment.teachingAssignment:id,subject_id,custom_subject_id',
+                  'assessment.teachingAssignment.subject:id,name,code,kkm',
+                  'assessment.teachingAssignment.customSubject:id,nama,kode,kkm')
+            ->get()
+            ->groupBy(fn($s) => $s->assessment->teachingAssignment?->subject?->name
+                ?? $s->assessment->teachingAssignment?->customSubject?->nama
+                ?? 'Unknown');
+
+        $subjects = [];
+        foreach ($scores as $subjectName => $items) {
+            $vals = $items->pluck('score')->filter();
+            $avg = $vals->isNotEmpty() ? round($vals->avg(), 1) : 0;
+            $first = $items->first();
+            $kkm = $first?->assessment->teachingAssignment?->subject?->kkm
+                ?? $first?->assessment->teachingAssignment?->customSubject?->kkm
+                ?? 75;
+            $subjects[] = [
+                'name' => $subjectName,
+                'avg' => $avg,
+                'grade' => $avg >= 90 ? 'A' : ($avg >= 85 ? 'A-' : ($avg >= 80 ? 'B+' : ($avg >= 75 ? 'B' : ($avg >= 70 ? 'C+' : ($avg >= 65 ? 'C' : 'D'))))),
+                'kkm' => $kkm,
+                'status' => $avg >= $kkm ? 'Tuntas' : 'Perlu Remedial',
+            ];
+        }
+
+        $allVals = $scores->flatten(1)->pluck('score')->filter();
+        $overallAvg = $allVals->isNotEmpty() ? round($allVals->avg(), 1) : 0;
+
+        return view('admin.alumni-report', compact('student', 'subjects', 'overallAvg'));
     }
 }

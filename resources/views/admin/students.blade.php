@@ -57,6 +57,14 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       </svg>
       Import CSV
     </a>
+    <button type="button" class="btn btn-outline" onclick="openBulkGraduate()" style="display:inline-flex;align-items:center;gap:6px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
+        <path d="M18 9l2 2 4-4"/>
+      </svg>
+      Luluskan Massal
+    </button>
     <button type="button" class="btn btn-primary" onclick="openCreateModal()" style="display:inline-flex;align-items:center;gap:6px">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="5" x2="12" y2="19" />
@@ -1343,5 +1351,47 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
   }
 
   @endif
+
+  function openBulkGraduate() {
+    const tingkatList = ['X', 'XI', 'XII'];
+    let optHtml = '<option value="">— Pilih Tingkat —</option>';
+    tingkatList.forEach(function(t) {
+      optHtml += '<option value="' + t + '">' + t + '</option>';
+    });
+
+    Swal.fire({
+      title: 'Luluskan Massal',
+      html: `<p style="text-align:left;margin-bottom:12px;font-size:.88rem;color:var(--muted)">Pilih tingkat kelas yang akan diluluskan. Semua siswa aktif di tingkat tersebut akan berstatus <strong>Lulus</strong>.</p>
+        <select id="bulkTingkat" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:.9rem;outline:none;background:var(--bg)">${optHtml}</select>`,
+      confirmButtonText: 'Luluskan',
+      confirmButtonColor: '#0b3b75',
+      showCancelButton: true,
+      cancelButtonText: 'Batal',
+      cancelButtonColor: '#6b7280',
+      reverseButtons: true,
+      preConfirm: () => {
+        const val = document.getElementById('bulkTingkat').value;
+        if (!val) { Swal.showValidationMessage('Pilih tingkat terlebih dahulu'); return false; }
+        return val;
+      }
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const tingkat = result.value;
+      fetch('{{ route('admin.students.bulk-graduate') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN },
+        body: JSON.stringify({ tingkat: tingkat })
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: d.message, timer: 2000, showConfirmButton: false })
+            .then(() => location.reload());
+        } else {
+          Swal.fire({ icon: 'error', title: 'Gagal', text: d.message });
+        }
+      });
+    });
+  }
 </script>
 @endpush

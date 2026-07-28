@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
+use App\Models\Assessment;
 use App\Models\Attendance;
 use App\Models\TeacherNote;
 use App\Models\TeachingAssignment;
@@ -17,9 +18,16 @@ class ReportController extends Controller
         $students = $user->students()->where('status', 'active')->get();
 
         if ($students->isEmpty()) {
+            $tgl = now()->startOfMonth();
             return view('portal.laporan', array_merge(
                 $this->emptyData(),
-                ['students' => collect(), 'selectedStudent' => null, 'selectedStudentId' => null, 'selectedStudentInitials' => 'S']
+                [
+                    'students' => collect(), 'selectedStudent' => null, 'selectedStudentId' => null,
+                    'selectedStudentInitials' => 'S',
+                    'jadwalBulan' => collect(), 'calendarMonth' => $tgl,
+                    'prevBulan' => $tgl->copy()->subMonth()->format('Y-m'),
+                    'nextBulan' => $tgl->copy()->addMonth()->format('Y-m'),
+                ]
             ));
         }
 
@@ -27,6 +35,17 @@ class ReportController extends Controller
         $selectedStudent = $students->firstWhere('id', $studentId) ?? $students->first();
 
         $studentReport = $this->buildStudentReport($selectedStudent);
+
+        $bulan = $request->query('bulan', now()->format('Y-m'));
+        $tgl = \Carbon\Carbon::parse($bulan . '-01');
+        $jadwalBulan = Assessment::whereHas('teachingAssignment', fn($q) =>
+            $q->where('class_name', $selectedStudent->class_name)
+        )->whereMonth('assessment_date', $tgl->month)
+         ->whereYear('assessment_date', $tgl->year)
+         ->with('teachingAssignment.subject', 'teachingAssignment.customSubject', 'teachingAssignment.teacher')
+         ->orderBy('assessment_date')
+         ->get()
+         ->groupBy(fn($a) => $a->assessment_date->format('Y-m-d'));
 
         return view('portal.laporan', [
             'students' => $students,
@@ -37,6 +56,10 @@ class ReportController extends Controller
             'subjects' => $studentReport['subjects'],
             'average' => $studentReport['average'],
             'attendanceRate' => $studentReport['attendanceRate'],
+            'jadwalBulan' => $jadwalBulan,
+            'calendarMonth' => $tgl,
+            'prevBulan' => $tgl->copy()->subMonth()->format('Y-m'),
+            'nextBulan' => $tgl->copy()->addMonth()->format('Y-m'),
         ]);
     }
 
