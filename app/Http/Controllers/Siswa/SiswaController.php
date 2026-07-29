@@ -302,6 +302,17 @@ class SiswaController extends Controller
             }
         }
 
+        $bulan = $request->query('bulan', now()->format('Y-m'));
+        $tgl = \Carbon\Carbon::parse($bulan . '-01');
+        $jadwalBulan = Assessment::whereHas('teachingAssignment', fn($q) =>
+            $q->where('class_name', $student->class_name)
+        )->whereMonth('assessment_date', $tgl->month)
+         ->whereYear('assessment_date', $tgl->year)
+         ->with('teachingAssignment.subject', 'teachingAssignment.customSubject', 'teachingAssignment.teacher')
+         ->orderBy('assessment_date')
+         ->get()
+         ->groupBy(fn($a) => $a->assessment_date->format('Y-m-d'));
+
         return view('siswa.jadwal', [
             'student' => $student,
             'period' => $period,
@@ -309,6 +320,10 @@ class SiswaController extends Controller
             'grid' => $grid,
             'days' => $days,
             'timeSlots' => $timeSlots,
+            'jadwalBulan' => $jadwalBulan,
+            'calendarMonth' => $tgl,
+            'prevBulan' => $tgl->copy()->subMonth()->format('Y-m'),
+            'nextBulan' => $tgl->copy()->addMonth()->format('Y-m'),
         ]);
     }
 
