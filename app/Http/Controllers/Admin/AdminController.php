@@ -119,6 +119,7 @@ class AdminController extends Controller
 
         $subjects = $user->teachingAssignments
             ->pluck('subject')
+            ->filter()
             ->unique('id')
             ->values()
             ->map(fn($s) => ['id' => $s->id, 'code' => $s->code, 'name' => $s->name]);

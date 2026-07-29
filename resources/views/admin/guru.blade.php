@@ -362,7 +362,7 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
     fetch('/admin/guru/' + userId + '/data', {
       headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(d => {
       document.getElementById('detailTitle').textContent = d.full_name || d.name;
       let html = '';
