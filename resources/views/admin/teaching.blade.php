@@ -202,14 +202,15 @@
           'Accept': 'application/json'
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
         document.getElementById('m_period_id').value = data.period_id;
         document.getElementById('m_subject_id').value = data.subject_id;
         document.getElementById('m_teacher_id').value = data.teacher_id;
         document.getElementById('m_class_name').value = data.class_name;
         document.getElementById('teachingModal').classList.add('open');
-      });
+      })
+      .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
   }
 
   function closeModal() {
@@ -310,7 +311,7 @@
               'Accept': 'application/json',
             }
           })
-          .then(r => r.json())
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
           .then(json => {
             if (json.success) {
               Swal.fire({

@@ -251,12 +251,13 @@ function openDetailModal(className) {
   fetch('/guru/kelas/' + encodeURIComponent(className) + '/data', {
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     renderSiswa(data);
     renderNilai(data);
     renderAbsensi(data);
-  });
+  })
+  .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
 }
 
 function switchTab(tab) {

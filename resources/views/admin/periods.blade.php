@@ -212,14 +212,15 @@ $currentStatus = request('status', '');
           'Accept': 'application/json'
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
         document.getElementById('m_academic_year').value = data.academic_year;
         document.getElementById('m_semester').value = data.semester;
         document.getElementById('m_start_date').value = data.start_date;
         document.getElementById('m_end_date').value = data.end_date;
         document.getElementById('periodModal').classList.add('open');
-      });
+      })
+      .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
   }
 
   function closeModal() {
@@ -343,7 +344,7 @@ $currentStatus = request('status', '');
           'Accept': 'application/json',
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(json => {
         if (json.success) {
           Swal.fire({

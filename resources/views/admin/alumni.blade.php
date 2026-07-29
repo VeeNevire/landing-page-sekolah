@@ -94,7 +94,7 @@ const CSRF = '{{ csrf_token() }}';
 
 function editAlumni(id) {
   fetch('{{ url('admin/alumni') }}/' + id + '/data')
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(data => {
       const s = data.student;
       Swal.fire({
@@ -131,7 +131,7 @@ function editAlumni(id) {
           headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
           body: JSON.stringify(result.value)
         })
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(d => {
           if (d.success) {
             Swal.fire({ icon: 'success', title: 'Berhasil', text: d.message, timer: 1200, showConfirmButton: false })
@@ -139,9 +139,11 @@ function editAlumni(id) {
           } else {
             Swal.fire({ icon: 'error', title: 'Gagal', text: d.message || 'Terjadi kesalahan' });
           }
-        });
+        })
+        .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
       });
-    });
+    })
+    .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
 }
 
 function uploadCv(id, name) {
@@ -162,7 +164,7 @@ function uploadCv(id, name) {
       headers: { 'X-CSRF-TOKEN': CSRF },
       body: formData
     })
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(d => {
       if (d.success) {
         Swal.fire({ icon: 'success', title: 'Berhasil', text: d.message, timer: 1200, showConfirmButton: false })
@@ -170,14 +172,15 @@ function uploadCv(id, name) {
       } else {
         Swal.fire({ icon: 'error', title: 'Gagal', text: d.message || 'Terjadi kesalahan' });
       }
-    });
+    })
+    .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
   };
   input.click();
 }
 
 function detailAlumni(id) {
   fetch('{{ url('admin/alumni') }}/' + id + '/data')
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(data => {
       const s = data.student;
       const statusLabels = {working:'Kerja',studying:'Kuliah'};
@@ -230,7 +233,8 @@ function detailAlumni(id) {
         confirmButtonColor: '#6b7280',
         width: 500,
       });
-    });
+    })
+    .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
 }
 </script>
 @endpush

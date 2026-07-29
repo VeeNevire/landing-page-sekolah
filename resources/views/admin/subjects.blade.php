@@ -297,7 +297,7 @@ function openEditModal(subjectId) {
   fetch('/admin/subjects/' + subjectId + '/data', {
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     document.getElementById('m_code').value = data.code;
     document.getElementById('m_name').value = data.name;
@@ -308,7 +308,8 @@ function openEditModal(subjectId) {
     });
     updateGuruCount();
     document.getElementById('subjectModal').classList.add('open');
-  });
+  })
+  .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
 }
 
 function clearSelectedGurus() {
@@ -406,7 +407,7 @@ function confirmDelete(subjectId, subjectName) {
           'Accept': 'application/json',
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(json => {
         if (json.success) {
           Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: json.message, showConfirmButton: false, timer: 3000 })
@@ -436,7 +437,7 @@ function openDetailModal(subjectId) {
   fetch('/admin/subjects/' + subjectId + '/detail', {
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(d => {
     document.getElementById('detailTitle').textContent = d.subject.code + ' — ' + d.subject.name;
     let html = '';
@@ -515,7 +516,7 @@ function saveDetailSubjects() {
       'X-CSRF-TOKEN': CSRF_TOKEN,
     }
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(d => {
     if (d.success) {
       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 2000 })
@@ -610,7 +611,7 @@ function saveEditCS(btn) {
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'Content-Type': 'application/json' },
     body: JSON.stringify({ kode: kode, nama: nama, kkm: kkm || null })
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(d => {
     if (d.success) {
       const view = item.querySelector('.cs-view');
@@ -647,7 +648,7 @@ function saveCS(btn) {
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'Content-Type': 'application/json' },
     body: JSON.stringify({ kode: kode, nama: nama, kkm: kkm || null })
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(d => {
     if (d.success) {
       group.querySelector('.cs-form-kode').value = '';
@@ -702,7 +703,7 @@ function confirmDeleteCS(jurusanId, csId, csName) {
         method: 'DELETE',
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(d => {
         if (d.success) {
           const item = document.querySelector('.jurusan-cs-item[data-cs-id="' + csId + '"]');
@@ -763,7 +764,7 @@ function saveCSAssignments(jurusanId) {
     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
     body: JSON.stringify({ cs_data: csData })
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(d => {
     if (d.success) {
       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 2000 });

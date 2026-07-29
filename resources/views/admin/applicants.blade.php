@@ -185,7 +185,7 @@ $stepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data' => 66, '
     document.getElementById('detailModal').classList.add('open');
     
     fetch('{{ url("admin/applicants") }}/' + id + '/data')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(d => {
         currentApplicantId = id;
         currentApplicantStatus = d.status;
@@ -464,7 +464,7 @@ $stepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data' => 66, '
           body: formData,
           headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(j => {
           if (j.success) {
             Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: j.message, showConfirmButton: false, timer: 3000 })
@@ -556,7 +556,7 @@ $stepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data' => 66, '
         'Accept': 'application/json'
       }
     })
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(j => {
       if (j.success) {
         Swal.fire({

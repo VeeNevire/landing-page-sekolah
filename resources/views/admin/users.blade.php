@@ -273,14 +273,15 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
           'Accept': 'application/json'
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
         document.getElementById('modal_name').value = data.name;
         document.getElementById('modal_full_name').value = data.full_name || '';
         document.getElementById('modal_email').value = data.email;
         document.getElementById('modal_role').value = data.role;
         document.getElementById('userModal').classList.add('open');
-      });
+      })
+      .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
   }
 
   function closeModal() {
@@ -397,7 +398,7 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
           'Accept': 'application/json',
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(json => {
         if (json.success) {
           Swal.fire({

@@ -80,7 +80,7 @@
 <script>
 function openEssayModal(attemptId) {
   fetch('/guru/kuis/' + attemptId + '/nilai-essay-data')
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(data => {
       let html = '<h3 style="margin:0 0 4px;font-size:1.05rem">Nilai Essay</h3>';
       html += '<p style="font-size:.85rem;color:var(--muted);margin:0 0 18px">' + data.student_name + '</p>';
@@ -101,7 +101,8 @@ function openEssayModal(attemptId) {
       html += '</div></form>';
       document.getElementById('essayModalContent').innerHTML = html;
       document.getElementById('essayModal').style.display = 'grid';
-    });
+    })
+    .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
 }
 
 function closeEssayModal() {

@@ -344,7 +344,7 @@
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]').value
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(d => {
         if (d.success) {
           document.querySelectorAll('.form-tab')[0].classList.add('completed');
@@ -372,7 +372,7 @@
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]').value
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(d => {
         if (d.success) {
           window.location.href = '{{ route("ppdb.upload") }}';

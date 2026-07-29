@@ -603,7 +603,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           'Accept': 'application/json'
         }
       })
-      .then(r => r.json()).then(d => {
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
         document.getElementById('modalTitle').textContent = 'Edit Siswa';
         document.getElementById('modalSubmitBtn').textContent = 'Simpan Perubahan';
         document.getElementById('formMethod').value = 'PUT';
@@ -640,7 +640,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           document.getElementById('currentParentsSection').style.display = 'none';
         }
         document.getElementById('studentModal').classList.add('open');
-      });
+      })
+      .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
   }
 
   function closeModal() {
@@ -701,7 +702,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           'Accept': 'application/json'
         }
       })
-      .then(r => r.json()).then(parents => {
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(parents => {
         const sel = document.getElementById('m_parent_id');
         sel.innerHTML = '<option value="">-- Pilih Orang Tua --</option>';
         parents.forEach(p => {
@@ -710,7 +711,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           opt.textContent = p.name + ' (' + p.email + ') — ' + p.students_count + ' siswa';
           sel.appendChild(opt);
         });
-      });
+      })
+      .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
   }
 
   function clearErrors() {
@@ -824,7 +826,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
                 'Accept': 'application/json'
               }
             })
-            .then(r => r.json()).then(j => {
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(j => {
               if (j.success) Swal.fire({
                 toast: true,
                 position: 'top-end',
@@ -896,7 +898,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           'Accept': 'application/json'
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
         sel.innerHTML = '<option value="">Pilih Kelas</option>';
         data.forEach(k => {
@@ -949,7 +951,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       fetch('/admin/check-email?email=' + encodeURIComponent(email), {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(d => {
         if (d.available) {
           status.style.display = 'block';
@@ -997,7 +999,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
               'X-CSRF-TOKEN': CSRF_TOKEN
             }
           })
-          .then(r => r.json())
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
           .then(json => {
             if (json.success) {
               Swal.fire({
@@ -1045,7 +1047,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     modalFooter.style.display = 'none';
     document.getElementById('detailModal').classList.add('open');
 
-    fetch('/admin/applicants/' + id + '/data').then(r => r.json()).then(d => {
+    fetch('/admin/applicants/' + id + '/data').then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
       currentApplicantId = id;
 
       const completionPercent = STEP_PERCENT[d.completion_step];
@@ -1183,7 +1185,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
       } else {
         modalFooter.style.display = 'none';
       }
-    });
+    })
+    .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
   }
 
   function getDocIcon(type) {
@@ -1295,7 +1298,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
               'Accept': 'application/json'
             }
           })
-          .then(r => r.json())
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
           .then(j => {
             if (j.success) {
               Swal.fire({
@@ -1331,7 +1334,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
           'Accept': 'application/json'
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(j => {
         if (j.success) {
           Swal.fire({
@@ -1382,7 +1385,7 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN },
         body: JSON.stringify({ tingkat: tingkat })
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(d => {
         if (d.success) {
           Swal.fire({ icon: 'success', title: 'Berhasil', text: d.message, timer: 2000, showConfirmButton: false })
@@ -1390,7 +1393,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         } else {
           Swal.fire({ icon: 'error', title: 'Gagal', text: d.message });
         }
-      });
+      })
+      .catch(() => Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error'));
     });
   }
 </script>

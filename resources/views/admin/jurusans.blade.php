@@ -304,7 +304,7 @@ function openEditModal(jurusanId) {
   fetch('/admin/jurusans/' + jurusanId + '/data', {
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     document.getElementById('m_kode').value = data.kode;
     document.getElementById('m_nama').value = data.nama;
@@ -323,7 +323,8 @@ function openEditModal(jurusanId) {
     }
     toggleKelasEmpty();
     document.getElementById('jurusanModal').classList.add('open');
-  });
+  })
+  .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
 }
 
 function closeModal() {
@@ -424,7 +425,7 @@ function confirmDelete(jurusanId, jurusanName) {
           'Accept': 'application/json',
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(json => {
         if (json.success) {
           Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: json.message, showConfirmButton: false, timer: 3000 })
@@ -621,7 +622,7 @@ function saveCustomSubject(jurusanId) {
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'Content-Type': 'application/json' },
     body: JSON.stringify({ kode: kode, nama: nama, kkm: kkm || null })
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(json => {
     if (json.success) {
       document.getElementById('csKode').value = '';
@@ -701,7 +702,7 @@ function deleteCustomSubject(jurusanId, subjectId) {
         method: 'DELETE',
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(json => {
         if (json.success) {
           document.querySelector('.custom-subject-item[data-id="' + subjectId + '"]')?.remove();

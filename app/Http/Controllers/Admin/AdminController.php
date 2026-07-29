@@ -19,6 +19,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use App\Mail\ParentAccountMail;
@@ -201,9 +202,9 @@ class AdminController extends Controller
 $validated = $request->validate([
             'name' => 'required|string|max:255',
             'full_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:parent,teacher,homeroom,admin,principal,student,alumni',
-            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(6)],
+            'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(6)],
         ], [
             'email.unique' => 'Email sudah terdaftar.',
         ]);
@@ -685,41 +686,32 @@ $applicantStatusCounts = [
     public function studentImport(Request $request)
     {
         $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
         ]);
 
-        $file = $request->file('csv_file');
-        $rows = array_map('str_getcsv', file($file->getRealPath()));
-        $header = array_map('strtolower', array_shift($rows));
+        try {
+            $importer = (new \App\Imports\StudentImport($request->file('csv_file')->getRealPath()))
+                ->load()
+                ->run();
 
-        $imported = 0;
-        $skipped = 0;
-
-        foreach ($rows as $row) {
-            $data = array_combine($header, $row);
-            $nisn = trim($data['nisn'] ?? '');
-            $fullName = trim($data['full_name'] ?? $data['nama'] ?? '');
-
-            if (!$nisn || !$fullName) {
-                $skipped++;
-                continue;
+            $msg = "Import selesai: {$importer->imported} siswa diimpor.";
+            if ($importer->errors) {
+                $msg .= " {$importer->errors} baris gagal.";
+                foreach ($importer->errorDetails as $err) {
+                    Log::warning("StudentImport: $err");
+                }
+                return redirect()->route('admin.students.import')
+                    ->with('warning', $msg)
+                    ->with('import_errors', $importer->errorDetails);
             }
 
-            Student::updateOrCreate(
-                ['nisn' => $nisn],
-                [
-                    'full_name' => $fullName,
-                    'birth_date' => !empty($data['birth_date']) ? $data['birth_date'] : null,
-                    'class_name' => trim($data['class_name'] ?? $data['kelas'] ?? ''),
-                    'program_name' => trim($data['program_name'] ?? $data['program'] ?? ''),
-                    'status' => 'active',
-                ]
-            );
-            $imported++;
+            return redirect()->route('admin.students.index')
+                ->with('success', $msg);
+        } catch (\Exception $e) {
+            Log::error('Student import error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->route('admin.students.import')
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-
-        return redirect()->route('admin.students.index')
-            ->with('success', "Import selesai: {$imported} siswa diimpor, {$skipped} dilewati.");
     }
 
     public function subjects(Request $request)

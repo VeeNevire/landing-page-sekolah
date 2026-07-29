@@ -434,7 +434,7 @@ function createModule() {
     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
     body: JSON.stringify({ teaching_assignment_id: taId, title })
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(d => {
     if (d.success) {
       input.value = '';
@@ -456,7 +456,7 @@ function editModule(id, currentTitle) {
     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
     body: JSON.stringify({ title: newTitle.trim() })
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(d => { if (d.success) location.reload(); else alert(d.message); })
   .catch(() => alert('Terjadi kesalahan.'));
 }
@@ -469,7 +469,7 @@ function deleteModule(id) {
     method: 'DELETE',
     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(d => { if (d.success) location.reload(); else alert(d.message); })
   .catch(() => alert('Terjadi kesalahan.'));
 }

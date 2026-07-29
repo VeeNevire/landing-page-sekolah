@@ -357,7 +357,7 @@ function confirmDelete(id, name) {
         method: 'DELETE',
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(d => {
         if (d.success) {
           document.getElementById('row-' + id)?.remove();

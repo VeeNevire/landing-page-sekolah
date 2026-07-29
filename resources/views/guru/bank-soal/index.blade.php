@@ -166,7 +166,7 @@ function toggleTopic(header) {
 
 function editSoal(id) {
   fetch('/guru/bank-soal/' + id)
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(q => {
       document.getElementById('editForm').action = '/guru/bank-soal/' + id;
       document.getElementById('edit-type').value = q.question_type;
@@ -190,7 +190,8 @@ function editSoal(id) {
 
       toggleEditOptions();
       document.getElementById('editModal').style.display = 'grid';
-    });
+    })
+    .catch(() => Swal.fire('Error', 'Gagal memuat data.', 'error'));
 }
 
 function toggleEditOptions() {

@@ -1,0 +1,6 @@
+nisn,full_name,student_email,birth_date,class_name,program_name,parent_name,parent_email,parent_relation
+0098765432,Alif Pratama,alif@mail.com,2009-05-15,XI RPL 1,Rekayasa Perangkat Lunak,Budi Pratama,budi@mail.com,Ayah
+0101234567,Alya Pratama,alya@mail.com,2009-08-20,X SMA 2,Sains & Teknologi,Siti Pratama,siti@mail.com,Ibu
+0101234568,Dimas Putra,dimas@mail.com,2010-01-10,X RPL 1,Rekayasa Perangkat Lunak,,,
+0101234569,Sari Indah,sari@mail.com,2009-11-03,XI AKL 1,Akuntansi,Rudi Indah,rudi@mail.com,Ayah
+0101234570,Rizky Aditya,rizky@mail.com,2010-03-22,X DKV 2,Desain Komunikasi Visual,Ani Aditya,ani@mail.com,Ibu

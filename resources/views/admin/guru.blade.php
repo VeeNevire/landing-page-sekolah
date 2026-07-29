@@ -269,14 +269,15 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
           'Accept': 'application/json'
         }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
         document.getElementById('modal_name').value = data.name;
         document.getElementById('modal_full_name').value = data.full_name || '';
         document.getElementById('modal_email').value = data.email;
         document.getElementById('modal_role').value = data.role;
         document.getElementById('userModal').classList.add('open');
-      });
+      })
+      .catch(() => { Swal.fire('Error', 'Tidak dapat memuat data guru.', 'error'); });
   }
 
   function closeModal() {
@@ -452,7 +453,7 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
           method: 'PATCH',
           headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(json => {
           if (json.success) {
             Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: json.message, showConfirmButton: false, timer: 3000, timerProgressBar: true })
@@ -482,7 +483,7 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
       })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(json => {
         if (json.success) {
           Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: json.message, showConfirmButton: false, timer: 3000 })
