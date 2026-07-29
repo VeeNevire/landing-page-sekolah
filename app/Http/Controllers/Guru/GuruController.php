@@ -159,11 +159,17 @@ class GuruController extends Controller
                 $subjectId = is_numeric($subject['id']) ? $subject['id'] : null;
                 $csId = !is_numeric($subject['id']) ? str_replace('cs_', '', $subject['id']) : null;
                 $taIds = $teachingAssignments->where('class_name', $class)
-                    ->when($subjectId, fn($q) => $q->where('subject_id', $subjectId))
-                    ->when($csId, fn($q) => $q->where('custom_subject_id', $csId))
-                    ->pluck('id');
+                    ->when($subjectId && is_numeric($subjectId), fn($q) => $q->where('subject_id', (int) $subjectId))
+                    ->when($csId && is_numeric($csId), fn($q) => $q->where('custom_subject_id', (int) $csId))
+                    ->pluck('id')
+                    ->toArray();
 
-                $assessmentIds = $assessmentsByTa->only($taIds)->flatten();
+                $assessmentIds = collect();
+                foreach ($taIds as $tid) {
+                    if ($assessmentsByTa->has($tid)) {
+                        $assessmentIds = $assessmentIds->merge($assessmentsByTa->get($tid));
+                    }
+                }
                 $scores = $assessmentIds->flatMap(fn($aid) => $allScoresByAssessment->get($aid, collect()))->toArray();
                 $subjectAverages[$subject['id']] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
             }
