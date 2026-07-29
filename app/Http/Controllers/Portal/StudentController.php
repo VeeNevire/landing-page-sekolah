@@ -101,7 +101,7 @@ class StudentController extends Controller
                     'day' => $dayMap[$jadwal->day] ?? ucfirst($jadwal->day),
                     'time' => $timeSlots[$jadwal->time_slot] ?? '-',
                     'subject' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
-                    'teacher' => $ta->teacher->full_name ?? '-',
+                    'teacher' => $ta->teacher?->full_name ?? '-',
                 ];
             }
         }

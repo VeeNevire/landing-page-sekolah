@@ -16,6 +16,7 @@ use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\Siswa\SiswaController;
 use App\Http\Controllers\Siswa\SiswaKuisController;
 use App\Http\Controllers\Siswa\SiswaTugasController;
+use App\Http\Controllers\Lms\DownloadController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 

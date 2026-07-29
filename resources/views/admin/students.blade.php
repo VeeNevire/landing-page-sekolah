@@ -230,6 +230,15 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
             <div class="field"><label for="m_birth_date">Tanggal Lahir</label><input id="m_birth_date" name="birth_date" type="date"></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+            <div class="field"><label for="m_student_password">Password Akun</label>
+              <input id="m_student_password" name="student_password" type="password" placeholder="Kosongkan untuk auto-generate">
+              <small class="field-error" style="color:#ef4444;display:none"></small>
+            </div>
+            <div class="field"><label for="m_student_password_confirmation">Konfirmasi Password</label>
+              <input id="m_student_password_confirmation" name="student_password_confirmation" type="password" placeholder="Ulangi password">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
             <div class="field"><label for="m_jurusan_id">Jurusan <span style="color:#ef4444">*</span></label>
               <select id="m_jurusan_id" name="jurusan_id" required onchange="loadKelasByJurusan(this.value)">
                 <option value="">Pilih Jurusan</option>
@@ -759,6 +768,8 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
         kelas_id: $('m_kelas_id')?.value || '',
         homeroom_teacher_id: $('m_homeroom_teacher_id')?.value || '',
         status: $('m_status')?.value || 'active',
+        student_password: $('m_student_password')?.value || '',
+        student_password_confirmation: $('m_student_password_confirmation')?.value || '',
         parent_action: parentAction,
         parent_id: $('m_parent_id')?.value || '',
         parent_name: $('m_parent_name')?.value || '',

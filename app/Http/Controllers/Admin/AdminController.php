@@ -433,6 +433,7 @@ $applicantStatusCounts = [
                 'homeroom_teacher_id' => 'nullable|exists:users,id',
                 'status' => 'required|in:active,graduated,inactive',
                 'student_email' => 'required|email|unique:users,email',
+                'student_password' => 'nullable|string|min:6|confirmed',
                 'parent_action' => 'required|in:existing,new,none',
                 'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
                 'parent_name' => 'nullable|string|max:255',
@@ -465,7 +466,10 @@ $applicantStatusCounts = [
             $nextNumber = $lastNis ? intval(substr($lastNis, -4)) + 1 : 1;
             $nis = $year . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
-            $password = (string) random_int(10000000, 99999999);
+            $password = !empty($validated['student_password'])
+                ? $validated['student_password']
+                : (string) random_int(10000000, 99999999);
+
             $user = User::create([
                 'name' => $validated['full_name'],
                 'full_name' => $validated['full_name'],
@@ -542,6 +546,7 @@ $applicantStatusCounts = [
                 'homeroom_teacher_id' => 'nullable|exists:users,id',
                 'status' => 'required|in:active,graduated,inactive',
                 'student_email' => 'nullable|email|unique:users,email,' . ($student->user_id ?? 'NULL'),
+                'student_password' => 'nullable|string|min:6|confirmed',
                 'parent_action' => 'nullable|in:existing,new,none,disconnect',
                 'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
                 'parent_name' => 'nullable|string|max:255',
@@ -573,6 +578,10 @@ $applicantStatusCounts = [
 
             if (!empty($validated['student_email']) && $student->user) {
                 $student->user->update(['email' => $validated['student_email']]);
+            }
+
+            if (!empty($validated['student_password']) && $student->user) {
+                $student->user->update(['password' => Hash::make($validated['student_password'])]);
             }
 
             if (!empty($validated['disconnect_parent_id'])) {

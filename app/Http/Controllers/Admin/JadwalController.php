@@ -58,7 +58,7 @@ class JadwalController extends Controller
                 $grid[$jadwal->day][$jadwal->time_slot] = [
                     'subject' => $subjectName,
                     'code' => $subjectCode,
-                    'teacher' => $ta->teacher->full_name ?? $ta->teacher->name,
+                    'teacher' => $ta->teacher?->full_name ?? $ta->teacher?->name ?? '-',
                     'jadwal_id' => $jadwal->id,
                     'time_slot' => $jadwal->time_slot,
                 ];
@@ -68,7 +68,7 @@ class JadwalController extends Controller
         $periods = AcademicPeriod::orderByDesc('academic_year')->get();
         $subjects = $assignments->map(fn($ta) => [
             'teaching_assignment_id' => $ta->id,
-            'label' => ($ta->subject?->code ?? $ta->customSubject?->kode ?? '-') . ' — ' . ($ta->subject?->name ?? $ta->customSubject?->nama ?? '-') . ' (' . ($ta->teacher->full_name ?? $ta->teacher->name) . ')',
+            'label' => ($ta->subject?->code ?? $ta->customSubject?->kode ?? '-') . ' — ' . ($ta->subject?->name ?? $ta->customSubject?->nama ?? '-') . ' (' . ($ta->teacher?->full_name ?? $ta->teacher?->name ?? '-') . ')',
         ])->values();
 
         $kelasList = Kelas::with(['jurusan', 'homeroomTeacher'])
@@ -134,7 +134,7 @@ class JadwalController extends Controller
         foreach ($allAssignments->groupBy('class_name') as $className => $assignments) {
             $kelasData[$className] = [
                 'guru' => $assignments->map(fn($ta) => [
-                    'nama' => $ta->teacher->full_name ?? $ta->teacher->name,
+                    'nama' => $ta->teacher?->full_name ?? $ta->teacher?->name ?? '-',
                     'mapel' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
                 ])->values(),
             ];

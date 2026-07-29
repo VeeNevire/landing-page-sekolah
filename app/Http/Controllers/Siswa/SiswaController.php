@@ -297,7 +297,7 @@ class SiswaController extends Controller
                 $grid[$jadwal->day][$jadwal->time_slot] = [
                     'subject' => $subjectName,
                     'code' => $subjectCode,
-                    'teacher' => $ta->teacher->full_name ?? $ta->teacher->name,
+                    'teacher' => $ta->teacher?->full_name ?? $ta->teacher?->name ?? '-',
                 ];
             }
         }

@@ -217,7 +217,7 @@ class ReportController extends Controller
                 'kkm' => $subjectKkm,
                 'code' => $ta->subject?->code ?? $ta->customSubject?->kode ?? '-',
                 'name' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
-                'teacher' => $ta->teacher->full_name ?? '-',
+                'teacher' => $ta->teacher?->full_name ?? '-',
                 'quiz' => $quizScores,
                 'homework' => $hwScores,
                 'project' => $projScores,
