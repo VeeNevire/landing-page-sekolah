@@ -361,13 +361,14 @@ class GuruController extends Controller
             'title' => 'required|string|max:160',
             'component' => 'required|in:quiz,homework,project,uts,uas',
             'scores' => 'required|array',
+            'assessment_date' => 'nullable|date',
         ]);
 
         $assessment = Assessment::create([
             'teaching_assignment_id' => $assignment->id,
             'title' => $validated['title'],
             'component' => $validated['component'],
-            'assessment_date' => now()->toDateString(),
+            'assessment_date' => $validated['assessment_date'] ?? now()->toDateString(),
             'max_score' => 100,
         ]);
 
@@ -395,11 +396,13 @@ class GuruController extends Controller
             'title' => 'required|string|max:160',
             'component' => 'required|in:quiz,homework,project,uts,uas',
             'scores' => 'required|array',
+            'assessment_date' => 'nullable|date',
         ]);
 
         $assessment->update([
             'title' => $validated['title'],
             'component' => $validated['component'],
+            'assessment_date' => $validated['assessment_date'] ?? $assessment->assessment_date,
         ]);
 
         foreach ($validated['scores'] as $studentId => $score) {
@@ -559,7 +562,7 @@ class GuruController extends Controller
             $students = Student::where('class_name', $class)->where('status', 'active')->get();
             $subjectNames = $teachingAssignments->where('class_name', $class)
                 ->map(fn($a) => $this->subjectName($a))
-                ->filter()->unique()->implode(', ');
+                ->filter()->unique()->values()->implode(', ');
             $totalAssessments = Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))->count();
             $publishedCount = Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))
                 ->whereNotNull('published_at')->count();

@@ -26,7 +26,7 @@
         <span style="width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-2) 12%,var(--card));color:var(--primary-2);font-weight:900;font-size:.9rem;flex-shrink:0">{{ $tingkat }}</span>
         <div style="flex:1">
           <strong style="display:block">{{ $class['name'] }}</strong>
-          <span style="color:var(--muted);font-size:.85rem">{{ $class['student_count'] }} siswa &bull; {{ $class['subjects'] }}</span>
+          <span style="color:var(--muted);font-size:.85rem">{{ $class['student_count'] }} siswa &bull; {{ is_array($class['subjects']) ? implode(', ', $class['subjects']) : $class['subjects'] }}</span>
         </div>
         <div style="text-align:right">
           <span style="display:block;font-weight:700;font-size:.85rem;margin-bottom:4px">
