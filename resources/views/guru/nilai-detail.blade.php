@@ -188,7 +188,6 @@ function openNilaiDetail(assessmentId) {
   Swal.fire({
     title: '<div style="display:flex;align-items:center;justify-content:space-between;width:100%">' +
       '<span style="display:inline-flex;align-items:center;gap:8px">' + ICON_CLIPBOARD + ' ' + ass.title + '</span>' +
-      '<span style="font-size:.78rem;font-weight:700;padding:4px 10px;border-radius:8px;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2);white-space:nowrap">' + ICON_CALENDAR + ' ' + ass.date + '</span>' +
       '</div>',
     html: `<div>
       <div class="nilai-summary">
