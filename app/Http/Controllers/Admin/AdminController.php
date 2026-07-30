@@ -1135,6 +1135,7 @@ $applicantStatusCounts = [
         $customSubjectTeachers = $request->input('custom_subject_teachers', []);
 
         $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $removedIds = [];
 
         foreach ($jurusan->kelas as $kelas) {
             $kId = (string) $kelas->id;
@@ -1147,7 +1148,21 @@ $applicantStatusCounts = [
                 $kelas->customSubjects()->sync($kelasCustomSubjects[$kId] ?? []);
             }
             if (array_key_exists($kId, $homeroomTeachers)) {
-                $kelas->update(['homeroom_teacher_id' => $homeroomTeachers[$kId] ?: null]);
+                $oldTeacherId = $kelas->getOriginal('homeroom_teacher_id');
+                $newTeacherId = $homeroomTeachers[$kId] ?: null;
+
+                $kelas->update(['homeroom_teacher_id' => $newTeacherId]);
+
+                if ($newTeacherId) {
+                    $teacher = User::find($newTeacherId);
+                    if ($teacher && $teacher->role === 'teacher') {
+                        $teacher->update(['role' => 'homeroom']);
+                    }
+                }
+
+                if ($oldTeacherId && !$newTeacherId) {
+                    $removedIds[] = $oldTeacherId;
+                }
             }
 
             // Simpan teacher assignment per mapel umum
@@ -1180,6 +1195,13 @@ $applicantStatusCounts = [
                         );
                     }
                 }
+            }
+        }
+
+        foreach (array_unique($removedIds) as $teacherId) {
+            $stillHomeroom = Kelas::where('homeroom_teacher_id', $teacherId)->exists();
+            if (!$stillHomeroom) {
+                User::where('id', $teacherId)->where('role', 'homeroom')->update(['role' => 'teacher']);
             }
         }
 

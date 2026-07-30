@@ -22,7 +22,7 @@
 .guru-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
 .guru-body .portal-menu-group{color:rgba(0,0,0,.2);padding:14px 10px 4px;font-size:.66rem}
 .guru-body .portal-menu-divider{height:1.5px;margin:5px 10px;border-radius:2px;background:rgba(95,111,130,.5)}
-.guru-body .portal-menu{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(95,111,130,.2) transparent;margin:0 -12px;padding:0 12px 4px}
+.guru-body .portal-menu{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(95,111,130,.2) transparent;margin:0 -12px;padding:0 12px 4px}
 .guru-body .portal-menu::-webkit-scrollbar{width:5px}
 .guru-body .portal-menu::-webkit-scrollbar-track{background:transparent}
 .guru-body .portal-menu::-webkit-scrollbar-thumb{background:rgba(95,111,130,.2);border-radius:3px}
@@ -99,3 +99,67 @@ body.dark.guru-body .portal-sidebar-footer .logout-btn:hover{background:rgba(255
 .absensi-label.excused.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
 .absensi-label.late.active { background: #f97316; border-color: #f97316; color: #fff; }
 .absensi-label.unexcused.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+/* ── Nav Toggle (Wali Kelas) ── */
+.nav-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #5f6f82;
+  font-size: .88rem;
+  cursor: pointer;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+  text-align: left;
+  font-family: inherit;
+}
+.nav-toggle:hover {
+  background: color-mix(in srgb, var(--primary-4) 18%, transparent);
+  color: var(--primary);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.06);
+}
+.nav-toggle svg:not(.nav-chevron) {
+  width: 20px; height: 20px;
+  color: rgba(0,0,0,.2);
+  flex-shrink: 0;
+}
+.nav-toggle:hover svg:not(.nav-chevron) {
+  color: var(--primary-3);
+}
+.nav-chevron {
+  transition: transform .2s ease;
+  flex-shrink: 0;
+}
+.nav-toggle.open .nav-chevron {
+  transform: rotate(90deg);
+}
+.guru-body .portal-menu .nav-sub {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 10px 16px 40px !important;
+  border-radius: 8px !important;
+  font-size: .9rem !important;
+  overflow: hidden;
+  max-height: 56px;
+  opacity: 1;
+  transition: max-height .3s ease, opacity .25s ease, padding .25s ease;
+}
+.guru-body .portal-menu .nav-sub::before {
+  display: none !important;
+}
+.guru-body .portal-menu .nav-sub.hidden {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.guru-body .portal-menu .nav-sub svg {
+  width: 20px; height: 20px;
+  flex-shrink: 0;
+}

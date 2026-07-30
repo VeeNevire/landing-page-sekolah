@@ -33,6 +33,22 @@
           </span>
           <span class="portal-menu-label">Dashboard</span>
         </a>
+        @if (auth()->user()->role === 'homeroom')
+        @php $waliActive = request()->routeIs('guru.wali.*'); @endphp
+        <button class="nav-toggle {{ $waliActive ? 'open' : '' }}" onclick="toggleSubmenu(this)">
+          <svg class="nav-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Wali Kelas</span>
+        </button>
+        <a href="{{ route('guru.wali.jadwal') }}" @class(['nav-sub', 'active' => request()->routeIs('guru.wali.jadwal'), 'hidden' => !$waliActive])>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Jadwal</span>
+        </a>
+        <a href="{{ route('guru.wali.nilai') }}" @class(['nav-sub', 'active' => request()->routeIs('guru.wali.nilai'), 'hidden' => !$waliActive])>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 20 4-4-4-4"/><path d="M20 16H9a4 4 0 0 1-4-4V4"/></svg>
+          <span>Nilai</span>
+        </a>
+        @endif
         <a href="{{ route('guru.kelas') }}"
           @class(['active'=> request()->routeIs('guru.kelas')])>
           <span class="portal-menu-icon">
@@ -236,6 +252,14 @@
   }
   function confirmLogout() {
     Swal.fire({ title:'Keluar dari portal?', text:'Anda akan keluar dari sistem dan perlu login kembali.', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, keluar', cancelButtonText:'Batal', confirmButtonColor:'#ef4444', width:420 }).then(r => { if (r.isConfirmed) document.getElementById('logoutForm').submit(); });
+  }
+  function toggleSubmenu(btn) {
+    btn.classList.toggle('open');
+    let el = btn.nextElementSibling;
+    while (el && el.classList.contains('nav-sub')) {
+      el.classList.toggle('hidden');
+      el = el.nextElementSibling;
+    }
   }
   </script>
   @stack('scripts')

@@ -7,7 +7,7 @@
   <div>
     <span class="kicker">Absensi siswa</span>
     <h1>Absensi</h1>
-    <p>Catat kehadiran siswa untuk kelas yang Anda ajar.</p>
+    <p>Catat kehadiran siswa per mata pelajaran untuk kelas yang Anda ajar.</p>
   </div>
 </div>
 
@@ -17,7 +17,7 @@
 
 <section class="portal-panel">
   <div class="portal-panel-header">
-    <div><h2>Catat Kehadiran</h2><p>Pilih kelas dan tanggal untuk mulai mengisi absensi.</p></div>
+    <div><h2>Catat Kehadiran</h2><p>Pilih kelas, mapel, dan tanggal untuk mulai mengisi absensi.</p></div>
   </div>
 
   <form method="GET" action="{{ route('guru.absensi') }}" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-bottom:20px">
@@ -29,6 +29,14 @@
         @endforeach
       </select>
     </div>
+<div class="field" style="margin:0">
+      <label>Mapel</label>
+      <select name="subject" onchange="this.form.submit()">
+        @foreach ($subjectList as $subj)
+          <option value="{{ $subj['id'] }}" @selected($selectedSubjectId === $subj['id'])>{{ $subj['name'] }}</option>
+        @endforeach
+      </select>
+    </div>
     <div class="field" style="margin:0">
       <label>Tanggal</label>
       <input type="date" name="date" value="{{ $date }}" onchange="this.form.submit()">
@@ -37,8 +45,16 @@
 
   <form method="POST" action="{{ route('guru.absensi.store') }}">
     @csrf
-    <input type="hidden" name="class_name" value="{{ $selectedClass }}">
+<input type="hidden" name="class_name" value="{{ $selectedClass }}">
     <input type="hidden" name="date" value="{{ $date }}">
+    <input type="hidden" name="subject" value="{{ $selectedSubjectId }}">
+
+    @if ($selectedSubjectName)
+    <div style="margin-bottom:16px;padding:12px 16px;background:var(--accent-bg, #eef2ff);border-radius:12px;font-weight:700;display:flex;align-items:center;gap:8px">
+      <span style="font-size:1.1rem">Mata Pelajaran:</span>
+      <span style="font-size:1.3rem;color:var(--primary)">{{ $selectedSubjectName }}</span>
+    </div>
+    @endif
 
     <div class="table-wrap">
       <table class="grade-table">

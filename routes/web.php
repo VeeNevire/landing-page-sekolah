@@ -90,6 +90,8 @@ Route::middleware(['auth', 'role:teacher,homeroom,admin'])->prefix('guru')->name
     Route::get('/absensi', [GuruController::class, 'absensi'])->name('absensi');
     Route::post('/absensi', [GuruController::class, 'absensiStore'])->name('absensi.store');
     Route::get('/jadwal', [GuruController::class, 'jadwal'])->name('jadwal');
+    Route::get('/wali/jadwal', [GuruController::class, 'waliJadwal'])->name('wali.jadwal');
+    Route::get('/wali/nilai', [GuruController::class, 'waliNilai'])->name('wali.nilai');
     Route::get('/catatan', [GuruController::class, 'catatan'])->name('catatan');
     Route::post('/catatan', [GuruController::class, 'catatanStore'])->name('catatan.store');
     Route::get('/publikasi', [GuruController::class, 'publikasi'])->name('publikasi');

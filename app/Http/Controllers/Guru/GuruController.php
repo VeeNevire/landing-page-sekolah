@@ -452,6 +452,25 @@ class GuruController extends Controller
         $selectedClass = $request->query('class', $classNames->first());
         $date = $request->query('date', now()->format('Y-m-d'));
 
+        $classAssignments = $teachingAssignments->where('class_name', $selectedClass)->values();
+
+        $subjectList = [];
+        foreach ($classAssignments as $ta) {
+            $subjectList[] = [
+                'id' => $this->subjectRouteId($ta),
+                'name' => $this->subjectName($ta),
+            ];
+        }
+
+        $selectedSubjectId = $request->query('subject', $subjectList[0]['id'] ?? '');
+        $selectedSubjectName = '';
+        foreach ($subjectList as $s) {
+            if ($s['id'] === $selectedSubjectId) {
+                $selectedSubjectName = $s['name'];
+                break;
+            }
+        }
+
         $students = Student::where('class_name', $selectedClass)
             ->where('status', 'active')->get();
 
@@ -464,6 +483,9 @@ class GuruController extends Controller
             'classNames' => $classNames,
             'selectedClass' => $selectedClass,
             'date' => $date,
+            'subjectList' => $subjectList,
+            'selectedSubjectId' => $selectedSubjectId,
+            'selectedSubjectName' => $selectedSubjectName,
             'students' => $students,
             'existing' => $existing,
         ]);
@@ -728,5 +750,210 @@ class GuruController extends Controller
         });
 
         return $schedule;
+    }
+
+    public function waliJadwal(Request $request)
+    {
+        $user = $request->user();
+        $kelas = Kelas::where('homeroom_teacher_id', $user->id)->first();
+
+        $date = $request->query('bulan');
+        $tgl = $date ? \Carbon\Carbon::parse($date) : now();
+
+        $timeSlots = self::TIME_SLOTS;
+        $days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
+        $dayLabels = self::DAY_MAP;
+
+        $grid = [];
+        $jadwalBulan = collect();
+
+        if ($kelas) {
+            $activePeriod = AcademicPeriod::where('is_active', true)->first();
+
+            $assignments = TeachingAssignment::where('class_name', $kelas->nama_lengkap)
+                ->where('period_id', $activePeriod?->id)
+                ->with(['subject', 'customSubject', 'teacher', 'jadwals'])
+                ->get();
+
+            foreach ($days as $day) {
+                $grid[$day] = [];
+                foreach ($timeSlots as $slot => $time) {
+                    $grid[$day][$slot] = null;
+                }
+            }
+            foreach ($assignments as $ta) {
+                $subjectName = $ta->subject?->name ?? $ta->customSubject?->nama ?? '-';
+                $subjectCode = $ta->subject?->code ?? $ta->customSubject?->kode ?? '-';
+                foreach ($ta->jadwals as $jadwal) {
+                    $grid[$jadwal->day][$jadwal->time_slot] = [
+                        'subject' => $subjectName,
+                        'code' => $subjectCode,
+                        'teacher' => $ta->teacher?->full_name ?? $ta->teacher?->name ?? '-',
+                    ];
+                }
+            }
+
+            $jadwalBulan = Assessment::whereHas('teachingAssignment', fn($q) =>
+                $q->where('class_name', $kelas->nama_lengkap)
+            )
+            ->whereMonth('assessment_date', $tgl->month)
+            ->whereYear('assessment_date', $tgl->year)
+            ->with('teachingAssignment.subject', 'teachingAssignment.customSubject', 'teachingAssignment.teacher')
+            ->orderBy('assessment_date')
+            ->get()
+            ->groupBy(fn($a) => $a->assessment_date->format('Y-m-d'));
+        }
+
+        return view('guru.wali.jadwal', [
+            'kelas' => $kelas,
+            'days' => $days,
+            'dayLabels' => $dayLabels,
+            'timeSlots' => $timeSlots,
+            'grid' => $grid,
+            'jadwalBulan' => $jadwalBulan,
+            'calendarMonth' => $tgl,
+            'prevBulan' => $tgl->copy()->subMonth()->format('Y-m'),
+            'nextBulan' => $tgl->copy()->addMonth()->format('Y-m'),
+        ]);
+    }
+
+    public function waliNilai(Request $request)
+    {
+        $user = $request->user();
+        $kelas = Kelas::where('homeroom_teacher_id', $user->id)->first();
+
+        $students = collect();
+        $selectedStudent = null;
+        $grades = [];
+
+        if ($kelas) {
+            $students = Student::where('class_name', $kelas->nama_lengkap)
+                ->where('status', 'active')
+                ->orderBy('full_name')
+                ->get();
+
+            $studentId = $request->query('student_id');
+            if ($studentId) {
+                $selectedStudent = $students->firstWhere('id', $studentId);
+                if ($selectedStudent) {
+                    $grades = $this->computeStudentGrades($selectedStudent);
+                }
+            }
+        }
+
+        $avgScore = $grades ? \App\Helpers\PortalHelper::average(array_column($grades, 'final_score')) : 0;
+        $classMaxScore = $grades ? round(max(array_column($grades, 'class_max')), 1) : 0;
+
+        return view('guru.wali.nilai', [
+            'kelas' => $kelas,
+            'students' => $students,
+            'selectedStudent' => $selectedStudent,
+            'grades' => $grades,
+            'avgScore' => round($avgScore, 1),
+            'avgLetter' => \App\Helpers\PortalHelper::gradeLetter($avgScore),
+            'classMaxScore' => $classMaxScore,
+        ]);
+    }
+
+    private function computeStudentGrades($student): array
+    {
+        $period = AcademicPeriod::where('is_active', true)->first();
+        if (!$period) return [];
+
+        $assignments = TeachingAssignment::where('period_id', $period->id)
+            ->where('class_name', $student->class_name)
+            ->with(['subject', 'customSubject', 'assessments' => fn($q) => $q->whereNotNull('published_at')->orderBy('assessment_date')])
+            ->get();
+
+        $allAssessmentIds = $assignments->flatMap->assessments->pluck('id');
+
+        $allMyScores = $allAssessmentIds->isNotEmpty()
+            ? AssessmentScore::whereIn('assessment_id', $allAssessmentIds)
+                ->where('student_id', $student->id)
+                ->get()
+                ->keyBy('assessment_id')
+            : collect();
+
+        $classStudentIds = Student::where('class_name', $student->class_name)
+            ->where('status', 'active')
+            ->pluck('id');
+
+        $allClassScores = $allAssessmentIds->isNotEmpty()
+            ? AssessmentScore::whereIn('assessment_id', $allAssessmentIds)
+                ->whereIn('student_id', $classStudentIds)
+                ->get()
+                ->groupBy('student_id')
+            : collect();
+
+        $grades = [];
+
+        foreach ($assignments as $assignment) {
+            $assessments = $assignment->assessments;
+
+            $raw = ['quiz' => [], 'homework' => [], 'project' => [], 'assignment' => [], 'uts' => 0, 'uas' => 0];
+
+            foreach ($assessments as $assessment) {
+                $score = $allMyScores->get($assessment->id)?->score;
+                if ($score === null) continue;
+
+                $comp = $assessment->component;
+                if ($comp === 'uts' || $comp === 'uas') {
+                    $raw[$comp] = max($raw[$comp], (float) $score);
+                } else {
+                    $raw[$comp][] = (float) $score;
+                }
+            }
+
+            $componentScores = \App\Helpers\PortalHelper::componentScores($raw);
+            $finalScore = \App\Helpers\PortalHelper::finalScore($raw);
+
+            $subjectName = $assignment->subject?->name ?? $assignment->customSubject?->nama ?? '-';
+            $subjectCode = $assignment->subject?->code ?? $assignment->customSubject?->kode ?? '-';
+            $kkm = (float) ($assignment->subject?->kkm ?? $assignment->customSubject?->kkm ?? 0);
+
+            $classAvg = 0;
+            $classMax = 0;
+
+            if ($classStudentIds->isNotEmpty()) {
+                $studentFinals = [];
+                foreach ($classStudentIds as $sid) {
+                    $r = ['quiz' => [], 'homework' => [], 'project' => [], 'assignment' => [], 'uts' => 0, 'uas' => 0];
+                    $studentScores = $allClassScores->get($sid, collect());
+
+                    foreach ($assessments as $a) {
+                        $sc = $studentScores->firstWhere('assessment_id', $a->id)?->score;
+                        if ($sc === null) continue;
+                        $comp = $a->component;
+                        if ($comp === 'uts' || $comp === 'uas') {
+                            $r[$comp] = max($r[$comp], (float) $sc);
+                        } else {
+                            $r[$comp][] = (float) $sc;
+                        }
+                    }
+
+                    $f = \App\Helpers\PortalHelper::finalScore($r);
+                    if ($f > 0) $studentFinals[] = $f;
+                }
+
+                if ($studentFinals) {
+                    $classAvg = round(array_sum($studentFinals) / count($studentFinals), 1);
+                    $classMax = round(max($studentFinals), 1);
+                }
+            }
+
+            $grades[] = [
+                'subject' => $subjectName,
+                'subject_code' => $subjectCode,
+                'kkm' => $kkm,
+                'components' => $componentScores,
+                'final_score' => $finalScore,
+                'letter' => \App\Helpers\PortalHelper::gradeLetter($finalScore),
+                'passed' => $finalScore >= $kkm,
+                'class_avg' => $classAvg,
+                'class_max' => $classMax,
+            ];
+        }
+
+        return $grades;
     }
 }
