@@ -7,6 +7,7 @@ use App\Models\AcademicPeriod;
 use App\Models\Assessment;
 use App\Models\AssessmentScore;
 use App\Models\Attendance;
+use Illuminate\Support\Facades\DB;
 use App\Models\JurusanCustomSubject;
 use App\Models\Kelas;
 use App\Models\Material;
@@ -395,38 +396,40 @@ class GuruController extends Controller
     }
 
     public function nilaiUpdate(Request $request, $class, $subject, $assessmentId)
-    {
-        $assessment = Assessment::findOrFail($assessmentId);
+{
+    $assessment = Assessment::findOrFail($assessmentId);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:160',
-            'component' => 'required|in:quiz,homework,project,uts,uas',
-            'scores' => 'required|array',
-            'assessment_date' => 'nullable|date',
-        ]);
+    $validated = $request->validate([
+        'title' => 'required|string|max:160',
+        'component' => 'required|in:quiz,homework,project,uts,uas',
+        'scores' => 'nullable|array',
+        'assessment_date' => 'nullable|date',
+    ]);
 
-        $assessment->update([
-            'title' => $validated['title'],
-            'component' => $validated['component'],
-            'assessment_date' => $validated['assessment_date'] ?? $assessment->assessment_date,
-        ]);
+    $assessment->update([
+        'title' => $validated['title'],
+        'component' => $validated['component'],
+        'assessment_date' => $validated['assessment_date'] ?? $assessment->assessment_date,
+    ]);
 
-        foreach ($validated['scores'] as $studentId => $score) {
-            if ($score !== null && $score !== '') {
-                AssessmentScore::updateOrCreate(
-                    ['assessment_id' => $assessment->id, 'student_id' => $studentId],
-                    ['score' => $score, 'graded_at' => now()]
-                );
-            } else {
-                AssessmentScore::where('assessment_id', $assessment->id)
-                    ->where('student_id', $studentId)->delete();
-            }
+    foreach ($validated['scores'] ?? [] as $studentId => $score) {
+        if ($score !== null && $score !== '') {
+            DB::table('assessment_scores')->updateOrInsert(
+                ['assessment_id' => $assessment->id, 'student_id' => $studentId],
+                ['score' => $score, 'graded_at' => now()]
+            );
+        } else {
+            DB::table('assessment_scores')->updateOrInsert(
+                ['assessment_id' => $assessment->id, 'student_id' => $studentId],
+                ['score' => null, 'graded_at' => now()]
+            );
         }
-
-        AuditService::log('assessment.update', 'Assessment', $assessment->id, $assessment->title);
-
-        return response()->json(['success' => true, 'message' => 'Nilai berhasil diperbarui.']);
     }
+
+    AuditService::log('assessment.update', 'Assessment', $assessment->id, $assessment->title);
+
+    return response()->json(['success' => true, 'message' => 'Nilai berhasil diperbarui.']);
+}
 
     public function nilaiDestroy(Request $request, $class, $subject, $assessmentId)
     {

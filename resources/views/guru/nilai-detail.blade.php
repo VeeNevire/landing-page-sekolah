@@ -23,11 +23,11 @@
     <div><h2>Tambah Penilaian Baru</h2><p>Isi data penilaian, lalu input nilai per siswa di bawah.</p></div>
     <label style="font-size:.78rem;font-weight:700;padding:5px 12px;border-radius:8px;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2);white-space:nowrap;display:inline-flex;align-items:center;gap:6px;cursor:pointer">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <input type="date" name="assessment_date" value="{{ old('assessment_date', now()->format('Y-m-d')) }}"
+      <input type="date" name="assessment_date" form="assessmentForm" value="{{ old('assessment_date', now()->format('Y-m-d')) }}"
         style="background:transparent;border:none;outline:none;font:inherit;color:inherit;width:110px;cursor:pointer;padding:0;margin:0">
     </label>
   </div>
-  <form method="POST" action="{{ route('guru.nilai.store', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id]) }}">
+  <form id="assessmentForm" method="POST" action="{{ route('guru.nilai.store', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id]) }}">
     @csrf
     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end">
       <div class="field">
@@ -133,7 +133,7 @@
 
 @php
   $assessmentsData = $assessments->map(function($a) {
-    return ['id' => $a->id, 'title' => $a->title, 'component' => $a->component, 'date' => $a->assessment_date->format('d M Y'), 'published' => $a->published_at ? true : false];
+    return ['id' => $a->id, 'title' => $a->title, 'component' => $a->component, 'date' => $a->assessment_date->format('d M Y'),  'date_input' => $a->assessment_date->format('Y-m-d'),'published' => $a->published_at ? true : false];
   })->values();
   $studentsData = $students->map(function($s) {
     return ['id' => $s->id, 'name' => $s->full_name];
@@ -264,6 +264,11 @@ function openEditModal(assessmentId) {
           <label style="display:block;font-size:.82rem;font-weight:700;margin-bottom:4px;color:var(--ink)">Komponen</label>
           <select id="edit-component" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:.9rem;outline:none;background:var(--bg)">${compOpts}</select>
         </div>
+         <div>
+          <label style="display:block;font-size:.82rem;font-weight:700;margin-bottom:4px;color:var(--ink)">Tanggal</label>
+          <input id="edit-date" type="date" value="${ass.date_input}" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:.9rem;outline:none;background:var(--bg)">
+        </div>
+    
       </div>
       <label style="display:block;font-size:.82rem;font-weight:700;margin-bottom:8px;color:var(--ink)">Nilai Siswa</label>
       <div style="max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:0 12px">
@@ -280,13 +285,14 @@ function openEditModal(assessmentId) {
     preConfirm: () => {
       const title = document.getElementById('edit-title').value.trim();
       const component = document.getElementById('edit-component').value;
+      const assessment_date = document.getElementById('edit-date').value;
       if (!title) { Swal.showValidationMessage('Judul harus diisi'); return false; }
       const scores = {};
       STUDENTS.forEach(s => {
         const input = document.getElementById('edit-score-' + s.id);
-        if (input && input.value !== '') scores[s.id] = input.value;
+        scores[s.id] = (input && input.value !== '') ? input.value : '';
       });
-      return { title, component, scores };
+      return { title, component, scores, assessment_date};
     }
   }).then((result) => {
     if (!result.isConfirmed) return;
