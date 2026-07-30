@@ -2,6 +2,28 @@
 
 @section('title', 'Absensi')
 
+@push('styles')
+<style>
+.tab-bar { display:flex; gap:0; background:var(--bg); border-radius:20px 20px 0 0; padding:12px 20px 0; margin:-23px -23px 20px -23px; border-bottom:none }
+.tab-btn { padding:10px 20px; font-size:.82rem; font-weight:700; color:var(--muted); font-family:inherit; text-decoration:none; transition:all .12s ease; cursor:pointer; border:none; background:transparent; border-radius:10px 10px 0 0 }
+.tab-btn:hover { color:var(--ink); background:color-mix(in srgb,var(--card) 60%,transparent) }
+.tab-btn.active { color:var(--primary-2); background:var(--card) }
+
+.rekap-hadir { color:#34C759; font-weight:700 }
+.rekap-sakit { color:#FF9F0A; font-weight:700 }
+.rekap-izin { color:#007AFF; font-weight:700 }
+.rekap-alpha { color:#FF3B30; font-weight:700 }
+.rekap-terlambat { color:#BF5AF2; font-weight:700 }
+
+.rekap-rate { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:6px; font-size:.78rem; font-weight:700 }
+.rekap-rate.good { background:color-mix(in srgb,#34C759 12%,var(--card)); color:#34C759 }
+.rekap-rate.ok { background:color-mix(in srgb,#FF9F0A 12%,var(--card)); color:#FF9F0A }
+.rekap-rate.bad { background:color-mix(in srgb,#FF3B30 12%,var(--card)); color:#FF3B30 }
+.detail-btn { padding:5px 12px; border-radius:7px; border:1.5px solid var(--line); background:var(--card); font-size:.73rem; font-weight:600; color:var(--primary-2); cursor:pointer; font-family:inherit; text-decoration:none; transition:all .12s ease; display:inline-flex; align-items:center; gap:4px }
+.detail-btn:hover { border-color:var(--primary-2); background:color-mix(in srgb,var(--primary-4) 8%,var(--card)) }
+</style>
+@endpush
+
 @section('content')
 <div class="portal-heading">
   <div>
@@ -16,11 +38,15 @@
 @endif
 
 <section class="portal-panel">
-  <div class="portal-panel-header">
-    <div><h2>Catat Kehadiran</h2><p>Pilih kelas, mapel, dan tanggal untuk mulai mengisi absensi.</p></div>
+  <div class="tab-bar">
+    <a href="{{ route('guru.absensi', ['tab' => 'catat', 'class' => $selectedClass, 'subject' => $selectedSubjectId, 'date' => $date]) }}" class="tab-btn {{ $tab === 'catat' ? 'active' : '' }}">Catat Kehadiran</a>
+    <a href="{{ route('guru.absensi', ['tab' => 'rekap', 'class' => $selectedClass]) }}" class="tab-btn {{ $tab === 'rekap' ? 'active' : '' }}">Rekap Kehadiran</a>
   </div>
 
+@if ($tab === 'catat')
+
   <form method="GET" action="{{ route('guru.absensi') }}" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-bottom:20px">
+    <input type="hidden" name="tab" value="catat">
     <div class="field" style="margin:0">
       <label>Kelas</label>
       <select name="class" onchange="this.form.submit()">
@@ -98,7 +124,83 @@
       </div>
     @endif
   </form>
+
+@else
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div>
+      <h2 style="font-size:1rem;font-weight:700;margin:0;color:var(--ink)">Rekap Kehadiran</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin:2px 0 0">Rekapitulasi kehadiran siswa kelas {{ $selectedClass }}.</p>
+    </div>
+    <div class="field" style="margin:0;width:auto">
+      <select name="class" onchange="window.location='?tab=rekap&class='+this.value" style="min-width:160px">
+        @foreach ($classNames as $class)
+          <option value="{{ $class }}" @selected($selectedClass === $class)>{{ $class }}</option>
+        @endforeach
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="grade-table">
+      <thead>
+        <tr>
+          <th style="width:40px">No</th>
+          <th>Nama Siswa</th>
+          <th style="text-align:center;width:64px"><span class="rekap-hadir">H</span></th>
+          <th style="text-align:center;width:64px"><span class="rekap-sakit">S</span></th>
+          <th style="text-align:center;width:64px"><span class="rekap-izin">I</span></th>
+          <th style="text-align:center;width:64px"><span class="rekap-alpha">A</span></th>
+          <th style="text-align:center;width:72px"><span class="rekap-terlambat">T</span></th>
+          <th style="text-align:center;width:64px">Total</th>
+          <th style="text-align:center;width:100px">Kehadiran</th>
+          <th style="text-align:center;width:60px">Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        @forelse ($students as $i => $s)
+          @php $r = $attendanceRecap[$s->id] ?? null @endphp
+          <tr>
+            <td>{{ $i + 1 }}</td>
+            <td>
+              <strong>{{ $s->full_name }}</strong><br>
+              <span style="color:var(--muted);font-size:.8rem">NISN {{ $s->nisn }}</span>
+            </td>
+            <td style="text-align:center;font-weight:700">{{ $r ? $r['present'] : 0 }}</td>
+            <td style="text-align:center;font-weight:700;color:#FF9F0A">{{ $r ? $r['sick'] : 0 }}</td>
+            <td style="text-align:center;font-weight:700;color:#007AFF">{{ $r ? $r['excused'] : 0 }}</td>
+            <td style="text-align:center;font-weight:700;color:#FF3B30">{{ $r ? $r['unexcused'] : 0 }}</td>
+            <td style="text-align:center;font-weight:700;color:#BF5AF2">{{ $r ? $r['late'] : 0 }}</td>
+            <td style="text-align:center;font-weight:700">{{ $r ? $r['total'] : 0 }}</td>
+            <td style="text-align:center">
+              @if ($r && $r['total'] > 0)
+                @php
+                  $rate = $r['present_rate'];
+                  $rateClass = $rate >= 90 ? 'good' : ($rate >= 75 ? 'ok' : 'bad');
+                @endphp
+                <span class="rekap-rate {{ $rateClass }}">{{ $rate }}%</span>
+              @else
+                <span style="color:var(--line);font-size:.82rem">—</span>
+              @endif
+            </td>
+            <td style="text-align:center">
+              <a href="{{ route('guru.absensi.detail', $s->id) }}" class="detail-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Detail
+              </a>
+            </td>
+          </tr>
+        @empty
+          <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:30px">Tidak ada data siswa.</td></tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+
+@endif
+
 </section>
+
 @push('scripts')
 <script>
 function selectAbsensi(label, studentId, value) {

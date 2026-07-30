@@ -43,6 +43,14 @@
 .student-name { font-weight:700; font-size:.85rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .student-nisn { font-size:.72rem; color:var(--muted) }
 .student-check { color:var(--primary); flex-shrink:0 }
+.student-avg-score { text-align:center; flex-shrink:0; margin-left:auto; padding-left:12px; min-width:60px }
+.student-avg-value { font-size:1.15rem; font-weight:800; line-height:1 }
+.student-avg-label { font-size:.6rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:2px }
+
+.sort-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap }
+.sort-btn { padding:6px 14px; border-radius:8px; border:1.5px solid var(--line); background:var(--card); font-size:.78rem; font-weight:600; color:var(--muted); cursor:pointer; transition:all .12s ease; font-family:inherit }
+.sort-btn:hover { border-color:var(--primary-3); color:var(--ink) }
+.sort-btn.active { border-color:var(--primary); background:color-mix(in srgb,var(--primary-4) 10%,var(--card)); color:var(--primary-2) }
 
 @media (max-width:768px) {
   .bento-4 { grid-template-columns:repeat(2,1fr) }
@@ -194,17 +202,57 @@
     </div>
   </div>
 
-  <div class="student-grid">
+  <div class="sort-bar">
+    <button class="sort-btn active" data-sort="name" onclick="sortStudents('name',this)">Urutkan Alfabet</button>
+    <button class="sort-btn" data-sort="score" onclick="sortStudents('score',this)">Urutkan Nilai</button>
+  </div>
+
+  <div class="student-grid" id="studentGrid">
     @foreach ($students as $s)
-    <a href="{{ route('guru.wali.nilai', ['student_id' => $s->id]) }}" class="student-card">
+    <a href="{{ route('guru.wali.nilai', ['student_id' => $s->id]) }}" class="student-card" data-name="{{ $s->full_name }}" data-score="{{ $studentAverages[$s->id] ?? '' }}">
       <div class="student-avatar">{{ strtoupper(mb_substr($s->full_name ?? 'S', 0, 1)) }}</div>
       <div class="student-info">
         <div class="student-name">{{ $s->full_name }}</div>
         <div class="student-nisn">NISN {{ $s->nisn }}</div>
       </div>
+      @php $avg = $studentAverages[$s->id] ?? null; @endphp
+      <div class="student-avg-score">
+        @if ($avg !== null)
+          <div class="student-avg-value" style="color:{{ $avg >= 75 ? '#34C759' : '#FF3B30' }}">{{ number_format($avg, 1) }}</div>
+        @else
+          <div class="student-avg-value" style="color:var(--line)">—</div>
+        @endif
+        <div class="student-avg-label">Rata-rata</div>
+      </div>
     </a>
     @endforeach
   </div>
 </section>
+
+@push('scripts')
+<script>
+function sortStudents(by, btn) {
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const grid = document.getElementById('studentGrid');
+  const cards = Array.from(grid.children);
+
+  cards.sort((a, b) => {
+    if (by === 'name') {
+      return a.dataset.name.localeCompare(b.dataset.name, 'id');
+    }
+    const sa = parseFloat(a.dataset.score);
+    const sb = parseFloat(b.dataset.score);
+    if (isNaN(sa) && isNaN(sb)) return 0;
+    if (isNaN(sa)) return 1;
+    if (isNaN(sb)) return -1;
+    return sb - sa;
+  });
+
+  cards.forEach(c => grid.appendChild(c));
+}
+</script>
+@endpush
 @endif
 @endsection

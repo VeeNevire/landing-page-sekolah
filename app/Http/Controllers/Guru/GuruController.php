@@ -322,6 +322,8 @@ class GuruController extends Controller
             $assessScores = AssessmentScore::where('assessment_id', $assess->id)
                 ->pluck('score', 'student_id')->toArray();
             $scores[$assess->id] = $assessScores;
+            $filtered = array_filter($assessScores, fn($v) => $v !== null && $v !== '');
+            $assess->avg_score = !empty($filtered) ? round(array_sum($filtered) / count($filtered), 1) : null;
         }
 
         $savedDraft = session("nilai_draft.{$class}.{$subject}", []);
@@ -443,6 +445,25 @@ class GuruController extends Controller
         return response()->json(['success' => true, 'message' => 'Penilaian berhasil dihapus.']);
     }
 
+    public function nilaiPublish(Request $request, $class, $subject, $assessmentId)
+    {
+        $assessment = Assessment::findOrFail($assessmentId);
+
+        if ($assessment->published_at) {
+            $assessment->update(['published_at' => null]);
+            $msg = 'Penilaian tidak dipublikasikan.';
+            $published = false;
+        } else {
+            $assessment->update(['published_at' => now()]);
+            $msg = 'Penilaian berhasil dipublikasikan.';
+            $published = true;
+        }
+
+        AuditService::log('assessment.publish', 'Assessment', $assessment->id, $assessment->title);
+
+        return response()->json(['success' => true, 'message' => $msg, 'published' => $published]);
+    }
+
     public function absensi(Request $request)
     {
         $user = $request->user();
@@ -451,6 +472,7 @@ class GuruController extends Controller
 
         $selectedClass = $request->query('class', $classNames->first());
         $date = $request->query('date', now()->format('Y-m-d'));
+        $tab = $request->query('tab', 'catat');
 
         $classAssignments = $teachingAssignments->where('class_name', $selectedClass)->values();
 
@@ -479,6 +501,27 @@ class GuruController extends Controller
             ->pluck('status', 'student_id')
             ->toArray();
 
+        $attendanceRecap = [];
+        if ($students->isNotEmpty()) {
+            $rawRecap = Attendance::whereIn('student_id', $students->pluck('id'))
+                ->selectRaw('student_id, status, COUNT(*) as total')
+                ->groupBy('student_id', 'status')
+                ->get()
+                ->groupBy('student_id');
+
+            foreach ($students as $s) {
+                $stats = array_fill_keys(['present', 'sick', 'excused', 'unexcused', 'late'], 0);
+                if ($rawRecap->has($s->id)) {
+                    foreach ($rawRecap->get($s->id) as $r) {
+                        $stats[$r->status] = (int) $r->total;
+                    }
+                }
+                $stats['total'] = array_sum($stats);
+                $stats['present_rate'] = $stats['total'] > 0 ? round(($stats['present'] / $stats['total']) * 100) : 0;
+                $attendanceRecap[$s->id] = $stats;
+            }
+        }
+
         return view('guru.absensi', [
             'classNames' => $classNames,
             'selectedClass' => $selectedClass,
@@ -488,6 +531,8 @@ class GuruController extends Controller
             'selectedSubjectName' => $selectedSubjectName,
             'students' => $students,
             'existing' => $existing,
+            'tab' => $tab,
+            'attendanceRecap' => $attendanceRecap,
         ]);
     }
 
@@ -514,6 +559,34 @@ class GuruController extends Controller
 
         AuditService::log('attendance.record', 'Attendance', null, null, $user->id);
         return back()->with('success', 'Absensi berhasil disimpan.');
+    }
+
+    public function absensiDetail(Request $request, $studentId)
+    {
+        $student = Student::findOrFail($studentId);
+
+        $breakdown = Attendance::where('student_id', $student->id)
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+
+        $total = array_sum($breakdown);
+        $presentDays = $breakdown['present'] ?? 0;
+        $rate = $total > 0 ? round($presentDays / $total * 100, 1) : 0;
+
+        $recentAttendance = Attendance::where('student_id', $student->id)
+            ->orderByDesc('attendance_date')
+            ->limit(20)
+            ->get();
+
+        return view('guru.absensi-detail', [
+            'student' => $student,
+            'breakdown' => $breakdown,
+            'total' => $total,
+            'rate' => $rate,
+            'recentAttendance' => $recentAttendance,
+        ]);
     }
 
     public function jadwal(Request $request)
@@ -841,6 +914,8 @@ class GuruController extends Controller
             }
         }
 
+        $studentAverages = $kelas ? $this->computeStudentAveragesMap($kelas->nama_lengkap) : [];
+
         $avgScore = $grades ? \App\Helpers\PortalHelper::average(array_column($grades, 'final_score')) : 0;
         $classMaxScore = $grades ? round(max(array_column($grades, 'class_max')), 1) : 0;
 
@@ -852,6 +927,7 @@ class GuruController extends Controller
             'avgScore' => round($avgScore, 1),
             'avgLetter' => \App\Helpers\PortalHelper::gradeLetter($avgScore),
             'classMaxScore' => $classMaxScore,
+            'studentAverages' => $studentAverages,
         ]);
     }
 
@@ -955,5 +1031,64 @@ class GuruController extends Controller
         }
 
         return $grades;
+    }
+
+    private function computeStudentAveragesMap($className): array
+    {
+        $period = AcademicPeriod::where('is_active', true)->first();
+        if (!$period) return [];
+
+        $assignments = TeachingAssignment::where('period_id', $period->id)
+            ->where('class_name', $className)
+            ->with(['subject', 'customSubject', 'assessments' => fn($q) => $q->whereNotNull('published_at')])
+            ->get();
+
+        $allAssessmentIds = $assignments->flatMap->assessments->pluck('id');
+
+        $studentIds = Student::where('class_name', $className)
+            ->where('status', 'active')
+            ->pluck('id');
+
+        if ($allAssessmentIds->isEmpty() || $studentIds->isEmpty()) return [];
+
+        $allScores = AssessmentScore::whereIn('assessment_id', $allAssessmentIds)
+            ->whereIn('student_id', $studentIds)
+            ->get()
+            ->groupBy('student_id');
+
+        $result = [];
+
+        foreach ($studentIds as $sid) {
+            $studentScores = $allScores->get($sid, collect());
+            $finalScores = [];
+
+            foreach ($assignments as $assignment) {
+                $assessments = $assignment->assessments;
+                $raw = ['quiz' => [], 'homework' => [], 'project' => [], 'assignment' => [], 'uts' => 0, 'uas' => 0];
+
+                foreach ($assessments as $assessment) {
+                    $score = $studentScores->firstWhere('assessment_id', $assessment->id)?->score;
+                    if ($score === null) continue;
+
+                    $comp = $assessment->component;
+                    if ($comp === 'uts' || $comp === 'uas') {
+                        $raw[$comp] = max($raw[$comp], (float) $score);
+                    } else {
+                        $raw[$comp][] = (float) $score;
+                    }
+                }
+
+                $finalScore = \App\Helpers\PortalHelper::finalScore($raw);
+                if ($finalScore > 0) {
+                    $finalScores[] = $finalScore;
+                }
+            }
+
+            $result[$sid] = $finalScores
+                ? round(array_sum($finalScores) / count($finalScores), 1)
+                : null;
+        }
+
+        return $result;
     }
 }

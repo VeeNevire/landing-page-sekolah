@@ -87,8 +87,10 @@ Route::middleware(['auth', 'role:teacher,homeroom,admin'])->prefix('guru')->name
     Route::post('/nilai/{class}/{subject}', [GuruController::class, 'nilaiStore'])->name('nilai.store');
     Route::put('/nilai/{class}/{subject}/assessment/{assessment}', [GuruController::class, 'nilaiUpdate'])->name('nilai.update');
     Route::delete('/nilai/{class}/{subject}/assessment/{assessment}', [GuruController::class, 'nilaiDestroy'])->name('nilai.destroy');
+    Route::patch('/nilai/{class}/{subject}/assessment/{assessment}/publish', [GuruController::class, 'nilaiPublish'])->name('nilai.publish');
     Route::get('/absensi', [GuruController::class, 'absensi'])->name('absensi');
     Route::post('/absensi', [GuruController::class, 'absensiStore'])->name('absensi.store');
+    Route::get('/absensi/{student}/detail', [GuruController::class, 'absensiDetail'])->name('absensi.detail');
     Route::get('/jadwal', [GuruController::class, 'jadwal'])->name('jadwal');
     Route::get('/wali/jadwal', [GuruController::class, 'waliJadwal'])->name('wali.jadwal');
     Route::get('/wali/nilai', [GuruController::class, 'waliNilai'])->name('wali.nilai');

@@ -85,7 +85,7 @@
   <div class="table-wrap">
     <table class="grade-table">
       <thead>
-        <tr><th>Judul</th><th>Komponen</th><th>Tanggal</th><th>Publish</th><th>Aksi</th></tr>
+        <tr><th>Judul</th><th>Komponen</th><th>Tanggal</th><th>Rata-rata</th><th>Aksi</th></tr>
       </thead>
       <tbody>
         @foreach ($assessments as $assess)
@@ -93,17 +93,18 @@
             <td><strong>{{ $assess->title }}</strong></td>
             <td><span style="text-transform:capitalize">{{ $assess->component }}</span></td>
             <td>{{ $assess->assessment_date->format('d M Y') }}</td>
-            <td>
-              @if ($assess->published_at)
-                <span style="color:var(--success);font-weight:700">Published</span>
-              @else
-                <span style="color:var(--muted)">Draft</span>
-              @endif
-            </td>
+            <td style="font-weight:700">{{ $assess->avg_score ?? '—' }}</td>
             <td>
               <div style="display:flex;gap:6px">
                 <button type="button" onclick="event.stopPropagation();openEditModal({{ $assess->id }})" title="Edit" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--primary-2);transition:.1s" onmouseover="this.style.background='color-mix(in srgb,var(--primary-2) 10%,var(--card))'" onmouseout="this.style.background='var(--card)'">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button type="button" onclick="event.stopPropagation();publishAssessment({{ $assess->id }})" title="{{ $assess->published_at ? 'Unpublish' : 'Publish' }}" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:{{ $assess->published_at ? '#34C759' : 'var(--muted)' }};transition:.1s" onmouseover="this.style.background='color-mix(in srgb,var(--primary-2) 10%,var(--card))'" onmouseout="this.style.background='var(--card)'">
+                  @if ($assess->published_at)
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  @else
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  @endif
                 </button>
                 <button type="button" onclick="event.stopPropagation();confirmDelete({{ $assess->id }}, '{{ addslashes($assess->title) }}')" title="Hapus" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#ef4444;transition:.1s" onmouseover="this.style.background='color-mix(in srgb,#ef4444 10%,var(--card))'" onmouseout="this.style.background='var(--card)'">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -149,6 +150,7 @@ const KKM = {{ $subject->kkm ?? 75 }};
 const CSRF = '{{ csrf_token() }}';
 const UPDATE_URL = '{{ route('guru.nilai.update', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id, 'assessment' => '__ID__']) }}';
 const DELETE_URL = '{{ route('guru.nilai.destroy', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id, 'assessment' => '__ID__']) }}';
+const PUBLISH_URL = '{{ route('guru.nilai.publish', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id, 'assessment' => '__ID__']) }}';
 
 const ICON_CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 const ICON_CROSS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
@@ -331,6 +333,40 @@ function confirmDelete(assessmentId, title) {
     const url = DELETE_URL.replace('__ID__', assessmentId);
     fetch(url, {
       method: 'DELETE',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+    })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => {
+      if (d.success) {
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: d.message, timer: 1500, showConfirmButton: false })
+          .then(() => location.reload());
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: d.message || 'Terjadi kesalahan' });
+      }
+    })
+    .catch(() => Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan server.' }));
+  });
+}
+
+function publishAssessment(assessmentId) {
+  const ass = ASSESSMENTS.find(a => a.id === assessmentId);
+  if (!ass) return;
+  const isPublished = ass.published;
+  Swal.fire({
+    title: isPublished ? 'Tarik Publikasi?' : 'Publikasikan Penilaian?',
+    text: isPublished ? 'Nilai ini tidak akan terlihat oleh siswa.' : 'Nilai akan terlihat oleh siswa.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: isPublished ? 'Ya, tarik' : 'Ya, publikasikan',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: isPublished ? '#FF9F0A' : '#34C759',
+    cancelButtonColor: '#6b7280',
+    reverseButtons: true,
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+    const url = PUBLISH_URL.replace('__ID__', assessmentId);
+    fetch(url, {
+      method: 'PATCH',
       headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
     })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
