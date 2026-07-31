@@ -1562,7 +1562,21 @@ $applicantStatusCounts = [
             $query->where('user_id', $userId);
         }
         if ($action = $request->query('action')) {
-            $query->where('action', 'like', "%{$action}%");
+            $combined = ['publish' => ['grade.publish', 'assessment.publish']];
+            if (isset($combined[$action])) {
+                $query->whereIn('action', $combined[$action]);
+            } else {
+                $query->where('action', $action);
+            }
+        }
+        if ($q = trim((string) $request->query('q'))) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('action', 'like', "%{$q}%")
+                    ->orWhere('entity_identifier', 'like', "%{$q}%")
+                    ->orWhereHas('user', function ($user) use ($q) {
+                        $user->where('name', 'like', "%{$q}%")->orWhere('email', 'like', "%{$q}%");
+                    });
+            });
         }
         if ($from = $request->query('from')) {
             $query->whereDate('created_at', '>=', $from);
@@ -1571,7 +1585,11 @@ $applicantStatusCounts = [
             $query->whereDate('created_at', '<=', $to);
         }
         if ($role = $request->query('role')) {
-            $query->whereHas('user', fn($q) => $q->where('role', $role));
+            if ($role === 'guru') {
+                $query->whereHas('user', fn($q) => $q->whereIn('role', ['teacher', 'homeroom', 'principal']));
+            } else {
+                $query->whereHas('user', fn($q) => $q->where('role', $role));
+            }
         }
 
         $logs = $query->latest()->paginate(20)->withQueryString();

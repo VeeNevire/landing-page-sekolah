@@ -93,7 +93,7 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 .portal-user-card strong,.portal-user-card span{display:block;font-size:.85rem}
 .portal-user-card span{font-size:.78rem;color:#9fb7d5;margin-top:1px}
 .portal-menu{
-  display:grid;gap:2px;flex:1;min-height:0;overflow-y:auto;margin:0 -16px;
+  display:grid;gap:2px;align-content:start;flex:1;min-height:0;overflow-y:auto;margin:0 -16px;
   padding:0 16px 4px;
   scrollbar-width:thin;
   scrollbar-color:rgba(255,255,255,.12) transparent

@@ -22,7 +22,7 @@
 .guru-body .portal-menu a.active .portal-menu-icon{color:var(--primary-3)}
 .guru-body .portal-menu-group{color:rgba(0,0,0,.2);padding:14px 10px 4px;font-size:.66rem}
 .guru-body .portal-menu-divider{height:1.5px;margin:5px 10px;border-radius:2px;background:rgba(95,111,130,.5)}
-.guru-body .portal-menu{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(95,111,130,.2) transparent;margin:0 -12px;padding:0 12px 4px}
+.guru-body .portal-menu{display:flex;flex-direction:column;justify-content:flex-start;gap:2px;flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(95,111,130,.2) transparent;margin:0 -12px;padding:0 12px 4px}
 .guru-body .portal-menu::-webkit-scrollbar{width:5px}
 .guru-body .portal-menu::-webkit-scrollbar-track{background:transparent}
 .guru-body .portal-menu::-webkit-scrollbar-thumb{background:rgba(95,111,130,.2);border-radius:3px}

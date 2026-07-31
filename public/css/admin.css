@@ -1467,3 +1467,50 @@ body.dark.admin-body .portal-sidebar-footer .logout-btn:hover{background:rgba(25
 .jurusan-cs-item:hover {
     background: color-mix(in srgb, var(--primary-2) 4%, var(--card));
 }
+
+/* =========================================================
+   AUDIT LOG
+   ========================================================= */
+.audit-tabs{margin:0 0 20px}
+.audit-toolbar{margin-bottom:20px}
+.audit-filter-form{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;flex:1}
+.audit-toolbar .field{min-width:170px}
+.audit-toolbar .field.audit-field-role{flex:0 1 210px}
+.audit-toolbar .field.audit-field-grow{flex:2 1 240px}
+.audit-toolbar .field.audit-field-date{flex:0 1 165px}
+.audit-toolbar label{font-size:.76rem;font-weight:700;letter-spacing:.02em;color:var(--muted)}
+.audit-toolbar .btn{min-height:42px}
+.audit-toolbar-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+@media(max-width:900px){
+  .audit-toolbar .field{flex:1 1 45%!important;min-width:0}
+  .audit-toolbar-actions{width:100%}
+}
+@media(max-width:560px){
+  .audit-toolbar .field{flex:1 1 100%!important}
+  .audit-toolbar-actions{width:100%}
+  .audit-toolbar-actions .btn{flex:1}
+}
+
+.audit-table{min-width:780px}
+.audit-table-wrap{max-height:70vh}
+.audit-table-wrap thead th{position:sticky;top:0;z-index:2}
+.audit-col-time{width:1%}
+.audit-time{display:inline-flex;align-items:center;gap:9px;font-size:.78rem;font-weight:600;color:var(--ink);white-space:nowrap}
+.audit-time-dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex-shrink:0}
+.audit-time-dot.today{background:var(--success);box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 16%,transparent)}
+.audit-time-dot.yesterday{background:var(--primary-3)}
+.audit-user{display:flex;align-items:center;gap:10px}
+.audit-avatar{--chip:#5f6f82;width:30px;height:30px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:.72rem;font-weight:800;color:#fff;background:linear-gradient(135deg,color-mix(in srgb,var(--chip) 55%,white),var(--chip))}
+.audit-user-meta{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+.audit-user-name{font-size:.88rem;font-weight:600;color:var(--ink);white-space:nowrap}
+.audit-chip{--chip:#5f6f82;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;font-size:.72rem;font-weight:700;line-height:1.45;white-space:nowrap;background:color-mix(in srgb,var(--chip) 12%,var(--card));color:color-mix(in srgb,var(--chip) 72%,var(--ink));border:1px solid color-mix(in srgb,var(--chip) 22%,transparent)}
+.audit-entity{display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap}
+.audit-entity-name{font-size:.85rem;font-weight:500;color:var(--ink);white-space:nowrap}
+.audit-entity-role{color:var(--muted);font-weight:400;font-size:.82rem}
+.audit-meta{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.audit-pagination{padding:16px}
+.audit-empty{padding:48px 20px;text-align:center}
+.audit-empty-icon{width:54px;height:54px;margin:0 auto 14px;border-radius:16px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2)}
+.audit-empty-icon svg{width:24px;height:24px}
+.audit-empty h3{margin:0 0 6px;font-size:1.05rem;color:var(--ink)}
+.audit-empty p{margin:0 auto 18px;color:var(--muted);font-size:.88rem;max-width:420px}
