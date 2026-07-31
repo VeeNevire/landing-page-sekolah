@@ -226,6 +226,7 @@ class SiswaController extends Controller
             'avgScore' => round($avgScore, 1),
             'avgLetter' => PortalHelper::gradeLetter($avgScore),
             'classMaxScore' => $classMaxScore,
+            'weights' => PortalHelper::WEIGHTS,
         ]);
     }
 
@@ -306,6 +307,7 @@ class SiswaController extends Controller
         $tgl = \Carbon\Carbon::parse($bulan . '-01');
         $jadwalBulan = Assessment::whereHas('teachingAssignment', fn($q) =>
             $q->where('class_name', $student->class_name)
+                ->where('period_id', $period?->id)
         )->whereMonth('assessment_date', $tgl->month)
          ->whereYear('assessment_date', $tgl->year)
          ->with('teachingAssignment.subject', 'teachingAssignment.customSubject', 'teachingAssignment.teacher')
@@ -383,12 +385,30 @@ class SiswaController extends Controller
 
         $extracurriculars = Extracurricular::where('student_id', $student->id)->get();
 
+        $parents = $student->parents()
+            ->orderByDesc('parent_student.is_primary')
+            ->get(['users.id', 'users.name', 'users.full_name', 'users.email']);
+
+        $attendanceBreakdown = Attendance::where('student_id', $student->id)
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+
+        $totalAttendance = array_sum($attendanceBreakdown);
+        $presentDays = $attendanceBreakdown['present'] ?? 0;
+        $attendanceRate = $totalAttendance > 0 ? round($presentDays / $totalAttendance * 100, 1) : 0;
+
         return view('siswa.profil', [
             'student' => $student,
             'period' => $period,
             'initials' => $data['initials'],
             'behavior' => $behavior,
             'extracurriculars' => $extracurriculars,
+            'parents' => $parents,
+            'attendanceBreakdown' => $attendanceBreakdown,
+            'attendanceRate' => $attendanceRate,
+            'account' => $student->user,
         ]);
     }
 }

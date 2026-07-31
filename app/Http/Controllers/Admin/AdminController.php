@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rule;
 use App\Mail\ParentAccountMail;
 use App\Mail\StudentAcceptedMail;
 use App\Services\AuditService;
@@ -1320,7 +1321,10 @@ $applicantStatusCounts = [
     public function periodsStore(Request $request)
     {
         $validated = $request->validate([
-            'academic_year' => 'required|string|max:20',
+            'academic_year' => [
+                'required', 'string', 'max:20',
+                Rule::unique('academic_periods')->where('semester', $request->semester),
+            ],
             'semester' => 'required|in:ganjil,genap',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -1340,7 +1344,10 @@ $applicantStatusCounts = [
     public function periodsUpdate(Request $request, AcademicPeriod $period)
     {
         $validated = $request->validate([
-            'academic_year' => 'required|string|max:20',
+            'academic_year' => [
+                'required', 'string', 'max:20',
+                Rule::unique('academic_periods')->ignore($period->id)->where('semester', $request->semester),
+            ],
             'semester' => 'required|in:ganjil,genap',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -1359,6 +1366,30 @@ $applicantStatusCounts = [
 
     public function periodsDestroy(Request $request, AcademicPeriod $period)
     {
+        if ($period->is_active) {
+            $message = 'Periode aktif tidak dapat dihapus. Nonaktifkan periode lain terlebih dahulu.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message]);
+            }
+            return back()->with('error', $message);
+        }
+
+        $teachingCount = $period->teachingAssignments()->count();
+        $notesCount = $period->teacherNotes()->count();
+        $behaviorCount = $period->behaviorScores()->count();
+
+        if ($teachingCount > 0 || $notesCount > 0 || $behaviorCount > 0) {
+            $parts = [];
+            if ($teachingCount > 0) $parts[] = "{$teachingCount} penugasan";
+            if ($notesCount > 0) $parts[] = "{$notesCount} catatan";
+            if ($behaviorCount > 0) $parts[] = "{$behaviorCount} nilai sikap";
+            $message = 'Periode ini masih memiliki data terkait (' . implode(', ', $parts) . '). Hapus data tersebut terlebih dahulu atau biarkan periode ini.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message]);
+            }
+            return back()->with('error', $message);
+        }
+
         AuditService::log('period.delete', 'AcademicPeriod', $period->id, $period->academic_year . ' ' . $period->semester);
         $period->delete();
 

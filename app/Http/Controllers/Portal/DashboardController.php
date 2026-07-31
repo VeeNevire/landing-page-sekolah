@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Portal;
 
+use App\Helpers\PortalHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
 use App\Models\Attendance;
@@ -161,7 +162,7 @@ class DashboardController extends Controller
             }
 
             $componentAvgs = [];
-            foreach (['quiz', 'homework', 'project', 'uts', 'uas'] as $comp) {
+            foreach (['quiz', 'homework', 'project', 'assignment', 'uts', 'uas'] as $comp) {
                 $items = $grouped[$comp] ?? [];
                 $allScores = [];
                 foreach ($items as $item) {
@@ -170,15 +171,15 @@ class DashboardController extends Controller
                 $componentAvgs[$comp] = $allScores ? array_sum($allScores) / count($allScores) : 0;
             }
 
-            $weights = ['quiz' => 0.15, 'homework' => 0.20, 'project' => 0.20, 'uts' => 0.20, 'uas' => 0.25];
             $finalScore = 0;
-            foreach ($weights as $comp => $w) {
-                $finalScore += $componentAvgs[$comp] * $w;
+            foreach (PortalHelper::WEIGHTS as $comp => $w) {
+                $finalScore += ($componentAvgs[$comp] ?? 0) * $w;
             }
 
             $quizScores = [];
             $hwScores = [];
             $projScores = [];
+            $assignmentScores = [];
             foreach ($grouped['quiz'] ?? [] as $item) {
                 $quizScores = array_merge($quizScores, $item['scores']);
             }
@@ -187,6 +188,9 @@ class DashboardController extends Controller
             }
             foreach ($grouped['project'] ?? [] as $item) {
                 $projScores = array_merge($projScores, $item['scores']);
+            }
+            foreach ($grouped['assignment'] ?? [] as $item) {
+                $assignmentScores = array_merge($assignmentScores, $item['scores']);
             }
 
             $subjectKkm = (float) ($ta->subject?->kkm ?? $ta->customSubject?->kkm ?? 75);
@@ -199,6 +203,7 @@ class DashboardController extends Controller
                 'quiz' => $quizScores,
                 'homework' => $hwScores,
                 'project' => $projScores,
+                'assignment' => $assignmentScores,
                 'uts' => $componentAvgs['uts'],
                 'uas' => $componentAvgs['uas'],
                 'final' => round($finalScore, 1),

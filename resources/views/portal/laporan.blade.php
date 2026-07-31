@@ -49,7 +49,8 @@
       </div>
       <div class="assessment-weights">
         <div class="weight-chip"><strong>15%</strong><span>Kuis</span></div>
-        <div class="weight-chip"><strong>20%</strong><span>PR / Tugas</span></div>
+        <div class="weight-chip"><strong>10%</strong><span>PR</span></div>
+        <div class="weight-chip"><strong>10%</strong><span>Tugas</span></div>
         <div class="weight-chip"><strong>20%</strong><span>Proyek / Praktik</span></div>
         <div class="weight-chip"><strong>20%</strong><span>UTS</span></div>
         <div class="weight-chip"><strong>25%</strong><span>UAS</span></div>
@@ -69,7 +70,7 @@
         <table class="grade-table">
           <thead>
             <tr>
-              <th>Mata Pelajaran</th><th>Kuis</th><th>PR/Tugas</th><th>Proyek/Praktik</th><th>UTS</th><th>UAS</th><th>Nilai Akhir</th><th>Predikat</th><th>Status</th>
+              <th>Mata Pelajaran</th><th>Kuis</th><th>PR</th><th>Tugas</th><th>Proyek/Praktik</th><th>UTS</th><th>UAS</th><th>Nilai Akhir</th><th>Predikat</th><th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -83,6 +84,7 @@
                 <td><strong>{{ $subject['name'] }}</strong><br><small style="color:var(--muted)">{{ $subject['teacher'] }}</small></td>
                 <td>{{ number_format($scores['quiz'], 1, ',', '.') }}</td>
                 <td>{{ number_format($scores['homework'], 1, ',', '.') }}</td>
+                <td>{{ number_format($scores['assignment'], 1, ',', '.') }}</td>
                 <td>{{ number_format($scores['project'], 1, ',', '.') }}</td>
                 <td>{{ number_format($scores['uts'], 1, ',', '.') }}</td>
                 <td>{{ number_format($scores['uas'], 1, ',', '.') }}</td>
@@ -186,7 +188,8 @@
             <summary>{{ $subject['name'] }} — Nilai Akhir {{ number_format($final, 1, ',', '.') }}</summary>
             <div class="detail-score-grid">
               <div class="detail-score-card"><strong>Kuis</strong><span>Bobot 15%</span><ul>@foreach ($subject['quiz'] as $i => $score)<li>Kuis {{ $i + 1 }}: <b>{{ $score }}</b></li>@endforeach</ul></div>
-              <div class="detail-score-card"><strong>PR / Tugas</strong><span>Bobot 20%</span><ul>@foreach ($subject['homework'] as $i => $score)<li>Tugas {{ $i + 1 }}: <b>{{ $score }}</b></li>@endforeach</ul></div>
+              <div class="detail-score-card"><strong>PR</strong><span>Bobot 10%</span><ul>@foreach ($subject['homework'] as $i => $score)<li>PR {{ $i + 1 }}: <b>{{ $score }}</b></li>@endforeach</ul></div>
+              <div class="detail-score-card"><strong>Tugas</strong><span>Bobot 10%</span><ul>@foreach ($subject['assignment'] as $i => $score)<li>Tugas {{ $i + 1 }}: <b>{{ $score }}</b></li>@endforeach</ul></div>
               <div class="detail-score-card"><strong>Proyek / Praktik</strong><span>Bobot 20%</span><ul>@foreach ($subject['project'] as $i => $score)<li>Proyek {{ $i + 1 }}: <b>{{ $score }}</b></li>@endforeach</ul></div>
               <div class="detail-score-card"><strong>UTS</strong><span>Bobot 20%</span><ul><li>Skor: <b>{{ $subject['uts'] }}</b></li></ul></div>
               <div class="detail-score-card"><strong>UAS</strong><span>Bobot 25%</span><ul><li>Skor: <b>{{ $subject['uas'] }}</b></li></ul></div>

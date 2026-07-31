@@ -12,18 +12,6 @@
 @endphp
 
 <div style="margin-bottom:16px">
-  <div style="display:flex;align-items:center;justify-content:space-between">
-    <div>
-      <h2 style="font-size:1.1rem;font-weight:700;color:var(--s-ink);margin:0">Kuis</h2>
-      <p style="font-size:.82rem;color:var(--s-muted);margin:2px 0 0">Kuis online dari guru</p>
-    </div>
-    @if ($quizCards->count())
-    <div style="display:flex;gap:12px">
-      <div class="b-stat-value" style="font-size:1.2rem;background:linear-gradient(135deg,var(--s-primary),var(--s-primary-dark));-webkit-background-clip:text;-webkit-text-fill-color:transparent">{{ $quizCards->where('status', 'open')->count() }}</div>
-      <div style="font-size:.72rem;color:var(--s-muted);align-self:flex-end;margin-bottom:4px">Tersedia</div>
-    </div>
-    @endif
-  </div>
 </div>
 
 @if (session('success'))

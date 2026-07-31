@@ -22,6 +22,8 @@ $currentStatus = request('status', '');
   </button>
 </div>
 
+<p style="font-size:.78rem;color:var(--muted);margin:-8px 0 16px">Mengganti periode aktif tidak menghapus data periode lain — data lama tetap tersimpan dan muncul kembali jika periode diaktifkan.</p>
+
 <div class="tabs" style="margin:0 0 20px">
   <a href="{{ route('admin.periods.index', array_filter(['search' => request('search')])) }}"
     class="tab-btn {{ $currentStatus === '' ? 'active' : '' }}">
@@ -74,7 +76,11 @@ $currentStatus = request('status', '');
           data-semester="{{ $period->semester }}"
           data-start_date="{{ $period->start_date->format('Y-m-d') }}"
           data-end_date="{{ $period->end_date->format('Y-m-d') }}"
-          data-is_active="{{ $period->is_active }}">
+          data-is_active="{{ $period->is_active }}"
+          data-teaching="{{ $period->teaching_assignments_count }}"
+          data-notes="{{ $period->teacher_notes_count }}"
+          data-behavior="{{ $period->behavior_scores_count }}"
+          style="{{ $period->is_active ? 'background:color-mix(in srgb,var(--success) 5%,var(--card))' : '' }}">
           <td style="text-align:center">{{ $loop->iteration + ($periods->currentPage() - 1) * $periods->perPage() }}</td>
           <td><strong>{{ $period->academic_year }}</strong></td>
           <td>
@@ -88,7 +94,12 @@ $currentStatus = request('status', '');
             <span style="padding:4px 10px;border-radius:8px;font-size:.78rem;font-weight:700;background:color-mix(in srgb,var(--muted) 12%,var(--card));color:var(--muted)">Nonaktif</span>
             @endif
           </td>
-          <td style="font-size:.85rem">{{ $period->teaching_assignments_count }} penugasan</td>
+          <td style="font-size:.85rem">
+            {{ $period->teaching_assignments_count }} penugasan
+            @if ($period->teacher_notes_count > 0 || $period->behavior_scores_count > 0)
+            <br><span style="font-size:.75rem;color:var(--muted)">{{ $period->teacher_notes_count }} catatan · {{ $period->behavior_scores_count }} sikap</span>
+            @endif
+          </td>
           <td>
             <div style="display:flex;gap:6px;align-items:center">
               <button type="button" class="btn btn-outline" title="Edit periode" style="min-height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center" onclick="openEditModal({{ $period->id }})">
@@ -105,6 +116,7 @@ $currentStatus = request('status', '');
                 </svg>
               </button>
               @endif
+              @if (!$period->is_active)
               <button type="button" class="btn btn-outline" title="Hapus periode" style="min-height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#ef4444" onclick="confirmDelete({{ $period->id }}, '{{ addslashes($period->academic_year) }}', '{{ $period->semester }}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3 6h18" />
@@ -112,6 +124,7 @@ $currentStatus = request('status', '');
                   <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                 </svg>
               </button>
+              @endif
             </div>
           </td>
         </tr>
@@ -316,9 +329,21 @@ $currentStatus = request('status', '');
   }
 
   function confirmDelete(periodId, year, semester) {
+    const row = document.getElementById('row-' + periodId);
+    const t = parseInt(row?.dataset.teaching || 0, 10);
+    const n = parseInt(row?.dataset.notes || 0, 10);
+    const b = parseInt(row?.dataset.behavior || 0, 10);
+    let related = '';
+    const parts = [];
+    if (t > 0) parts.push(t + ' penugasan');
+    if (n > 0) parts.push(n + ' catatan');
+    if (b > 0) parts.push(b + ' nilai sikap');
+    if (parts.length) {
+      related = '<p style="color:#b45309;margin-top:8px;font-size:.8rem;text-align:left">Periode ini memiliki data terkait: <strong>' + parts.join(', ') + '</strong>.<br>Periode berdata tidak dapat dihapus untuk melindungi data historis.</p>';
+    }
     Swal.fire({
       title: 'Hapus Periode?',
-      html: 'Periode <strong>' + year + ' ' + semester.charAt(0).toUpperCase() + semester.slice(1) + '</strong> akan dihapus permanen.',
+      html: 'Periode <strong>' + year + ' ' + semester.charAt(0).toUpperCase() + semester.slice(1) + '</strong> akan dihapus permanen.' + related,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',

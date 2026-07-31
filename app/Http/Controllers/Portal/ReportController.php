@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Portal;
 
+use App\Helpers\PortalHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
 use App\Models\Assessment;
@@ -85,7 +86,7 @@ class ReportController extends Controller
             fputcsv($output, ['Kelas: ' . $student->class_name, 'Program: ' . $student->program_name]);
             fputcsv($output, []);
 
-            fputcsv($output, ['Mata Pelajaran', 'Kuis', 'PR/Tugas', 'Proyek', 'UTS', 'UAS', 'Nilai Akhir', 'Grade', 'KKM', 'Status']);
+            fputcsv($output, ['Mata Pelajaran', 'Kuis', 'PR', 'Tugas', 'Proyek', 'UTS', 'UAS', 'Nilai Akhir', 'Grade', 'KKM', 'Status']);
             foreach ($subjects as $subject) {
                 $final = $subject['final'] ?? 0;
                 $kkm = $subject['kkm'] ?? 75;
@@ -95,6 +96,7 @@ class ReportController extends Controller
                     $subject['name'],
                     number_format($this->avg($subject['quiz']), 1, ',', '.'),
                     number_format($this->avg($subject['homework']), 1, ',', '.'),
+                    number_format($this->avg($subject['assignment']), 1, ',', '.'),
                     number_format($this->avg($subject['project']), 1, ',', '.'),
                     number_format($subject['uts'], 1, ',', '.'),
                     number_format($subject['uas'], 1, ',', '.'),
@@ -190,7 +192,7 @@ class ReportController extends Controller
             }
 
             $componentAvgs = [];
-            foreach (['quiz', 'homework', 'project', 'uts', 'uas'] as $comp) {
+            foreach (['quiz', 'homework', 'project', 'assignment', 'uts', 'uas'] as $comp) {
                 $all = [];
                 foreach ($grouped[$comp] ?? [] as $scores) {
                     $all = array_merge($all, $scores);
@@ -198,18 +200,19 @@ class ReportController extends Controller
                 $componentAvgs[$comp] = $all ? array_sum($all) / count($all) : 0;
             }
 
-            $weights = ['quiz' => 0.15, 'homework' => 0.20, 'project' => 0.20, 'uts' => 0.20, 'uas' => 0.25];
             $finalScore = 0;
-            foreach ($weights as $comp => $w) {
-                $finalScore += $componentAvgs[$comp] * $w;
+            foreach (PortalHelper::WEIGHTS as $comp => $w) {
+                $finalScore += ($componentAvgs[$comp] ?? 0) * $w;
             }
 
             $quizScores = [];
             $hwScores = [];
             $projScores = [];
+            $assignmentScores = [];
             foreach ($grouped['quiz'] ?? [] as $s) { $quizScores = array_merge($quizScores, $s); }
             foreach ($grouped['homework'] ?? [] as $s) { $hwScores = array_merge($hwScores, $s); }
             foreach ($grouped['project'] ?? [] as $s) { $projScores = array_merge($projScores, $s); }
+            foreach ($grouped['assignment'] ?? [] as $s) { $assignmentScores = array_merge($assignmentScores, $s); }
 
             $subjectKkm = (float) ($ta->subject?->kkm ?? $ta->customSubject?->kkm ?? 75);
 
@@ -221,6 +224,7 @@ class ReportController extends Controller
                 'quiz' => $quizScores,
                 'homework' => $hwScores,
                 'project' => $projScores,
+                'assignment' => $assignmentScores,
                 'uts' => $componentAvgs['uts'],
                 'uas' => $componentAvgs['uas'],
                 'final' => round($finalScore, 1),

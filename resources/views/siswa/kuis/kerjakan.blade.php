@@ -96,6 +96,13 @@
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:color-mix(in srgb,var(--s-primary) 30%,transparent);border:1.5px solid var(--s-primary)"></span> Terjawab</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f59e0b"></span> Ragu-ragu</span>
     </div>
+
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--s-line)">
+      <a href="{{ route('siswa.kuis.index') }}" onclick="return confirmExit(event)" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:10px;border:1.5px solid var(--s-line);background:var(--s-card);color:var(--s-muted);font-size:.78rem;font-weight:600;text-decoration:none;transition:all .15s;cursor:pointer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Keluar
+      </a>
+    </div>
   </div>
 </div>
 
@@ -206,6 +213,20 @@ document.getElementById('question-container').addEventListener('blur', e => {
     autoSave(page.dataset.questionId, { text: ta.value });
   }, 500);
 }, true);
+
+function confirmExit(e) {
+  e.preventDefault();
+  Swal.fire({
+    title: 'Keluar dari Kuis?',
+    text: 'Jawaban yang sudah diisi tersimpan otomatis. Kamu bisa melanjutkan kuis ini kapan saja.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Keluar',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: 'var(--s-primary)',
+    width: 440,
+  }).then(r => { if (r.isConfirmed) window.location.href = e.target.closest('a').href; });
+}
 
 function confirmSubmit() {
   const unanswered = document.querySelectorAll('.question-page').length - document.querySelectorAll('.quiz-nav-btn.answered').length;
