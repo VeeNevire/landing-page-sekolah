@@ -88,6 +88,7 @@ Route::middleware(['auth', 'role:teacher,homeroom,admin'])->prefix('guru')->name
     Route::put('/nilai/{class}/{subject}/assessment/{assessment}', [GuruController::class, 'nilaiUpdate'])->name('nilai.update');
     Route::delete('/nilai/{class}/{subject}/assessment/{assessment}', [GuruController::class, 'nilaiDestroy'])->name('nilai.destroy');
     Route::patch('/nilai/{class}/{subject}/assessment/{assessment}/publish', [GuruController::class, 'nilaiPublish'])->name('nilai.publish');
+    Route::post('/nilai/{class}/{subject}/bobot', [GuruController::class, 'nilaiWeightsStore'])->name('nilai.weights');
     Route::get('/absensi', [GuruController::class, 'absensi'])->name('absensi');
     Route::post('/absensi', [GuruController::class, 'absensiStore'])->name('absensi.store');
     Route::get('/absensi/{student}/detail', [GuruController::class, 'absensiDetail'])->name('absensi.detail');
@@ -211,6 +212,7 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     Route::post('/jurusans/{jurusan}/subjects', [AdminController::class, 'jurusansSubjectsSave'])->name('jurusans.subjects.save');
     Route::post('/jurusans/{jurusan}/custom-subjects', [AdminController::class, 'jurusanCustomSubjectStore'])->name('jurusans.custom-subjects.store');
     Route::put('/jurusans/custom-subjects/{customSubject}', [AdminController::class, 'jurusanCustomSubjectUpdate'])->name('jurusans.custom-subjects.update');
+    Route::put('/jurusans/custom-subjects/{customSubject}/bobot', [AdminController::class, 'jurusanCustomSubjectWeightsUpdate'])->name('jurusans.custom-subjects.weights');
     Route::delete('/jurusans/custom-subjects/{customSubject}', [AdminController::class, 'jurusanCustomSubjectDestroy'])->name('jurusans.custom-subjects.destroy');
 
     Route::get('/periods', [AdminController::class, 'periods'])->name('periods.index');

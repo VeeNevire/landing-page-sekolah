@@ -63,27 +63,6 @@
   </div>
 </div>
 
-<div class="bento bento-full" style="margin-bottom:16px">
-  <div class="b-card" style="padding:16px 20px">
-    @php $weightOrder = ['quiz' => 'Kuis', 'homework' => 'PR', 'assignment' => 'Tugas', 'project' => 'Proyek', 'uts' => 'UTS', 'uas' => 'UAS']; @endphp
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--s-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 21h8"/><path d="m3 7 4 4-4 4"/><path d="m21 7-4 4 4 4"/></svg>
-        <h3 style="font-size:.88rem;font-weight:700;color:var(--s-ink);margin:0">Pembobotan Nilai</h3>
-      </div>
-      <span style="font-size:.72rem;font-weight:600;color:var(--s-muted)">Total 100%</span>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
-      @foreach($weightOrder as $key => $label)
-      <div style="padding:10px 12px;border-radius:10px;background:var(--s-bg);border:1px solid var(--s-line);text-align:center">
-        <div style="font-size:.66rem;font-weight:600;color:var(--s-muted);text-transform:uppercase">{{ $label }}</div>
-        <div style="font-size:1.05rem;font-weight:800;margin-top:2px;color:var(--s-primary-dark)">{{ round($weights[$key] * 100) }}%</div>
-      </div>
-      @endforeach
-    </div>
-  </div>
-</div>
-
 <div class="bento bento-grade">
   @foreach($grades as $g)
   <div class="b-grade">
@@ -107,6 +86,12 @@
         <div class="b-comp-label">{{ $label }}</div>
         <div class="b-comp-value" style="color:{{ $g['components'][$key] > 0 ? 'var(--s-ink)' : 'var(--s-line)' }}">{{ $g['components'][$key] > 0 ? number_format($g['components'][$key], 1) : '-' }}</div>
       </div>
+      @endforeach
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+      @foreach(['quiz' => 'Kuis', 'homework' => 'PR', 'assignment' => 'Tugas', 'project' => 'Proyek', 'uts' => 'UTS', 'uas' => 'UAS'] as $key => $label)
+      <span style="font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--s-bg);color:var(--s-muted);border:1px solid var(--s-line)">{{ $label }} {{ round($g['weights'][$key] * 100) }}%</span>
       @endforeach
     </div>
 

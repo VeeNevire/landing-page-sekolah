@@ -828,6 +828,12 @@ $applicantStatusCounts = [
             'code' => $subject->code,
             'name' => $subject->name,
             'kkm' => $subject->kkm,
+            'weight_quiz' => $subject->weight_quiz,
+            'weight_homework' => $subject->weight_homework,
+            'weight_project' => $subject->weight_project,
+            'weight_assignment' => $subject->weight_assignment,
+            'weight_uts' => $subject->weight_uts,
+            'weight_uas' => $subject->weight_uas,
             'guru_ids' => $subject->gurus->pluck('id')->toArray(),
         ]);
     }
@@ -891,6 +897,35 @@ $applicantStatusCounts = [
         return response()->json(['success' => true, 'message' => 'Kelas berhasil diperbarui.']);
     }
 
+    private function weightInputs(Request $request): array
+    {
+        $keys = ['weight_quiz', 'weight_homework', 'weight_project', 'weight_assignment', 'weight_uts', 'weight_uas'];
+        $weights = $request->only($keys);
+
+        $hasAny = collect($weights)->contains(fn($w) => $w !== null && $w !== '');
+        if (!$hasAny) {
+            return array_fill_keys($keys, null);
+        }
+
+        $validated = \Illuminate\Support\Facades\Validator::make($weights, [
+            'weight_quiz' => 'required|numeric|min:0|max:100',
+            'weight_homework' => 'required|numeric|min:0|max:100',
+            'weight_project' => 'required|numeric|min:0|max:100',
+            'weight_assignment' => 'required|numeric|min:0|max:100',
+            'weight_uts' => 'required|numeric|min:0|max:100',
+            'weight_uas' => 'required|numeric|min:0|max:100',
+        ])->validate();
+
+        $sum = array_sum(array_map('floatval', $validated));
+        if (abs($sum - 100) > 0.5) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'bobot' => 'Total bobot harus 100%. Saat ini ' . round($sum, 1) . '%.',
+            ]);
+        }
+
+        return array_map('floatval', $validated);
+    }
+
     public function subjectsStore(Request $request)
     {
         $validated = $request->validate([
@@ -901,11 +936,7 @@ $applicantStatusCounts = [
             'guru_ids.*' => 'exists:users,id',
         ]);
 
-        $subject = Subject::create([
-            'code' => $validated['code'],
-            'name' => $validated['name'],
-            'kkm' => $validated['kkm'],
-        ]);
+        $subject = Subject::create(array_merge($validated, $this->weightInputs($request)));
 
         $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
         if (!empty($validated['guru_ids']) && $activePeriod) {
@@ -931,11 +962,7 @@ $applicantStatusCounts = [
             'guru_ids.*' => 'exists:users,id',
         ]);
 
-        $subject->update([
-            'code' => $validated['code'],
-            'name' => $validated['name'],
-            'kkm' => $validated['kkm'],
-        ]);
+        $subject->update(array_merge($validated, $this->weightInputs($request)));
 
         $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
         $subject->gurus()->syncWithPivotValues($validated['guru_ids'] ?? [], ['semester_id' => $activePeriod?->id]);
@@ -1221,7 +1248,7 @@ $applicantStatusCounts = [
             'kkm' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $subject = $jurusan->customSubjects()->create($validated);
+        $subject = $jurusan->customSubjects()->create(array_merge($validated, $this->weightInputs($request)));
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Mata pelajaran jurusan berhasil ditambahkan.', 'subject' => $subject]);
@@ -1238,13 +1265,24 @@ $applicantStatusCounts = [
             'kkm' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $customSubject->update($validated);
+        $customSubject->update(array_merge($validated, $this->weightInputs($request)));
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Mata pelajaran jurusan berhasil diperbarui.', 'subject' => $customSubject]);
         }
 
         return back()->with('success', 'Mata pelajaran jurusan berhasil diperbarui.');
+    }
+
+    public function jurusanCustomSubjectWeightsUpdate(Request $request, JurusanCustomSubject $customSubject)
+    {
+        $customSubject->update($this->weightInputs($request));
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Bobot nilai berhasil diperbarui.']);
+        }
+
+        return back()->with('success', 'Bobot nilai berhasil diperbarui.');
     }
 
     public function jurusanCustomSubjectDestroy(Request $request, JurusanCustomSubject $customSubject)

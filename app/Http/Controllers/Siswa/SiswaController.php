@@ -89,7 +89,9 @@ class SiswaController extends Controller
             }
 
             $componentScores = PortalHelper::componentScores($raw);
-            $finalScore = PortalHelper::finalScore($raw);
+            $subject = $assignment->subject ?? $assignment->customSubject;
+            $weights = PortalHelper::effectiveWeights($subject, $assignment);
+            $finalScore = PortalHelper::finalScore($raw, $weights);
 
             $subjectName = $assignment->subject?->name ?? $assignment->customSubject?->nama ?? '-';
             $subjectCode = $assignment->subject?->code ?? $assignment->customSubject?->kode ?? '-';
@@ -114,7 +116,7 @@ class SiswaController extends Controller
                         }
                     }
 
-                    $f = PortalHelper::finalScore($r);
+                    $f = PortalHelper::finalScore($r, $weights);
                     if ($f > 0) $studentFinals[] = $f;
                 }
 
@@ -129,6 +131,7 @@ class SiswaController extends Controller
                 'subject_code' => $subjectCode,
                 'kkm' => $kkm,
                 'components' => $componentScores,
+                'weights' => $weights,
                 'final_score' => $finalScore,
                 'letter' => PortalHelper::gradeLetter($finalScore),
                 'passed' => $finalScore >= $kkm,
@@ -226,7 +229,6 @@ class SiswaController extends Controller
             'avgScore' => round($avgScore, 1),
             'avgLetter' => PortalHelper::gradeLetter($avgScore),
             'classMaxScore' => $classMaxScore,
-            'weights' => PortalHelper::WEIGHTS,
         ]);
     }
 

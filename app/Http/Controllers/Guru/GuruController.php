@@ -328,6 +328,8 @@ class GuruController extends Controller
 
         $savedDraft = session("nilai_draft.{$class}.{$subject}", []);
 
+        $subjectWeights = \App\Helpers\PortalHelper::effectiveWeights($subjectModel, $assignment);
+
         return view('guru.nilai-detail', [
             'class' => $class,
             'subject' => $subjectModel,
@@ -336,7 +338,79 @@ class GuruController extends Controller
             'scores' => $scores,
             'savedDraft' => $savedDraft,
             'isCustom' => $isCustom,
+            'assignment' => $assignment,
+            'weights' => $subjectWeights,
         ]);
+    }
+
+    public function nilaiWeightsStore(Request $request, $class, $subject)
+    {
+        $user = $request->user();
+
+        $isCustom = str_starts_with($subject, 'cs_');
+        $assignment = null;
+
+        if ($isCustom) {
+            $csId = (int) str_replace('cs_', '', $subject);
+            $assignment = $user->teachingAssignments()
+                ->where('class_name', $class)
+                ->where('custom_subject_id', $csId)
+                ->whereHas('period', fn($q) => $q->where('is_active', true))
+                ->first();
+        } else {
+            $assignment = $user->teachingAssignments()
+                ->where('class_name', $class)
+                ->where('subject_id', $subject)
+                ->whereHas('period', fn($q) => $q->where('is_active', true))
+                ->first();
+        }
+
+        if (!$assignment) {
+            return back()->with('error', 'Tidak ada penugasan ditemukan.');
+        }
+
+        $components = ['weight_quiz', 'weight_homework', 'weight_project', 'weight_assignment', 'weight_uts', 'weight_uas'];
+
+        if ($request->boolean('reset')) {
+            $assignment->update([
+                'weight_quiz' => null,
+                'weight_homework' => null,
+                'weight_project' => null,
+                'weight_assignment' => null,
+                'weight_uts' => null,
+                'weight_uas' => null,
+            ]);
+
+            AuditService::log('weights.reset', 'TeachingAssignment', $assignment->id, $class);
+
+            return back()->with('success', 'Bobot nilai dikembalikan ke default mapel.');
+        }
+
+        $weights = $request->only($components);
+
+        if (collect($weights)->every(fn($w) => $w === null || $w === '')) {
+            return back()->with('error', 'Isi bobot nilai terlebih dahulu atau gunakan tombol "Gunakan Default".');
+        }
+
+        $validated = $request->validate([
+            'weight_quiz' => 'required|numeric|min:0|max:100',
+            'weight_homework' => 'required|numeric|min:0|max:100',
+            'weight_project' => 'required|numeric|min:0|max:100',
+            'weight_assignment' => 'required|numeric|min:0|max:100',
+            'weight_uts' => 'required|numeric|min:0|max:100',
+            'weight_uas' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $sum = array_sum(array_map('floatval', $validated));
+        if (abs($sum - 100) > 0.5) {
+            return back()->withErrors(['bobot' => 'Total bobot harus 100%. Saat ini ' . round($sum, 1) . '%.'])->withInput();
+        }
+
+        $assignment->update(array_map('floatval', $validated));
+
+        AuditService::log('weights.update', 'TeachingAssignment', $assignment->id, $class);
+
+        return back()->with('success', 'Bobot nilai untuk kelas ini berhasil diperbarui.');
     }
 
     public function nilaiStore(Request $request, $class, $subject)
@@ -981,7 +1055,9 @@ class GuruController extends Controller
             }
 
             $componentScores = \App\Helpers\PortalHelper::componentScores($raw);
-            $finalScore = \App\Helpers\PortalHelper::finalScore($raw);
+            $subject = $assignment->subject ?? $assignment->customSubject;
+            $weights = \App\Helpers\PortalHelper::effectiveWeights($subject, $assignment);
+            $finalScore = \App\Helpers\PortalHelper::finalScore($raw, $weights);
 
             $subjectName = $assignment->subject?->name ?? $assignment->customSubject?->nama ?? '-';
             $subjectCode = $assignment->subject?->code ?? $assignment->customSubject?->kode ?? '-';
@@ -1007,7 +1083,7 @@ class GuruController extends Controller
                         }
                     }
 
-                    $f = \App\Helpers\PortalHelper::finalScore($r);
+                    $f = \App\Helpers\PortalHelper::finalScore($r, $weights);
                     if ($f > 0) $studentFinals[] = $f;
                 }
 
@@ -1022,6 +1098,7 @@ class GuruController extends Controller
                 'subject_code' => $subjectCode,
                 'kkm' => $kkm,
                 'components' => $componentScores,
+                'weights' => $weights,
                 'final_score' => $finalScore,
                 'letter' => \App\Helpers\PortalHelper::gradeLetter($finalScore),
                 'passed' => $finalScore >= $kkm,
@@ -1078,7 +1155,9 @@ class GuruController extends Controller
                     }
                 }
 
-                $finalScore = \App\Helpers\PortalHelper::finalScore($raw);
+                $subject = $assignment->subject ?? $assignment->customSubject;
+                $weights = \App\Helpers\PortalHelper::effectiveWeights($subject, $assignment);
+                $finalScore = \App\Helpers\PortalHelper::finalScore($raw, $weights);
                 if ($finalScore > 0) {
                     $finalScores[] = $finalScore;
                 }

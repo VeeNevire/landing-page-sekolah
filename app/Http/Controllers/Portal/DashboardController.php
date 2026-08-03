@@ -172,7 +172,8 @@ class DashboardController extends Controller
             }
 
             $finalScore = 0;
-            foreach (PortalHelper::WEIGHTS as $comp => $w) {
+            $subjectWeights = PortalHelper::effectiveWeights($ta->subject ?? $ta->customSubject, $ta);
+            foreach ($subjectWeights as $comp => $w) {
                 $finalScore += ($componentAvgs[$comp] ?? 0) * $w;
             }
 

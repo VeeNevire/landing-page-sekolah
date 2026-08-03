@@ -20,6 +20,61 @@
 
 <section class="portal-panel" style="margin-bottom:20px">
   <div class="portal-panel-header">
+    <div>
+      <h2>Bobot Penilaian</h2>
+      <p>Atur bobot komponen nilai untuk {{ $subject->name ?? $subject->nama }} di kelas {{ $class }}. Total harus 100%.</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      @if ($assignment && $assignment->hasWeights())
+        <span style="font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:8px;background:color-mix(in srgb,#FF9F0A 12%,var(--card));color:#b45309;white-space:nowrap">Kelas ini memakai bobot khusus</span>
+      @else
+        <span style="font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:8px;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2);white-space:nowrap">Memakai bobot default mapel</span>
+      @endif
+      <form method="POST" action="{{ route('guru.nilai.weights', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id]) }}" style="display:inline">
+        @csrf
+        <input type="hidden" name="reset" value="1">
+        <button type="submit" class="btn btn-outline" title="Kembalikan bobot ke default mapel">Gunakan Default</button>
+      </form>
+    </div>
+  </div>
+  <form method="POST" action="{{ route('guru.nilai.weights', ['class' => $class, 'subject' => ($isCustom ?? false) ? 'cs_' . $subject->id : $subject->id]) }}">
+    @csrf
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
+      @foreach(['quiz' => 'Quiz', 'homework' => 'PR', 'assignment' => 'Tugas', 'project' => 'Proyek', 'uts' => 'UTS', 'uas' => 'UAS'] as $key => $label)
+      <div class="field">
+        <label for="weight_{{ $key }}">{{ $label }} (%)</label>
+        <input id="weight_{{ $key }}" type="number" name="weight_{{ $key }}" min="0" max="100" step="0.01"
+               value="{{ round($weights[$key] * 100, 2) }}" class="bobot-input">
+      </div>
+      @endforeach
+    </div>
+    <div style="margin-top:14px;display:flex;align-items:center;gap:14px">
+      <button class="btn btn-primary" type="submit">Simpan Bobot</button>
+      <span style="font-weight:700;font-size:.85rem">Total: <span id="bobotTotal">100</span>%</span>
+      @error('bobot')
+        <span style="color:#ef4444;font-size:.8rem;font-weight:600">{{ $message }}</span>
+      @enderror
+    </div>
+  </form>
+</section>
+
+<script>
+(function () {
+  const inputs = document.querySelectorAll('.bobot-input');
+  const totalEl = document.getElementById('bobotTotal');
+  function updateTotal() {
+    let sum = 0;
+    inputs.forEach(i => { const v = parseFloat(i.value); if (!isNaN(v)) sum += v; });
+    totalEl.textContent = Math.round(sum * 100) / 100;
+    totalEl.style.color = Math.abs(sum - 100) > 0.5 ? '#dc2626' : '';
+  }
+  inputs.forEach(i => i.addEventListener('input', updateTotal));
+  updateTotal();
+})();
+</script>
+
+<section class="portal-panel" style="margin-bottom:20px">
+  <div class="portal-panel-header">
     <div><h2>Tambah Penilaian Baru</h2><p>Isi data penilaian, lalu input nilai per siswa di bawah.</p></div>
     <label style="font-size:.78rem;font-weight:700;padding:5px 12px;border-radius:8px;background:color-mix(in srgb,var(--primary-2) 10%,var(--card));color:var(--primary-2);white-space:nowrap;display:inline-flex;align-items:center;gap:6px;cursor:pointer">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>

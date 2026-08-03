@@ -10,13 +10,31 @@ class Subject extends Model
         'code',
         'name',
         'kkm',
+        'weight_quiz',
+        'weight_homework',
+        'weight_project',
+        'weight_assignment',
+        'weight_uts',
+        'weight_uas',
     ];
 
     protected function casts(): array
     {
         return [
             'kkm' => 'decimal:2',
+            'weight_quiz' => 'decimal:2',
+            'weight_homework' => 'decimal:2',
+            'weight_project' => 'decimal:2',
+            'weight_assignment' => 'decimal:2',
+            'weight_uts' => 'decimal:2',
+            'weight_uas' => 'decimal:2',
         ];
+    }
+
+    public function hasWeights(): bool
+    {
+        return collect(['weight_quiz', 'weight_homework', 'weight_project', 'weight_assignment', 'weight_uts', 'weight_uas'])
+            ->contains(fn($column) => $this->{$column} !== null);
     }
 
     public function teachingAssignments()
