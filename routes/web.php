@@ -12,6 +12,7 @@ use App\Http\Controllers\Guru\GuruController;
 use App\Http\Controllers\Guru\KuisController;
 use App\Http\Controllers\Guru\ModuleController;
 use App\Http\Controllers\Guru\TugasController;
+use App\Http\Controllers\Guru\WaliRaporController;
 use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\Siswa\SiswaController;
 use App\Http\Controllers\Siswa\SiswaKuisController;
@@ -138,6 +139,14 @@ Route::middleware(['auth', 'role:teacher,homeroom,admin'])->prefix('guru')->name
     Route::get('/kuis/{attempt}/nilai-essay-data', [KuisController::class, 'nilaiEssayData'])->name('kuis.nilai-essay-data');
     Route::post('/kuis/{attempt}/nilai-essay', [KuisController::class, 'nilaiEssay'])->name('kuis.nilai-essay');
 });
+
+Route::middleware(['auth', 'role:homeroom'])->prefix('guru')->name('guru.')->group(function () {
+    Route::get('/wali/rapor', [WaliRaporController::class, 'index'])->name('wali.rapor');
+    Route::get('/wali/rapor/pdf-semua', [WaliRaporController::class, 'pdfSemua'])->name('wali.rapor.pdf-semua');
+    Route::get('/wali/rapor/{student}/preview', [WaliRaporController::class, 'preview'])->name('wali.rapor.preview');
+    Route::get('/wali/rapor/{student}/pdf', [WaliRaporController::class, 'pdf'])->name('wali.rapor.pdf');
+});
+
 
 Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->name('alumni.')->group(function () {
     Route::get('/dashboard', [AlumniController::class, 'dashboard'])->name('dashboard');
