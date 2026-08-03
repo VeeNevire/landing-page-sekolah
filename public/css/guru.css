@@ -163,3 +163,17 @@ body.dark.guru-body .portal-sidebar-footer .logout-btn:hover{background:rgba(255
   width: 20px; height: 20px;
   flex-shrink: 0;
 }
+.guru-body .portal-menu .nav-count {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 99px;
+  background: #ef4444;
+  color: #fff;
+  font-size: .7rem;
+  font-weight: 700;
+}

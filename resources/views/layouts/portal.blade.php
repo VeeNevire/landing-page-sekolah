@@ -77,6 +77,16 @@
           </span>
           <span class="portal-menu-label">Kehadiran</span>
         </a>
+        <a href="{{ route('portal.izin', ['student_id' => $selectedStudentId ?? '']) }}"
+          @class(['active'=> request()->routeIs('portal.izin*')])>
+          <span class="portal-menu-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 8v4l3 3" />
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+          </span>
+          <span class="portal-menu-label">Izin / Sakit</span>
+        </a>
         <a href="{{ route('portal.jadwal', ['student_id' => $selectedStudentId ?? '']) }}"
           @class(['active'=> request()->routeIs('portal.jadwal')])>
           <span class="portal-menu-icon">

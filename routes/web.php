@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\Portal\DashboardController;
+use App\Http\Controllers\Portal\IzinController;
 use App\Http\Controllers\Portal\ReportController;
 use App\Http\Controllers\Portal\StudentController;
 use App\Http\Controllers\Guru\BankSoalController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Guru\GuruController;
 use App\Http\Controllers\Guru\KuisController;
 use App\Http\Controllers\Guru\ModuleController;
 use App\Http\Controllers\Guru\TugasController;
+use App\Http\Controllers\Guru\WaliIzinController;
 use App\Http\Controllers\Guru\WaliRaporController;
 use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\Siswa\SiswaController;
@@ -54,6 +56,8 @@ Route::middleware(['auth', 'role:parent'])->prefix('portal')->name('portal.')->g
     Route::get('/laporan', [ReportController::class, 'index'])->name('laporan');
     Route::get('/laporan/csv', [ReportController::class, 'exportCsv'])->name('laporan.csv');
     Route::get('/kehadiran', [StudentController::class, 'kehadiran'])->name('kehadiran');
+    Route::get('/izin', [IzinController::class, 'index'])->name('izin');
+    Route::post('/izin', [IzinController::class, 'store'])->name('izin.store');
     Route::get('/jadwal', [StudentController::class, 'jadwal'])->name('jadwal');
     Route::get('/tagihan', [StudentController::class, 'tagihan'])->name('tagihan');
     Route::post('/tagihan/{billing}/bayar', [StudentController::class, 'tagihanBayar'])->name('tagihan.bayar');
@@ -145,6 +149,10 @@ Route::middleware(['auth', 'role:homeroom'])->prefix('guru')->name('guru.')->gro
     Route::get('/wali/rapor/pdf-semua', [WaliRaporController::class, 'pdfSemua'])->name('wali.rapor.pdf-semua');
     Route::get('/wali/rapor/{student}/preview', [WaliRaporController::class, 'preview'])->name('wali.rapor.preview');
     Route::get('/wali/rapor/{student}/pdf', [WaliRaporController::class, 'pdf'])->name('wali.rapor.pdf');
+
+    Route::get('/wali/izin', [WaliIzinController::class, 'index'])->name('wali.izin');
+    Route::post('/wali/izin/{leaveRequest}/approve', [WaliIzinController::class, 'approve'])->name('wali.izin.approve');
+    Route::post('/wali/izin/{leaveRequest}/reject', [WaliIzinController::class, 'reject'])->name('wali.izin.reject');
 });
 
 
@@ -271,6 +279,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/materi/{material}/preview', [DownloadController::class, 'preview'])->name('materi.preview');
         Route::get('/assignment/{assignment}', [DownloadController::class, 'assignment'])->name('assignment');
         Route::get('/submission/{submission}', [DownloadController::class, 'submission'])->name('submission');
+        Route::get('/izin/{leaveRequest}', [DownloadController::class, 'izin'])->name('izin');
+        Route::get('/izin/{leaveRequest}/preview', [DownloadController::class, 'izinPreview'])->name('izin.preview');
     });
 });
 

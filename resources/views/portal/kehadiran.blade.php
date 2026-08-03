@@ -9,12 +9,16 @@
     <p>Hubungi admin sekolah untuk menautkan akun Anda dengan data siswa.</p>
   </div>
 @else
-    <div class="portal-heading">
+<div class="portal-heading">
       <div>
         <span class="kicker">Rekap kehadiran</span>
         <h1>Kehadiran Siswa</h1>
         <p>Pencatatan kehadiran {{ $demoStudent['name'] }} Semester {{ $demoStudent['semester'] }} Tahun Ajaran {{ $demoStudent['academic_year'] }}.</p>
       </div>
+      <a class="btn btn-primary" href="{{ route('portal.izin', ['student_id' => $selectedStudentId]) }}" style="min-height:38px;padding:0 16px;display:inline-flex;align-items:center;gap:6px;font-size:.85rem;flex-shrink:0">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+        Ajukan Izin / Sakit
+      </a>
     </div>
 
     <div class="report-profile">

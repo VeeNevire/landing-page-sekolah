@@ -258,7 +258,7 @@ main.no-nav {
     font-size: 0.85rem;
     font-weight: 800;
     color: white;
-    background: linear-gradient(135deg, var(--primary-3), var(--primary-2), var(--primary));
+    background: var(--primary);
     box-shadow: 0 4px 14px color-mix(in srgb, var(--primary-4) 40%, transparent);
     transition: all 0.25s ease;
     cursor: pointer;
@@ -387,7 +387,7 @@ body.dark .nav-dropdown-menu a:hover {
     transform: translateY(-2px);
 }
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--primary-2), var(--primary-3));
+    background: var(--primary);
     color: white;
     box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 40%, transparent);
 }
@@ -395,7 +395,7 @@ body.dark .nav-dropdown-menu a:hover {
     box-shadow: 0 14px 30px color-mix(in srgb, var(--primary) 50%, transparent);
 }
 .btn-accent {
-    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    background: var(--accent);
     color: white;
     box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent);
 }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Lms;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assignment;
+use App\Models\Kelas;
+use App\Models\LeaveRequest;
 use App\Models\Material;
 use App\Models\Student;
 use App\Models\Submission;
@@ -13,6 +15,43 @@ use Illuminate\Support\Facades\Storage;
 
 class DownloadController extends Controller
 {
+    public function izin(Request $request, LeaveRequest $leaveRequest)
+    {
+        $this->authorizeIzin($request->user(), $leaveRequest);
+
+        return Storage::disk('public')->download($leaveRequest->attachment_path, $leaveRequest->attachment_name);
+    }
+
+    public function izinPreview(Request $request, LeaveRequest $leaveRequest)
+    {
+        $this->authorizeIzin($request->user(), $leaveRequest);
+
+        return response()->file(Storage::disk('public')->path($leaveRequest->attachment_path));
+    }
+
+    private function authorizeIzin($user, LeaveRequest $leaveRequest): void
+    {
+        if (!$leaveRequest->attachment_path) {
+            abort(404, 'Lampiran tidak ditemukan.');
+        }
+
+        $isParent = $user->students()->where('student_id', $leaveRequest->student_id)->exists();
+        $isRequester = $user->id === $leaveRequest->requested_by;
+
+        $kelas = Kelas::where('homeroom_teacher_id', $user->id)->first();
+        $isHomeroom = $kelas &&
+            $leaveRequest->student &&
+            $leaveRequest->student->class_name === $kelas->nama_lengkap;
+
+        if (!$isParent && !$isRequester && !$isHomeroom) {
+            abort(403);
+        }
+
+        if (!Storage::disk('public')->exists($leaveRequest->attachment_path)) {
+            abort(404, 'File tidak ditemukan di storage.');
+        }
+    }
+
     public function materi(Request $request, Material $material)
     {
         $user = $request->user();
