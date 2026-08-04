@@ -15,13 +15,6 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
     <h1>Kelola Pengguna</h1>
     <p>Kelola akun guru, orang tua, administrator, dan wali kelas.</p>
   </div>
-  <button type="button" class="btn btn-primary" onclick="openCreateModal()" style="display:inline-flex;align-items:center;gap:6px">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-    Tambah Pengguna
-  </button>
 </div>
 
 <div class="tabs" style="margin:0 0 20px">
@@ -45,6 +38,15 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
     class="tab-btn {{ $currentRole === 'admin' ? 'active' : '' }}">
     Admin <span class="tab-count">{{ $tabCounts['admin'] }}</span>
   </a>
+  <div class="portal-actions" style="margin-left:auto">
+    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      Tambah Pengguna
+    </button>
+  </div>
 </div>
 
 <div class="admin-toolbar">

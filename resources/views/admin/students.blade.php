@@ -48,31 +48,6 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     <h1>Siswa Aktif</h1>
     <p>Kelola data siswa aktif, hubungkan ke akun orang tua, dan import data.</p>
   </div>
-  <div style="display:flex;gap:8px">
-    <a href="{{ route('admin.students.import') }}" class="btn btn-outline" style="display:inline-flex;align-items:center;gap:6px">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="17 8 12 3 7 8" />
-        <line x1="12" y1="3" x2="12" y2="15" />
-      </svg>
-      Import CSV
-    </a>
-    <button type="button" class="btn btn-outline" onclick="openBulkGraduate()" style="display:inline-flex;align-items:center;gap:6px">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-        <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
-        <path d="M18 9l2 2 4-4"/>
-      </svg>
-      Luluskan Massal
-    </button>
-    <button type="button" class="btn btn-primary" onclick="openCreateModal()" style="display:inline-flex;align-items:center;gap:6px">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-      Tambah Siswa
-    </button>
-  </div>
 </div>
 
 <div class="tabs" style="margin:0 0 20px">
@@ -88,10 +63,31 @@ $applicantStepPercent = ['not_started' => 0, 'student_data' => 33, 'parent_data'
     class="tab-btn {{ $studentStatus === 'graduated' ? 'active' : '' }}">
     Lulus <span class="tab-count">{{ $tabCounts['graduated'] }}</span>
   </a>
-  <a href="{{ route('admin.students.index', array_merge(['tab' => 'students', 'status' => 'inactive'], array_filter(['search' => request('search'), 'class' => request('class')]))) }}"
-    class="tab-btn {{ $studentStatus === 'inactive' ? 'active' : '' }}">
-    Nonaktif <span class="tab-count">{{ $tabCounts['inactive'] }}</span>
-  </a>
+  <div class="portal-actions" style="margin-left:auto">
+    <a href="{{ route('admin.students.import') }}" class="btn btn-outline">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+      </svg>
+      Import CSV
+    </a>
+    <button type="button" class="btn btn-outline" onclick="openBulkGraduate()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
+        <path d="M18 9l2 2 4-4"/>
+      </svg>
+      Luluskan Massal
+    </button>
+    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      Tambah Siswa
+    </button>
+  </div>
 </div>
 
 <div class="admin-toolbar">
