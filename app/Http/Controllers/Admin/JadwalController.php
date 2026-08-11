@@ -7,6 +7,7 @@ use App\Models\AcademicPeriod;
 use App\Models\TeachingAssignment;
 use App\Models\Jadwal;
 use App\Models\Kelas;
+use App\Models\Student;
 use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
@@ -130,13 +131,25 @@ class JadwalController extends Controller
             ->with(['subject', 'customSubject', 'teacher'])
             ->get();
 
+        $muridByClass = Student::where('status', 'active')
+            ->whereNotNull('class_name')
+            ->orderBy('full_name')
+            ->get(['full_name', 'nisn', 'class_name'])
+            ->groupBy('class_name');
+
         $kelasData = [];
-        foreach ($allAssignments->groupBy('class_name') as $className => $assignments) {
+        foreach ($kelasList as $kelas) {
+            $className = $kelas->nama_lengkap;
             $kelasData[$className] = [
-                'guru' => $assignments->map(fn($ta) => [
-                    'nama' => $ta->teacher?->full_name ?? $ta->teacher?->name ?? '-',
-                    'mapel' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
-                ])->values(),
+                'wali' => $kelas->homeroomTeacher ? ($kelas->homeroomTeacher->full_name ?? $kelas->homeroomTeacher->name) : null,
+                'guru' => $allAssignments->where('class_name', $className)
+                    ->map(fn($ta) => [
+                        'id' => $ta->teacher_id,
+                        'name' => $ta->teacher?->full_name ?? $ta->teacher?->name ?? '-',
+                        'mapel' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
+                    ])
+                    ->values(),
+                'murid' => $muridByClass->get($className, collect())->values(),
             ];
         }
 

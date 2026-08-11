@@ -9,6 +9,7 @@
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/glass.css') }}">
   <style>
     .alumni-navbar {
       background: var(--card);

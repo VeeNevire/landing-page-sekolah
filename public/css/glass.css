@@ -1,0 +1,223 @@
+/* =========================================================
+   GLASS DESIGN SYSTEM — InvestaSchool
+   Adapted from admin dashboard mockup (code.html)
+   Loaded LAST in all portal layouts so it overrides base CSS
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+.portal-body{font-family:'Plus Jakarta Sans',Inter,ui-sans-serif,system-ui,sans-serif}
+
+/* ── Body background (soft gradient) ── */
+.portal-body{
+  background:linear-gradient(135deg,#e4edfb 0%,#dcE8F8 35%,#cfdef3 100%);
+  background-attachment:fixed
+}
+body.dark.portal-body{
+  background:linear-gradient(135deg,#0a1a2e 0%,#0e2036 55%,#0f2035 100%);
+  background-attachment:fixed
+}
+
+/* ── Glass panel ── */
+.glass-panel,
+.portal-panel,
+.portal-kpi,
+.portal-hero,
+.bento .b-card:not(.b-card-hero),
+.bento .b-card-stat{
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:0 4px 30px rgba(0,0,0,.05)
+}
+body.dark .glass-panel,
+body.dark .portal-panel,
+body.dark .portal-kpi,
+body.dark .portal-hero,
+body.dark .bento .b-card:not(.b-card-hero),
+body.dark .bento .b-card-stat{
+  background:rgba(15,32,53,.62);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 4px 30px rgba(0,0,0,.30)
+}
+
+/* ── Sidebar ── */
+.portal-body .portal-sidebar{
+  background:rgba(255,255,255,.36);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-right:1px solid rgba(255,255,255,.65);
+  box-shadow:0 0 40px rgba(0,0,0,.05)
+}
+body.dark.portal-body .portal-sidebar{
+  background:rgba(10,26,46,.52);
+  border-right-color:rgba(255,255,255,.08)
+}
+.portal-body .portal-sidebar .brand{color:var(--ink);border-bottom:1px solid rgba(255,255,255,.5);margin-bottom:10px}
+body.dark.portal-body .portal-sidebar .brand{border-bottom-color:rgba(255,255,255,.08)}
+
+/* ── Menu items (rounded pill, flat active) ── */
+.portal-body .portal-menu a{
+  border-radius:12px;border:1px solid transparent;
+  transform:none!important;
+  transition:background .2s ease,color .2s ease,box-shadow .2s ease
+}
+.portal-body .portal-menu a::before{display:none}
+.portal-body .portal-menu a:hover{
+  background:rgba(255,255,255,.55);color:var(--ink);
+  box-shadow:none
+}
+.portal-body .portal-menu a.active{
+  background:rgba(255,255,255,.9);color:var(--primary);
+  border-color:rgba(255,255,255,.65);
+  box-shadow:0 1px 4px rgba(0,0,0,.04)
+}
+body.dark.portal-body .portal-menu a:hover{background:rgba(255,255,255,.06);color:#fff}
+body.dark.portal-body .portal-menu a.active{
+  background:rgba(255,255,255,.12);color:var(--primary-2);
+  border-color:rgba(255,255,255,.1)
+}
+.portal-body .portal-menu-icon{color:#9aa4b2;transition:color .2s ease}
+.portal-body .portal-menu a:hover .portal-menu-icon,
+.portal-body .portal-menu a.active .portal-menu-icon{color:var(--primary)}
+body.dark.portal-body .portal-menu-icon{color:rgba(255,255,255,.4)}
+body.dark.portal-body .portal-menu a:hover .portal-menu-icon,
+body.dark.portal-body .portal-menu a.active .portal-menu-icon{color:var(--primary-2)}
+.portal-body .portal-menu-group{color:#8a94a6}
+body.dark.portal-body .portal-menu-group{color:rgba(255,255,255,.3)}
+
+/* ── Sidebar footer ── */
+.portal-body .portal-sidebar-footer{border-top:1px solid rgba(255,255,255,.5)}
+body.dark.portal-body .portal-sidebar-footer{border-top-color:rgba(255,255,255,.08)}
+.portal-body .portal-sidebar-footer a:hover,
+.portal-body .portal-sidebar-footer .logout-btn:hover{
+  background:rgba(255,255,255,.55);color:var(--ink);transform:none
+}
+body.dark.portal-body .portal-sidebar-footer a:hover,
+body.dark.portal-body .portal-sidebar-footer .logout-btn:hover{
+  background:rgba(255,255,255,.06);color:#fff
+}
+body.dark.portal-body .portal-sidebar-footer .logout-btn:hover{color:#f87171}
+
+/* ── Topbar ── */
+.portal-body .portal-topbar{
+  background:rgba(255,255,255,.3);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.55);
+  box-shadow:0 4px 20px rgba(0,0,0,.03)
+}
+body.dark.portal-body .portal-topbar{
+  background:rgba(10,26,46,.45);
+  border-bottom-color:rgba(255,255,255,.08)
+}
+
+/* ── Welcome hero ── */
+.portal-hero{
+  display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;
+  border-radius:22px;padding:28px 30px;margin-bottom:26px
+}
+.portal-hero-kicker{
+  display:inline-flex;align-items:center;gap:8px;font-size:.74rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:8px
+}
+.portal-hero h1{font-size:clamp(1.5rem,2.6vw,2.1rem);letter-spacing:-.04em;line-height:1.1;margin:0}
+.portal-hero p{color:var(--muted);margin:8px 0 0;font-size:.92rem}
+.portal-hero-side{display:flex;gap:12px;flex-wrap:wrap}
+.portal-hero-chip{
+  display:flex;align-items:center;gap:12px;min-width:225px;
+  border:1px solid rgba(255,255,255,.6);border-radius:14px;padding:12px 15px;
+  background:rgba(255,255,255,.45)
+}
+.portal-hero-chip .kpi-chip{width:40px;height:40px;border-radius:12px}
+.portal-hero-chip strong{display:block;font-size:.86rem;color:var(--ink)}
+.portal-hero-chip div span{display:block;font-size:.78rem;color:var(--muted);margin-top:2px}
+.portal-hero-chip-badge{margin-left:auto;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:800}
+.portal-hero-chip-badge.ok{background:color-mix(in srgb,var(--success) 14%,#fff);color:var(--success)}
+.portal-hero-chip-badge.warn{background:color-mix(in srgb,#ef4444 12%,#fff);color:#ef4444}
+body.dark.portal-body .portal-hero-chip{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.05)}
+body.dark.portal-body .portal-hero-chip-badge.ok{background:rgba(52,199,89,.18);color:#6ee7b7}
+body.dark.portal-body .portal-hero-chip-badge.warn{background:rgba(239,68,68,.18);color:#fca5a5}
+@media(max-width:760px){.portal-hero{padding:20px}.portal-hero-side{width:100%}}
+
+/* ── KPI icon chips (gradient accent) ── */
+.kpi-chip{
+  width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+  color:#fff;flex-shrink:0
+}
+.kpi-chip svg{width:22px;height:22px}
+.kpi-chip.blue{background:linear-gradient(135deg,#4f8ef7,#2456e0);box-shadow:0 6px 16px rgba(37,86,224,.28)}
+.kpi-chip.green{background:linear-gradient(135deg,#34d399,#059669);box-shadow:0 6px 16px rgba(5,150,105,.28)}
+.kpi-chip.purple{background:linear-gradient(135deg,#a78bfa,#7c3aed);box-shadow:0 6px 16px rgba(124,58,237,.28)}
+.kpi-chip.rose{background:linear-gradient(135deg,#fb7185,#e11d48);box-shadow:0 6px 16px rgba(225,29,72,.28)}
+.kpi-chip.teal{background:linear-gradient(135deg,var(--primary-3),var(--primary));box-shadow:0 6px 16px rgba(26,95,122,.28)}
+.kpi-chip.amber{background:linear-gradient(135deg,#fbbf24,#f59e0b);box-shadow:0 6px 16px rgba(217,119,6,.28)}
+.kpi-chip.slate{background:linear-gradient(135deg,#94a3b8,#64748b);box-shadow:0 6px 16px rgba(71,85,105,.28)}
+
+/* ── KPI cards ── */
+.portal-body .portal-kpis{gap:16px}
+.portal-body .portal-kpi{padding:20px 22px;display:flex;flex-direction:column;justify-content:space-between;transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease}
+.portal-body .portal-kpi:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.08)}
+.portal-body .portal-kpi::after{display:none}
+.portal-body .portal-kpi-label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.portal-body .portal-kpi-value{margin:14px 0 6px;font-size:2rem}
+.portal-body .portal-kpi-note{font-size:.78rem}
+
+/* ── Panel header (bar ala mockup) ── */
+.portal-panel-header{padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,.6)}
+body.dark .portal-panel-header{border-bottom-color:rgba(255,255,255,.08)}
+.portal-panel-header h2,.portal-panel-header h3{font-size:1.05rem}
+
+/* ── Buttons ── */
+.btn-gradient{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,var(--primary-2),var(--primary));
+  color:#fff;border:none;border-radius:12px;padding:10px 18px;
+  font-weight:700;font-size:.85rem;line-height:1;
+  box-shadow:0 6px 16px color-mix(in srgb,var(--primary) 35%,transparent);
+  cursor:pointer;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease
+}
+.btn-gradient:hover{transform:translateY(-1px);box-shadow:0 8px 22px color-mix(in srgb,var(--primary) 45%,transparent)}
+.btn-gradient svg{width:16px;height:16px}
+
+/* ── Activity icon pastel chips ── */
+.activity-icon{box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.activity-icon.blue{background:#dbeafe;color:#2563eb}
+.activity-icon.green{background:#d1fae5;color:#059669}
+.activity-icon.purple{background:#ede9fe;color:#7c3aed}
+.activity-icon.rose{background:#ffe4e6;color:#e11d48}
+.activity-icon.amber{background:#fef3c7;color:#d97706}
+.activity-icon.slate{background:#e2e8f0;color:#475569}
+body.dark .activity-icon.blue{background:rgba(37,99,235,.18);color:#93c5fd}
+body.dark .activity-icon.green{background:rgba(5,150,105,.18);color:#6ee7b7}
+body.dark .activity-icon.purple{background:rgba(124,58,237,.18);color:#c4b5fd}
+body.dark .activity-icon.rose{background:rgba(225,29,72,.18);color:#fda4af}
+body.dark .activity-icon.amber{background:rgba(217,119,6,.18);color:#fcd34d}
+body.dark .activity-icon.slate{background:rgba(71,85,105,.18);color:#cbd5e1}
+
+/* ── Attendance modal chips (shared w/ stat grid) ── */
+.attendance-box{border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.4)}
+body.dark .attendance-box{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
+
+/* ── Siswa bento stat hover lift ── */
+.bento .b-card-stat:not(.is-band){transition:transform .3s ease,box-shadow .3s ease}
+.bento .b-card-stat:not(.is-band):hover{transform:translateY(-3px)}
+
+/* ── Siswa portal (bento) — glass consistency ── */
+.siswa-body{font-family:'Plus Jakarta Sans','Inter',-apple-system,BlinkMacSystemFont,sans-serif}
+.siswa-body{background:linear-gradient(135deg,#eef2f9 0%,#e6ecf6 55%,#dde6f4 100%);background-attachment:fixed}
+body.dark.siswa-body{background:linear-gradient(135deg,#0d0d14 0%,#10101a 55%,#0d0d14 100%);background-attachment:fixed}
+.siswa-sidebar{
+  background:rgba(255,255,255,.42);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  border-right:1px solid rgba(255,255,255,.5)
+}
+body.dark .siswa-sidebar{background:rgba(13,13,20,.55);border-right-color:rgba(255,255,255,.06)}
+.siswa-nav-item{border-radius:12px;border:1px solid transparent}
+.siswa-nav-item:hover{background:rgba(255,255,255,.6)}
+.siswa-nav-item.active{background:rgba(255,255,255,.92);color:var(--s-primary-dark);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.siswa-nav-item.active .siswa-nav-icon{color:var(--s-primary-dark)}
+body.dark .siswa-nav-item:hover{background:rgba(255,255,255,.06)}
+body.dark .siswa-nav-item.active{background:rgba(255,255,255,.12);color:var(--s-primary)}
+body.dark .siswa-nav-item.active .siswa-nav-icon{color:var(--s-primary)}

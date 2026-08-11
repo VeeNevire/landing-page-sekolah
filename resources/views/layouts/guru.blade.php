@@ -7,10 +7,11 @@
   <meta name="description" content="Portal Guru InvestaSchool ">
   <title>@yield('title') | Portal Guru</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
-  <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+<link rel="stylesheet" href="{{ asset('css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
   <link rel="stylesheet" href="{{ asset('css/guru.css') }}">
   <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/glass.css') }}">
   @stack('styles')
 </head>
 

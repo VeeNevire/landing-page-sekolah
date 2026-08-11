@@ -102,6 +102,8 @@ class PPDBController extends Controller
             ]);
         }
 
+        $user->update(['last_login_at' => now()]);
+
         Auth::login($user);
 
         $user->load('applicant');
@@ -153,6 +155,8 @@ class PPDBController extends Controller
             'user_id' => $user->id,
             'full_name' => $user->full_name,
         ]);
+
+        $user->update(['last_login_at' => now()]);
 
         Auth::login($user);
 

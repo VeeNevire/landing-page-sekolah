@@ -32,6 +32,8 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $role = $user->role ?? 'parent';
 
+        $user->update(['last_login_at' => now()]);
+
         AuditService::log('auth.login', null, null, null, $user->id);
 
         if ($role === 'admin') {

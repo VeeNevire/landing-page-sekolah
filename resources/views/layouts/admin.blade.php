@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
   <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/glass.css') }}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   @stack('styles')
 </head>
@@ -78,6 +79,17 @@
             </svg>
           </span>
           <span class="portal-menu-label">Alumni</span>
+        </a>
+        <a href="{{ route('admin.perpustakaan.index') }}"
+          @class(['active'=> request()->routeIs('admin.perpustakaan.*')])>
+          <span class="portal-menu-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              <path d="M12 13v7" />
+              <path d="M12 13 5 9.5 12 6l7 3.5Z" />
+            </svg>
+          </span>
+          <span class="portal-menu-label">Perpustakaan</span>
         </a>
 
         <div class="portal-menu-group">Akademik</div>

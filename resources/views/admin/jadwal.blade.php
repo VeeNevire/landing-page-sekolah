@@ -42,6 +42,12 @@
       text-underline-offset: 4px;
       text-decoration-thickness: 2px;
     }
+    .kelas-detail-tab {
+      padding:8px 12px;border:0;border-bottom:2px solid transparent;background:transparent;
+      color:var(--muted);font:600 .85rem inherit;cursor:pointer
+    }
+    .kelas-detail-tab.active { color:var(--primary);border-bottom-color:var(--primary) }
+    .kelas-detail-count { margin-left:4px;padding:2px 6px;border-radius:999px;background:color-mix(in srgb,var(--primary-2) 12%,var(--card));font-size:.72rem }
   </style>
 @endpush
 
@@ -257,6 +263,51 @@
     </div>
   </div>
 </section>
+
+<div class="admin-modal-overlay" id="kelasDetailModal">
+  <div class="admin-modal-box" style="max-width:680px">
+    <div class="admin-modal-header">
+      <div>
+        <h2 id="kelasDetailTitle">Detail Kelas</h2>
+        <span id="kelasDetailWali" style="display:block;margin-top:3px;font-size:.82rem;color:var(--muted)"></span>
+      </div>
+      <button class="admin-modal-close" type="button" onclick="closeKelasDetailModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="admin-modal-body">
+      <div style="display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:16px">
+        <button type="button" class="kelas-detail-tab active" data-kelas-detail-tab="guru">Guru <span id="kelasGuruCount"></span></button>
+        <button type="button" class="kelas-detail-tab" data-kelas-detail-tab="murid">Murid <span id="kelasMuridCount"></span></button>
+      </div>
+      <div id="kelasGuruPanel"></div>
+      <div id="kelasMuridPanel" style="display:none"></div>
+    </div>
+    <div class="admin-modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeKelasDetailModal()">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="admin-modal-overlay" id="classScoresModal">
+  <div class="admin-modal-box" style="max-width:1000px">
+    <div class="admin-modal-header">
+      <div>
+        <h2 id="classScoresTitle">Nilai Siswa</h2>
+        <span id="classScoresSubtitle" style="font-size:.8rem;color:var(--muted)"></span>
+      </div>
+      <button class="admin-modal-close" type="button" onclick="closeClassScoresModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="admin-modal-body" id="classScoresBody">
+      <div style="text-align:center;padding:2rem;color:var(--muted)">Memuat...</div>
+    </div>
+    <div class="admin-modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeClassScoresModal()">Tutup</button>
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -330,24 +381,112 @@ function backToGuruList() {
 const KELAS_DATA = @json($kelasData);
 
 function openKelasGuru(className) {
-  const data = KELAS_DATA[className];
-  if (!data || !data.guru.length) {
-    Swal.fire({ icon: 'info', title: 'Belum Ada Jadwal', text: 'Belum ada jadwal untuk ' + className + '.', confirmButtonText: 'Tutup', confirmButtonColor: '#6b7280' });
-    return;
-  }
-  const list = data.guru.map(g =>
-    `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);margin-bottom:6px">
-      <strong style="font-size:.88rem">${g.nama}</strong>
-      <span style="font-size:.82rem;color:var(--muted)">${g.mapel}</span>
-    </div>`
-  ).join('');
-  Swal.fire({
-    title: `Guru — ${className}`,
-    html: `<div style="text-align:left">${list || '<p style="color:var(--muted)">Tidak ada guru.</p>'}</div>`,
-    confirmButtonText: 'Tutup',
-    confirmButtonColor: '#6b7280',
+  const data = KELAS_DATA[className] || { guru: [], murid: [], wali: null };
+  const guru = data.guru || [];
+  const murid = data.murid || [];
+
+  document.getElementById('kelasDetailTitle').textContent = className;
+  document.getElementById('kelasDetailWali').textContent = data.wali ? 'Wali kelas: ' + data.wali : 'Wali kelas belum ditetapkan';
+  document.getElementById('kelasGuruCount').innerHTML = '<span class="kelas-detail-count">' + guru.length + '</span>';
+  document.getElementById('kelasMuridCount').innerHTML = '<span class="kelas-detail-count">' + murid.length + '</span>';
+
+  const guruHtml = guru.length
+    ? guru.map(g => {
+      const encoded = encodeURIComponent(className);
+      const row = g.id
+        ? `<div onclick="openClassScores(${g.id}, '${encoded}')" title="Klik untuk lihat nilai" style="display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);margin-bottom:6px;cursor:pointer;transition:border-color .15s,background .15s" onmouseover="this.style.borderColor='var(--primary-2)';this.style.background='color-mix(in srgb,var(--primary-2) 6%,var(--card))'" onmouseout="this.style.borderColor='var(--line)';this.style.background='var(--bg)'"><strong style="font-size:.88rem">${g.name}</strong><span style="font-size:.82rem;color:var(--muted);text-align:right;display:flex;align-items:center;gap:8px">${g.mapel}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary-2)"><path d="m9 18 6-6-6-6"/></svg></span></div>`
+        : `<div style="display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);margin-bottom:6px"><strong style="font-size:.88rem">${g.name}</strong><span style="font-size:.82rem;color:var(--muted);text-align:right">${g.mapel}</span></div>`;
+      return row;
+    }).join('')
+    : '<p style="text-align:center;padding:24px;color:var(--muted)">Belum ada guru pengampu pada periode ini.</p>';
+  document.getElementById('kelasGuruPanel').innerHTML = guruHtml;
+
+  const muridHtml = murid.length
+    ? '<div style="max-height:340px;overflow-y:auto">' + murid.map((m, index) => `<div style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)"><span style="width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-2) 12%,var(--card));color:var(--primary);font-size:.72rem;font-weight:800;flex-shrink:0">${index + 1}</span><div><strong style="display:block;font-size:.88rem">${m.full_name}</strong><span style="font-size:.76rem;color:var(--muted)">NISN ${m.nisn || '-'}</span></div></div>`).join('') + '</div>'
+    : '<p style="text-align:center;padding:24px;color:var(--muted)">Belum ada murid aktif di kelas ini.</p>';
+  document.getElementById('kelasMuridPanel').innerHTML = muridHtml;
+
+  switchKelasDetailTab('guru');
+  document.getElementById('kelasDetailModal').classList.add('open');
+}
+
+function switchKelasDetailTab(tab) {
+  document.querySelectorAll('[data-kelas-detail-tab]').forEach(button => button.classList.toggle('active', button.dataset.kelasDetailTab === tab));
+  document.getElementById('kelasGuruPanel').style.display = tab === 'guru' ? '' : 'none';
+  document.getElementById('kelasMuridPanel').style.display = tab === 'murid' ? '' : 'none';
+}
+
+function closeKelasDetailModal() {
+  document.getElementById('kelasDetailModal').classList.remove('open');
+}
+
+function openClassScores(userId, encodedClass) {
+  const className = decodeURIComponent(encodedClass);
+  const modal = document.getElementById('classScoresModal');
+  const body = document.getElementById('classScoresBody');
+  body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Memuat data nilai...</div>';
+  document.getElementById('classScoresTitle').textContent = 'Nilai Siswa';
+  document.getElementById('classScoresSubtitle').textContent = className;
+  modal.classList.add('open');
+
+  fetch('/admin/guru/' + userId + '/class-students?class=' + encodeURIComponent(className), {
+    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+  })
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    if (!data.rows.length) {
+      body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Belum ada siswa atau penugasan guru pada kelas ini.</div>';
+      return;
+    }
+
+    const components = [['quiz', 'Quiz'], ['homework', 'PR'], ['assignment', 'Tugas'], ['project', 'Proyek'], ['uts', 'UTS'], ['uas', 'UAS']];
+    let html = '<div style="overflow:auto;max-height:460px;border:1px solid var(--line);border-radius:12px">';
+    html += '<table class="grade-table" style="width:100%;min-width:900px;border-collapse:separate;border-spacing:0">';
+    html += '<thead><tr><th style="position:sticky;top:0;background:var(--card);z-index:2;text-align:left">Siswa</th><th style="position:sticky;top:0;background:var(--card);z-index:2">NISN</th><th style="position:sticky;top:0;background:var(--card);z-index:2;text-align:left">Mapel</th>';
+    components.forEach(([key, label]) => {
+      const weight = data.rows[0].weights?.[key];
+      html += '<th style="position:sticky;top:0;background:var(--card);z-index:2;text-align:center">' + label + ' (' + (weight !== undefined ? Math.round(weight * 100) : '-') + '%)</th>';
+    });
+    html += '<th style="position:sticky;top:0;background:var(--card);z-index:2;text-align:center;color:var(--primary)">Total</th></tr></thead><tbody>';
+
+    data.rows.forEach(row => {
+      html += '<tr><td style="font-weight:600">' + row.full_name + '</td><td style="text-align:center;color:var(--muted)">' + row.nisn + '</td><td>' + row.subject + '</td>';
+      components.forEach(([key]) => {
+        const score = row.components?.[key];
+        html += '<td style="text-align:center">' + (score !== undefined && score !== null && score > 0 ? score : '-') + '</td>';
+      });
+      html += '<td style="text-align:center;font-weight:800;color:var(--primary)">' + (row.total !== null ? row.total : '-') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+  })
+  .catch(() => {
+    body.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444">Gagal memuat data nilai.</div>';
   });
 }
+
+function closeClassScoresModal() {
+  document.getElementById('classScoresModal').classList.remove('open');
+}
+
+document.querySelectorAll('[data-kelas-detail-tab]').forEach(button => {
+  button.addEventListener('click', () => switchKelasDetailTab(button.dataset.kelasDetailTab));
+});
+
+document.getElementById('kelasDetailModal').addEventListener('click', function(event) {
+  if (event.target === this) closeKelasDetailModal();
+});
+
+document.getElementById('classScoresModal').addEventListener('click', function(event) {
+  if (event.target === this) closeClassScoresModal();
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeKelasDetailModal();
+    closeClassScoresModal();
+  }
+});
 
 function openAddModal() {
   Swal.fire({

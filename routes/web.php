@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PPDBController;
+use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\IzinController;
 use App\Http\Controllers\Portal\ReportController;
@@ -28,6 +29,12 @@ Route::get('/profil', [HomeController::class, 'profil'])->name('profil');
 Route::get('/akademik', [HomeController::class, 'akademik'])->name('akademik');
 Route::get('/ppdb', [HomeController::class, 'ppdb'])->name('ppdb');
 Route::get('/kontak', [HomeController::class, 'kontak'])->name('kontak');
+
+Route::get('/perpustakaan', [LibraryController::class, 'index'])->name('perpustakaan');
+Route::middleware(['auth', 'role:student'])->group(function () {
+    Route::get('/perpustakaan/{book}/baca', [LibraryController::class, 'baca'])->name('perpustakaan.baca');
+    Route::get('/perpustakaan/{book}/unduh', [LibraryController::class, 'unduh'])->name('perpustakaan.unduh');
+});
 
 Route::prefix('ppdb')->name('ppdb.')->group(function () {
     Route::get('/daftar', [PPDBController::class, 'start'])->name('start');
@@ -183,11 +190,13 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     });
 
     Route::post('/users', [AdminController::class, 'usersStore'])->name('users.store');
+    Route::get('/users/last-login', [AdminController::class, 'usersLastLogin'])->name('users.last-login');
     Route::get('/users/{user}/data', [AdminController::class, 'userData'])->name('users.data');
     Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('users.update');
     Route::patch('/users/{user}/toggle', [AdminController::class, 'usersToggle'])->name('users.toggle');
 
     Route::get('/guru', [AdminController::class, 'guru'])->name('guru.index');
+    Route::get('/guru/{user}/class-students', [AdminController::class, 'guruClassStudents'])->name('guru.class-students');
     Route::get('/guru/{user}/data', [AdminController::class, 'guruData'])->name('guru.data');
 
     Route::get('/students', [AdminController::class, 'students'])->name('students.index');
@@ -261,6 +270,14 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     Route::delete('/parent-student', [AdminController::class, 'parentStudentDestroy'])->name('parent-student.destroy');
 
     Route::get('/audit', [AdminController::class, 'audit'])->name('audit.index');
+
+    Route::get('/perpustakaan', [AdminController::class, 'perpustakaan'])->name('perpustakaan.index');
+    Route::get('/perpustakaan/{book}/data', [AdminController::class, 'perpustakaanData'])->name('perpustakaan.data');
+    Route::post('/perpustakaan/import', [AdminController::class, 'perpustakaanImport'])->name('perpustakaan.import');
+    Route::post('/perpustakaan', [AdminController::class, 'perpustakaanStore'])->name('perpustakaan.store');
+    Route::put('/perpustakaan/{book}', [AdminController::class, 'perpustakaanUpdate'])->name('perpustakaan.update');
+    Route::patch('/perpustakaan/{book}/toggle', [AdminController::class, 'perpustakaanToggle'])->name('perpustakaan.toggle');
+    Route::delete('/perpustakaan/{book}', [AdminController::class, 'perpustakaanDestroy'])->name('perpustakaan.destroy');
 
     Route::get('/applicants', [AdminController::class, 'applicants'])->name('applicants.index');
     Route::get('/applicants/{applicant}/data', [AdminController::class, 'applicantData'])->name('applicants.data');

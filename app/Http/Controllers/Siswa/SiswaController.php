@@ -42,7 +42,7 @@ class SiswaController extends Controller
 
         $assignments = TeachingAssignment::where('period_id', $period->id)
             ->where('class_name', $student->class_name)
-            ->with(['subject', 'customSubject', 'assessments' => fn($q) => $q->whereNotNull('published_at')->orderBy('assessment_date')])
+            ->with(['subject', 'customSubject', 'teacher', 'assessments' => fn($q) => $q->whereNotNull('published_at')->orderBy('assessment_date')])
             ->get();
 
         $allAssessmentIds = $assignments->flatMap->assessments->pluck('id');
@@ -130,6 +130,7 @@ class SiswaController extends Controller
                 'subject' => $subjectName,
                 'subject_code' => $subjectCode,
                 'kkm' => $kkm,
+                'teacher' => $assignment->teacher?->full_name ?? $assignment->teacher?->name ?? null,
                 'components' => $componentScores,
                 'weights' => $weights,
                 'final_score' => $finalScore,

@@ -28,6 +28,7 @@
         <a href="{{ route('beranda') }}" @class(['active'=> request()->routeIs('beranda')])>Beranda</a>
         <a href="{{ route('profil') }}" @class(['active'=> request()->routeIs('profil')])>Profil</a>
         <a href="{{ route('akademik') }}" @class(['active'=> request()->routeIs('akademik')])>Akademik</a>
+        <a href="{{ route('perpustakaan') }}" @class(['active'=> request()->routeIs('perpustakaan*')])>Perpustakaan</a>
         <a href="{{ route('ppdb') }}" @class(['active'=> request()->routeIs('ppdb')])>PPDB</a>
         <div class="nav-dropdown">
           <button class="nav-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false">
@@ -131,9 +132,9 @@
           <h4>Layanan</h4>
           <ul>
             <li><a href="#">E-Learning</a></li>
-            <li><a href="#">Portal Siswa</a></li>
+            <li><a href="{{ route('login') }}?role=siswa">Portal Siswa</a></li>
             <li><a href="{{ route('login') }}">Portal</a></li>
-            <li><a href="#">Perpustakaan</a></li>
+            <li><a href="{{ route('perpustakaan') }}">Perpustakaan</a></li>
           </ul>
         </div>
         <div class="footer-col">

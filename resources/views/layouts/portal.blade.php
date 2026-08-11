@@ -7,8 +7,9 @@
   <meta name="description" content="Portal Orang Tua InvestaSchool ">
   <title>@yield('title') | Portal Orang Tua</title>
   <link rel="icon" href="{{ asset('img/logo.svg') }}">
-  <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+<link rel="stylesheet" href="{{ asset('css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/glass.css') }}">
   @push('styles')
   <style>
     .topbar-student-switcher { position:relative }

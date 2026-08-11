@@ -221,6 +221,26 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
   </div>
 </div>
 
+<div class="admin-modal-overlay" id="classScoresModal">
+  <div class="admin-modal-box" style="max-width:1000px">
+    <div class="admin-modal-header">
+      <div>
+        <h2 id="classScoresTitle">Nilai Siswa</h2>
+        <span id="classScoresSubtitle" style="font-size:.8rem;color:var(--muted)"></span>
+      </div>
+      <button class="admin-modal-close" onclick="closeClassScoresModal()" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="admin-modal-body" id="classScoresBody">
+      <div style="text-align:center;padding:2rem;color:var(--muted)">Memuat...</div>
+    </div>
+    <div class="admin-modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeClassScoresModal()">Tutup</button>
+    </div>
+  </div>
+</div>
+
 @push('scripts')
 <script>
   const CSRF_TOKEN = '{{ csrf_token() }}';
@@ -353,6 +373,7 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
   const ICON_BOOK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>';
   const ICON_SCHOOL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>';
   const ICON_USER_CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>';
+  const ICON_JURUSAN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>';
 
   function openDetailModal(userId) {
     const modal = document.getElementById('detailModal');
@@ -390,6 +411,30 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
       }
       html += '</div>';
 
+      // Pelajaran Jurusan (Custom Subjects)
+      html += '<div style="margin-bottom:1.25rem">';
+      html += '<h3 style="font-size:.9rem;font-weight:700;margin:0 0 .5rem;color:var(--ink)"><span style="display:inline-flex;vertical-align:middle;margin-right:6px">' + ICON_JURUSAN + '</span>Pelajaran Jurusan <span style="font-size:.78rem;font-weight:400;color:var(--muted)">(' + d.custom_subjects.length + ')</span></h3>';
+      if (d.custom_subjects.length) {
+        html += '<div style="display:flex;flex-direction:column;gap:6px">';
+        d.custom_subjects.forEach(cs => {
+          html += '<div style="padding:9px 12px;border-radius:8px;background:color-mix(in srgb,#7c3aed 7%,var(--card));border:1px solid color-mix(in srgb,#7c3aed 15%,var(--line))">';
+          html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">';
+          html += '<span style="font-weight:700;font-size:.85rem;color:#6d28d9">' + cs.code + ' &mdash; ' + cs.name + '</span>';
+          if (cs.jurusan) {
+            html += '<span style="font-size:.75rem;font-weight:600;color:#7c3aed;background:rgba(124,58,237,.1);padding:2px 8px;border-radius:6px;white-space:nowrap">' + cs.jurusan + '</span>';
+          }
+          html += '</div>';
+          if (cs.class_names && cs.class_names.length) {
+            html += '<div style="font-size:.76rem;color:var(--muted);margin-top:4px">' + cs.class_names.join(' &middot; ') + '</div>';
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<p style="color:var(--muted);font-size:.85rem">Belum ada penugasan pelajaran jurusan.</p>';
+      }
+      html += '</div>';
+
       // Kelas
       html += '<div style="margin-bottom:1.25rem">';
       html += '<h3 style="font-size:.9rem;font-weight:700;margin:0 0 .5rem;color:var(--ink)"><span style="display:inline-flex;vertical-align:middle;margin-right:6px">' + ICON_SCHOOL + '</span>Kelas Diajar <span style="font-size:.78rem;font-weight:400;color:var(--muted)">(' + d.class_names.length + ')</span></h3>';
@@ -397,9 +442,12 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
         html += '<div style="display:flex;flex-direction:column;gap:4px">';
         d.class_names.forEach(cn => {
           const count = d.students_per_class[cn] || 0;
-          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:var(--bg);border:1px solid var(--line)">';
+          const encoded = encodeURIComponent(cn);
+          html += '<div onclick="openClassScores(' + d.id + ', \'' + encoded + '\')" title="Klik untuk lihat nilai siswa" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:var(--bg);border:1px solid var(--line);cursor:pointer;transition:border-color .15s,background .15s" onmouseover="this.style.borderColor=\'var(--primary-2)\';this.style.background=\'color-mix(in srgb,var(--primary-2) 6%,var(--card))\'" onmouseout="this.style.borderColor=\'var(--line)\';this.style.background=\'var(--bg)\'">';
           html += '<span style="font-weight:600;font-size:.85rem">' + cn + '</span>';
-          html += '<span style="font-size:.78rem;color:var(--muted)">' + count + ' siswa</span>';
+          html += '<span style="font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:8px">' + count + ' siswa';
+          html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary-2)"><path d="m9 18 6-6-6-6"/></svg>';
+          html += '</span>';
           html += '</div>';
         });
         html += '</div>';
@@ -432,8 +480,65 @@ $roleLabels = ['teacher' => 'Guru', 'homeroom' => 'Wali Kelas', 'principal' => '
     document.getElementById('detailModal').classList.remove('open');
   }
 
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeModal(); closeDetailModal(); } });
+  function openClassScores(userId, encodedClass) {
+    const className = decodeURIComponent(encodedClass);
+    const modal = document.getElementById('classScoresModal');
+    const body = document.getElementById('classScoresBody');
+    body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Memuat data nilai...</div>';
+    document.getElementById('classScoresTitle').textContent = 'Nilai Siswa';
+    document.getElementById('classScoresSubtitle').textContent = className;
+    modal.classList.add('open');
+
+    fetch('/admin/guru/' + userId + '/class-students?class=' + encodeURIComponent(className), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => {
+      if (!d.rows.length) {
+        body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Belum ada siswa aktif di kelas ini.</div>';
+        return;
+      }
+      const compLabels = [['quiz','Quiz'],['homework','PR'],['assignment','Tugas'],['project','Proyek'],['uts','UTS'],['uas','UAS']];
+      let html = '<div style="overflow:auto;max-height:460px;border:1px solid var(--line);border-radius:12px">';
+      html += '<table class="grade-table" style="width:100%;min-width:900px;border-collapse:separate;border-spacing:0">';
+      html += '<thead><tr>';
+      html += '<th style="position:sticky;top:0;background:var(--card);z-index:2;text-align:left">Siswa</th>';
+      html += '<th style="position:sticky;top:0;background:var(--card);z-index:2">NISN</th>';
+      html += '<th style="position:sticky;top:0;background:var(--card);z-index:2;text-align:left">Mapel</th>';
+      compLabels.forEach(([key, label]) => {
+        const w = (d.rows[0].weights && d.rows[0].weights[key]) ? Math.round(d.rows[0].weights[key] * 100) : '-';
+        html += '<th title="Bobot ' + w + '%" style="position:sticky;top:0;background:var(--card);z-index:2;text-align:center">' + label + ' (' + w + '%)</th>';
+      });
+      html += '<th style="position:sticky;top:0;background:var(--card);z-index:2;text-align:center;color:var(--primary)">Total</th>';
+      html += '</tr></thead><tbody>';
+
+      d.rows.forEach(row => {
+        html += '<tr>';
+        html += '<td style="font-weight:600">' + row.full_name + '</td>';
+        html += '<td style="text-align:center;color:var(--muted)">' + row.nisn + '</td>';
+        html += '<td>' + row.subject + '</td>';
+        compLabels.forEach(([key]) => {
+          const v = row.components ? row.components[key] : null;
+          html += '<td style="text-align:center">' + (v !== null && v !== undefined && v > 0 ? v : '-') + '</td>';
+        });
+        html += '<td style="text-align:center;font-weight:800;color:var(--primary)">' + (row.total !== null ? row.total : '-') + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+      body.innerHTML = html;
+    })
+    .catch(() => {
+      body.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444">Gagal memuat data.</div>';
+    });
+  }
+
+  function closeClassScoresModal() {
+    document.getElementById('classScoresModal').classList.remove('open');
+  }
+
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeModal(); closeDetailModal(); closeClassScoresModal(); } });
   document.getElementById('detailModal')?.addEventListener('click', function(e) { if (e.target === this) closeDetailModal(); });
+  document.getElementById('classScoresModal')?.addEventListener('click', function(e) { if (e.target === this) closeClassScoresModal(); });
 
   function confirmToggle(userId, userName, isActive) {
     const action = isActive ? 'Menonaktifkan' : 'Mengaktifkan';

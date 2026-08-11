@@ -9,6 +9,7 @@ use App\Models\AssessmentScore;
 use App\Models\Attendance;
 use App\Models\AuditLog;
 use App\Models\Billing;
+use App\Models\Book;
 use App\Models\Student;
 use App\Models\Jurusan;
 use App\Models\JurusanCustomSubject;
@@ -110,7 +111,7 @@ class AdminController extends Controller
     {
         $activePeriod = AcademicPeriod::where('is_active', true)->first();
 
-        $user->load(['teachingAssignments' => fn($q) => $q->where('period_id', $activePeriod?->id)->with('subject')]);
+        $user->load(['teachingAssignments' => fn($q) => $q->where('period_id', $activePeriod?->id)->with(['subject', 'customSubject' => fn($q) => $q->with('jurusan')])]);
 
         $classNames = $user->teachingAssignments->pluck('class_name')->unique();
         $studentsPerClass = [];
@@ -126,6 +127,21 @@ class AdminController extends Controller
             ->values()
             ->map(fn($s) => ['id' => $s->id, 'code' => $s->code, 'name' => $s->name]);
 
+        $customSubjects = $user->teachingAssignments
+            ->filter(fn($ta) => $ta->customSubject)
+            ->groupBy(fn($ta) => $ta->custom_subject_id)
+            ->map(function ($assignments, $id) {
+                $cs = $assignments->first()->customSubject;
+                return [
+                    'id' => (int) $id,
+                    'code' => $cs->kode,
+                    'name' => $cs->nama,
+                    'jurusan' => $cs->jurusan?->nama,
+                    'class_names' => $assignments->pluck('class_name')->unique()->values(),
+                ];
+            })
+            ->values();
+
         $homeroomKelas = \App\Models\Kelas::where('homeroom_teacher_id', $user->id)->first();
 
         return response()->json([
@@ -136,12 +152,91 @@ class AdminController extends Controller
             'role' => $user->role,
             'is_active' => $user->is_active,
             'subjects' => $subjects,
+            'custom_subjects' => $customSubjects,
             'class_names' => $classNames->values(),
             'students_per_class' => $studentsPerClass,
             'homeroom' => $homeroomKelas ? [
                 'nama_lengkap' => $homeroomKelas->nama_lengkap,
                 'student_count' => $homeroomKelas->students()->where('status', 'active')->count(),
             ] : null,
+        ]);
+    }
+
+    public function guruClassStudents(Request $request, User $user)
+    {
+        $className = trim((string) $request->query('class', ''));
+        if ($className === '') {
+            return response()->json(['error' => 'Kelas tidak valid.'], 422);
+        }
+
+        $period = AcademicPeriod::where('is_active', true)->first();
+
+        $students = Student::where('class_name', $className)
+            ->where('status', 'active')
+            ->orderBy('full_name')
+            ->get(['id', 'full_name', 'nisn']);
+
+        $assignments = TeachingAssignment::where('teacher_id', $user->id)
+            ->where('class_name', $className)
+            ->when($period, fn($q) => $q->where('period_id', $period->id))
+            ->with([
+                'subject', 'customSubject',
+                'assessments' => fn($q) => $q->whereNotNull('published_at'),
+                'assessments.scores',
+            ])
+            ->get();
+
+        $subjects = [];
+        foreach ($assignments as $ta) {
+            $model = $ta->subject ?? $ta->customSubject;
+            if (!$model) continue;
+            $key = $ta->subject_id ? 's' . $ta->subject_id : 'c' . $ta->custom_subject_id;
+            $subjects[$key] = [
+                'key' => $key,
+                'code' => $ta->subject?->code ?? $ta->customSubject?->kode ?? '-',
+                'name' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
+                'weights' => \App\Helpers\PortalHelper::effectiveWeights($model, $ta),
+            ];
+        }
+
+        $rows = [];
+        foreach ($students as $student) {
+            foreach ($assignments as $ta) {
+                $model = $ta->subject ?? $ta->customSubject;
+                if (!$model) continue;
+
+                $key = $ta->subject_id ? 's' . $ta->subject_id : 'c' . $ta->custom_subject_id;
+                $raw = ['quiz' => [], 'homework' => [], 'project' => [], 'assignment' => [], 'uts' => 0, 'uas' => 0];
+
+                foreach ($ta->assessments as $assessment) {
+                    $score = $assessment->scores->where('student_id', $student->id)->first()?->score;
+                    if ($score === null) continue;
+
+                    if ($assessment->component === 'uts' || $assessment->component === 'uas') {
+                        $raw[$assessment->component] = max($raw[$assessment->component], (float) $score);
+                    } else {
+                        $raw[$assessment->component][] = (float) $score;
+                    }
+                }
+
+                $components = \App\Helpers\PortalHelper::componentScores($raw);
+                $hasScore = collect($components)->contains(fn($score) => $score > 0);
+                $weights = $subjects[$key]['weights'];
+
+                $rows[] = [
+                    'full_name' => $student->full_name,
+                    'nisn' => $student->nisn,
+                    'subject' => $subjects[$key]['code'] . ' — ' . $subjects[$key]['name'],
+                    'components' => $hasScore ? $components : null,
+                    'weights' => $weights,
+                    'total' => $hasScore ? \App\Helpers\PortalHelper::finalScore($raw, $weights) : null,
+                ];
+            }
+        }
+
+        return response()->json([
+            'class_name' => $className,
+            'rows' => $rows,
         ]);
     }
 
@@ -246,8 +341,24 @@ $validated = $request->validate([
         return back()->with('success', "Akun {$user->name} berhasil {$status}.");
     }
 
-    public function usersResetPassword(Request $request, User $user)
+    public function usersLastLogin(Request $request)
     {
+        $ids = array_filter(array_map('intval', (array) $request->query('ids', [])));
+        if (empty($ids)) {
+            return response()->json([]);
+        }
+
+        $users = User::whereIn('id', $ids)->get(['id', 'last_login_at']);
+
+        return response()->json($users->mapWithKeys(fn($u) => [
+            (string) $u->id => [
+                'last_login_at' => $u->last_login_at ? $u->last_login_at->toDateTimeString() : null,
+                'human' => $u->last_login_at ? $u->last_login_at->diffForHumans() : null,
+            ],
+        ]));
+    }
+
+    public function usersResetPassword(Request $request, User $user) {
         $validated = $request->validate([
             'new_password' => ['required', Password::min(6)],
         ]);
@@ -2003,5 +2114,259 @@ $applicantStatusCounts = [
         $overallAvg = $allVals->isNotEmpty() ? round($allVals->avg(), 1) : 0;
 
         return view('admin.alumni-report', compact('student', 'subjects', 'overallAvg'));
+    }
+
+    public function perpustakaan(Request $request)
+    {
+        $query = Book::query();
+
+        if ($search = trim($request->query('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('author', 'like', "%{$search}%")
+                  ->orWhere('publisher', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->query('status')) {
+            $query->where('is_active', $status === 'active');
+        }
+
+        $books = $query->latest()->paginate(15)->withQueryString();
+
+        $tabCounts = [
+            'all' => Book::count(),
+            'active' => Book::where('is_active', true)->count(),
+            'inactive' => Book::where('is_active', false)->count(),
+        ];
+
+        return view('admin.perpustakaan', compact('books', 'tabCounts'));
+    }
+
+    public function perpustakaanData(Book $book)
+    {
+        return response()->json([
+            'id' => $book->id,
+            'title' => $book->title,
+            'author' => $book->author,
+            'publisher' => $book->publisher,
+            'category' => $book->category,
+            'year' => $book->year,
+            'description' => $book->description,
+            'stock' => $book->stock,
+            'is_active' => $book->is_active,
+            'has_cover' => (bool) $book->cover_path,
+            'cover_url' => $book->cover_path ? Storage::url($book->cover_path) : null,
+            'has_file' => (bool) $book->file_path,
+            'file_name' => $book->file_name,
+            'file_size' => $book->file_size,
+        ]);
+    }
+
+    public function perpustakaanStore(Request $request)
+    {
+        $validated = $this->validateBook($request);
+
+        $book = Book::create([
+            'title' => $validated['title'],
+            'author' => $validated['author'] ?? null,
+            'publisher' => $validated['publisher'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'year' => $validated['year'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'stock' => $validated['stock'] ?? 1,
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        if ($request->hasFile('cover')) {
+            $book->update(['cover_path' => $this->storeCover($request->file('cover'))]);
+        }
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $book->update([
+                'file_path' => $file->store('perpustakaan/files', 'public'),
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'file_type' => $file->getClientOriginalExtension(),
+            ]);
+        }
+
+        AuditService::log('library.create', 'Book', $book->id, $book->title);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Buku berhasil ditambahkan.']);
+        }
+
+        return back()->with('success', 'Buku berhasil ditambahkan.');
+    }
+
+    public function perpustakaanUpdate(Request $request, Book $book)
+    {
+        $validated = $this->validateBook($request, $book);
+
+        $book->update([
+            'title' => $validated['title'],
+            'author' => $validated['author'] ?? null,
+            'publisher' => $validated['publisher'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'year' => $validated['year'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'stock' => $validated['stock'] ?? 1,
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        if ($request->hasFile('cover')) {
+            if ($book->cover_path) {
+                Storage::disk('public')->delete($book->cover_path);
+            }
+            $book->update(['cover_path' => $this->storeCover($request->file('cover'))]);
+        }
+
+        if ($request->hasFile('file')) {
+            if ($book->file_path) {
+                Storage::disk('public')->delete($book->file_path);
+            }
+            $file = $request->file('file');
+            $book->update([
+                'file_path' => $file->store('perpustakaan/files', 'public'),
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'file_type' => $file->getClientOriginalExtension(),
+            ]);
+        }
+
+        AuditService::log('library.update', 'Book', $book->id, $book->title);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Buku berhasil diperbarui.']);
+        }
+
+        return back()->with('success', 'Buku berhasil diperbarui.');
+    }
+
+    public function perpustakaanToggle(Request $request, Book $book)
+    {
+        $book->update(['is_active' => !$book->is_active]);
+
+        AuditService::log(
+            $book->is_active ? 'library.publish' : 'library.unpublish',
+            'Book',
+            $book->id,
+            $book->title
+        );
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $book->is_active ? 'Buku ditampilkan di publik.' : 'Buku disembunyikan dari publik.',
+            ]);
+        }
+
+        return back()->with('success', 'Status buku diperbarui.');
+    }
+
+    public function perpustakaanDestroy(Request $request, Book $book)
+    {
+        if ($book->cover_path) {
+            Storage::disk('public')->delete($book->cover_path);
+        }
+        if ($book->file_path) {
+            Storage::disk('public')->delete($book->file_path);
+        }
+
+        AuditService::log('library.delete', 'Book', $book->id, $book->title);
+        $book->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Buku berhasil dihapus.']);
+        }
+
+        return back()->with('success', 'Buku berhasil dihapus.');
+    }
+
+    public function perpustakaanImport(Request $request)
+    {
+        $request->validate([
+            'import_files' => 'required|array|max:50',
+        ]);
+
+        $allowed = ['pdf', 'epub', 'mobi', 'doc', 'docx', 'ppt', 'pptx'];
+        $maxBytes = 50 * 1024 * 1024;
+        $imported = 0;
+        $failed = [];
+
+        foreach ($request->file('import_files') as $file) {
+            $ext = strtolower($file->getClientOriginalExtension());
+
+            if (!$file->isValid() || !in_array($ext, $allowed) || $file->getSize() > $maxBytes) {
+                $failed[] = $file->getClientOriginalName();
+                continue;
+            }
+
+            $title = $this->bookTitleFromFilename($file->getClientOriginalName());
+
+            $book = Book::create([
+                'title' => $title,
+                'author' => null,
+                'category' => null,
+                'stock' => 1,
+                'is_active' => true,
+                'file_path' => $file->store('perpustakaan/files', 'public'),
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'file_type' => $file->getClientOriginalExtension(),
+            ]);
+
+            AuditService::log('library.import', 'Book', $book->id, $book->title);
+            $imported++;
+        }
+
+        $message = "{$imported} buku berhasil diimpor.";
+
+        if (!empty($failed)) {
+            $message .= ' Gagal: ' . implode(', ', array_slice($failed, 0, 5)) . (count($failed) > 5 ? ', dan lainnya.' : '.');
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'imported' => $imported,
+                'failed' => count($failed),
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    private function bookTitleFromFilename(string $filename): string
+    {
+        $base = pathinfo($filename, PATHINFO_FILENAME);
+        $title = str_replace(['_', '-'], ' ', trim($base));
+        $title = preg_replace('/\s+/', ' ', $title);
+
+        return $title !== '' ? mb_strtoupper(mb_substr($title, 0, 1)) . mb_substr($title, 1) : 'Tanpa Judul';
+    }
+
+    private function validateBook(Request $request, ?Book $book = null): array
+    {
+        return $request->validate([
+            'title' => 'required|string|max:255',
+            'author' => 'nullable|string|max:255',
+            'publisher' => 'nullable|string|max:255',
+            'category' => 'nullable|string|max:100',
+            'year' => 'nullable|string|max:10',
+            'description' => 'nullable|string|max:5000',
+            'stock' => 'nullable|integer|min:0',
+            'cover' => 'nullable|file|image|mimes:jpg,jpeg,png,webp,svg|max:2048',
+            'file' => 'nullable|file|mimes:pdf,epub,mobi,doc,docx,ppt,pptx|max:51200',
+        ]);
+    }
+
+    private function storeCover($file): string
+    {
+        return $file->store('perpustakaan/covers', 'public');
     }
 }

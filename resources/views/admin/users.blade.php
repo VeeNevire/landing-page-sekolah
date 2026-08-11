@@ -107,7 +107,7 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
             <span class="status-badge" style="padding:4px 10px;border-radius:8px;font-size:.78rem;font-weight:700;background:color-mix(in srgb,#ef4444 12%,var(--card));color:#ef4444">Nonaktif</span>
             @endif
           </td>
-          <td style="font-size:.85rem;color:var(--muted)">{{ $user->last_login_at ? $user->last_login_at->diffForHumans() : '-' }}</td>
+          <td id="lastlogin-{{ $user->id }}" data-raw="{{ $user->last_login_at?->toDateTimeString() }}" style="font-size:.85rem;color:var(--muted)">{{ $user->last_login_at ? $user->last_login_at->diffForHumans() : '-' }}</td>
           <td>
             <div style="display:flex;gap:6px;align-items:center">
               <button type="button" class="btn btn-outline" title="Edit pengguna" style="min-height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center" onclick="openEditModal({{ $user->id }})">
@@ -423,13 +423,42 @@ $roleLabels = ['admin' => 'Admin', 'teacher' => 'Guru', 'homeroom' => 'Wali Kela
       });
   }
 
-  document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeModal();
   });
 
   document.getElementById('userModal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
+
+  // ── Realtime "Login Terakhir" (polling ringan) ──
+  function refreshLastLogins() {
+    const cells = document.querySelectorAll('#usersTable tbody td[id^="lastlogin-"]');
+    if (!cells.length) return;
+    const ids = Array.from(cells).map(c => c.id.replace('lastlogin-', ''));
+
+    fetch('/admin/users/last-login?ids=' + encodeURIComponent(ids.join(',')), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+      })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        cells.forEach(cell => {
+          const info = data[cell.id.replace('lastlogin-', '')];
+          if (!info) return;
+          const raw = info.last_login_at || '';
+          if (raw !== cell.dataset.raw) {
+            cell.dataset.raw = raw;
+            cell.textContent = info.human || '-';
+            cell.style.cssText = 'font-size:.85rem;color:var(--primary);font-weight:700;transition:color .3s';
+            setTimeout(() => cell.style.cssText = 'font-size:.85rem;color:var(--muted)', 2500);
+          }
+        });
+      })
+      .catch(() => {});
+  }
+
+  setInterval(refreshLastLogins, 5000);
+  refreshLastLogins();
 </script>
 @endpush
 @endsection
