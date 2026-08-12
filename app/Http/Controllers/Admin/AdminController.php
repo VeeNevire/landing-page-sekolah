@@ -1307,7 +1307,8 @@ $applicantStatusCounts = [
             // Simpan teacher assignment per mapel umum
             if ($activePeriod && isset($subjectTeachers[$kId])) {
                 foreach ($subjectTeachers[$kId] as $subjectId => $teacherId) {
-                    if (!empty($teacherId)) {
+                    $teacherId = $this->normalizeTeacherId($teacherId);
+                    if ($teacherId) {
                         TeachingAssignment::updateOrCreate(
                             [
                                 'period_id' => $activePeriod->id,
@@ -1316,6 +1317,12 @@ $applicantStatusCounts = [
                             ],
                             ['teacher_id' => $teacherId]
                         );
+                    } else {
+                        TeachingAssignment::where([
+                            'period_id' => $activePeriod->id,
+                            'subject_id' => $subjectId,
+                            'class_name' => $classNamaLengkap,
+                        ])->delete();
                     }
                 }
             }
@@ -1323,7 +1330,8 @@ $applicantStatusCounts = [
             // Simpan teacher assignment per custom subject
             if ($activePeriod && isset($customSubjectTeachers[$kId])) {
                 foreach ($customSubjectTeachers[$kId] as $csId => $teacherId) {
-                    if (!empty($teacherId)) {
+                    $teacherId = $this->normalizeTeacherId($teacherId);
+                    if ($teacherId) {
                         TeachingAssignment::updateOrCreate(
                             [
                                 'period_id' => $activePeriod->id,
@@ -1332,6 +1340,12 @@ $applicantStatusCounts = [
                             ],
                             ['teacher_id' => $teacherId]
                         );
+                    } else {
+                        TeachingAssignment::where([
+                            'period_id' => $activePeriod->id,
+                            'custom_subject_id' => $csId,
+                            'class_name' => $classNamaLengkap,
+                        ])->delete();
                     }
                 }
             }
@@ -2368,5 +2382,13 @@ $applicantStatusCounts = [
     private function storeCover($file): string
     {
         return $file->store('perpustakaan/covers', 'public');
+    }
+
+    private function normalizeTeacherId($value): ?int
+    {
+        if ($value === null || $value === '' || $value === 'null' || $value === '0' || $value === 0) {
+            return null;
+        }
+        return (int) $value;
     }
 }
