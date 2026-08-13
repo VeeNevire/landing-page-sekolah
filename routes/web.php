@@ -2,15 +2,18 @@
 
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\JadwalController;
+use App\Http\Controllers\Admin\PklController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\IzinController;
+use App\Http\Controllers\Portal\PklController as PortalPklController;
 use App\Http\Controllers\Portal\ReportController;
 use App\Http\Controllers\Portal\StudentController;
 use App\Http\Controllers\Guru\BankSoalController;
 use App\Http\Controllers\Guru\GuruController;
+use App\Http\Controllers\Guru\GuruPklController;
 use App\Http\Controllers\Guru\KuisController;
 use App\Http\Controllers\Guru\ModuleController;
 use App\Http\Controllers\Guru\TugasController;
@@ -19,6 +22,7 @@ use App\Http\Controllers\Guru\WaliRaporController;
 use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\Siswa\SiswaController;
 use App\Http\Controllers\Siswa\SiswaKuisController;
+use App\Http\Controllers\Siswa\SiswaPklController;
 use App\Http\Controllers\Siswa\SiswaTugasController;
 use App\Http\Controllers\Lms\DownloadController;
 use App\Http\Controllers\ProfileController;
@@ -65,6 +69,8 @@ Route::middleware(['auth', 'role:parent'])->prefix('portal')->name('portal.')->g
     Route::get('/kehadiran', [StudentController::class, 'kehadiran'])->name('kehadiran');
     Route::get('/izin', [IzinController::class, 'index'])->name('izin');
     Route::post('/izin', [IzinController::class, 'store'])->name('izin.store');
+    Route::get('/pkl', [PortalPklController::class, 'index'])->name('pkl');
+    Route::get('/pkl/csv', [PortalPklController::class, 'exportCsv'])->name('pkl.csv');
     Route::get('/jadwal', [StudentController::class, 'jadwal'])->name('jadwal');
     Route::get('/tagihan', [StudentController::class, 'tagihan'])->name('tagihan');
     Route::post('/tagihan/{billing}/bayar', [StudentController::class, 'tagihanBayar'])->name('tagihan.bayar');
@@ -87,6 +93,9 @@ Route::middleware(['auth', 'role:student'])->prefix('siswa')->name('siswa.')->gr
     Route::post('/kuis/{attempt}/submit', [SiswaKuisController::class, 'submit'])->name('kuis.submit');
     Route::post('/kuis/{attempt}/auto-save', [SiswaKuisController::class, 'autoSave'])->name('kuis.auto-save');
     Route::get('/kuis/{attempt}/hasil', [SiswaKuisController::class, 'hasil'])->name('kuis.hasil');
+    Route::get('/pkl', [SiswaPklController::class, 'index'])->name('pkl.index');
+    Route::post('/pkl', [SiswaPklController::class, 'store'])->name('pkl.store');
+    Route::delete('/pkl/{activity}', [SiswaPklController::class, 'destroy'])->name('pkl.destroy');
     Route::get('/profil', [SiswaController::class, 'profil'])->name('profil');
 });
 
@@ -149,6 +158,11 @@ Route::middleware(['auth', 'role:teacher,homeroom,admin'])->prefix('guru')->name
     Route::get('/kuis/{quiz}/hasil', [KuisController::class, 'hasil'])->name('kuis.hasil');
     Route::get('/kuis/{attempt}/nilai-essay-data', [KuisController::class, 'nilaiEssayData'])->name('kuis.nilai-essay-data');
     Route::post('/kuis/{attempt}/nilai-essay', [KuisController::class, 'nilaiEssay'])->name('kuis.nilai-essay');
+
+    Route::get('/pkl', [GuruPklController::class, 'index'])->name('pkl.index');
+    Route::get('/pkl/{placement}', [GuruPklController::class, 'show'])->name('pkl.show');
+    Route::post('/pkl/{activity}/approve', [GuruPklController::class, 'approve'])->name('pkl.approve');
+    Route::post('/pkl/{activity}/reject', [GuruPklController::class, 'reject'])->name('pkl.reject');
 });
 
 Route::middleware(['auth', 'role:homeroom'])->prefix('guru')->name('guru.')->group(function () {
@@ -284,6 +298,17 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     Route::patch('/applicants/{applicant}/status', [AdminController::class, 'applicantStatus'])->name('applicants.status');
     Route::post('/applicants/bulk-status', [AdminController::class, 'applicantsBulkStatus'])->name('applicants.bulk-status');
     Route::delete('/applicants/{applicant}', [AdminController::class, 'applicantDestroy'])->name('applicants.destroy');
+
+    Route::get('/pkl', [PklController::class, 'index'])->name('pkl.index');
+    Route::get('/pkl/students-data', [PklController::class, 'studentsData'])->name('pkl.students.data');
+    Route::get('/pkl/companies/{company}/data', [PklController::class, 'companyData'])->name('pkl.companies.data');
+    Route::post('/pkl/companies', [PklController::class, 'companiesStore'])->name('pkl.companies.store');
+    Route::put('/pkl/companies/{company}', [PklController::class, 'companiesUpdate'])->name('pkl.companies.update');
+    Route::delete('/pkl/companies/{company}', [PklController::class, 'companiesDestroy'])->name('pkl.companies.destroy');
+    Route::get('/pkl/placements/{placement}/data', [PklController::class, 'placementData'])->name('pkl.placements.data');
+    Route::post('/pkl/placements', [PklController::class, 'placementsStore'])->name('pkl.placements.store');
+    Route::put('/pkl/placements/{placement}', [PklController::class, 'placementsUpdate'])->name('pkl.placements.update');
+    Route::delete('/pkl/placements/{placement}', [PklController::class, 'placementsDestroy'])->name('pkl.placements.destroy');
 });
 
 Route::middleware('auth')->group(function () {
