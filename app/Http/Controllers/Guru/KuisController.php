@@ -13,6 +13,7 @@ use App\Models\QuizAnswer;
 use App\Models\QuizQuestion;
 use App\Models\Student;
 use App\Services\AuditService;
+use App\Jobs\SendGradeTelegramNotification;
 use Illuminate\Http\Request;
 
 class KuisController extends Controller
@@ -337,7 +338,7 @@ class KuisController extends Controller
             ]
         );
 
-        AssessmentScore::updateOrCreate(
+        $assessmentScore = AssessmentScore::updateOrCreate(
             [
                 'assessment_id' => $assessment->id,
                 'student_id' => $attempt->student_id,
@@ -347,6 +348,7 @@ class KuisController extends Controller
                 'graded_at' => now(),
             ]
         );
+        SendGradeTelegramNotification::dispatchForScore($assessmentScore->assessment_id, $assessmentScore->student_id);
 
         AuditService::log('quiz.grade_essay', 'QuizAttempt', $attempt->id, null);
 

@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\PortalHelper;
 use App\Http\Controllers\Controller;
+use App\Imports\StudentImport;
+use App\Mail\ParentAccountMail;
+use App\Mail\StudentAcceptedMail;
 use App\Models\AcademicPeriod;
 use App\Models\Applicant;
 use App\Models\AssessmentScore;
@@ -10,25 +14,25 @@ use App\Models\Attendance;
 use App\Models\AuditLog;
 use App\Models\Billing;
 use App\Models\Book;
-use App\Models\Student;
 use App\Models\Jurusan;
 use App\Models\JurusanCustomSubject;
 use App\Models\Kelas;
+use App\Models\Student;
 use App\Models\Subject;
 use App\Models\TeachingAssignment;
 use App\Models\User;
+use App\Services\AuditService;
+use App\Services\StudentRegistrationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rules\Password;
-use Illuminate\Validation\Rule;
-use App\Mail\ParentAccountMail;
-use App\Mail\StudentAcceptedMail;
-use App\Services\AuditService;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
@@ -69,8 +73,8 @@ class AdminController extends Controller
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('full_name', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('full_name', 'like', "%{$search}%");
             });
         }
         $users = $query->latest()->paginate(15)->withQueryString();
@@ -94,12 +98,12 @@ class AdminController extends Controller
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('full_name', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('full_name', 'like', "%{$search}%");
             });
         }
 
-        $query->with(['teachingAssignments' => fn($q) => $q->where('period_id', $activePeriod?->id)])
+        $query->with(['teachingAssignments' => fn ($q) => $q->where('period_id', $activePeriod?->id)])
             ->withCount('homeroomStudents');
 
         $users = $query->latest()->paginate(15)->withQueryString();
@@ -111,12 +115,12 @@ class AdminController extends Controller
     {
         $activePeriod = AcademicPeriod::where('is_active', true)->first();
 
-        $user->load(['teachingAssignments' => fn($q) => $q->where('period_id', $activePeriod?->id)->with(['subject', 'customSubject' => fn($q) => $q->with('jurusan')])]);
+        $user->load(['teachingAssignments' => fn ($q) => $q->where('period_id', $activePeriod?->id)->with(['subject', 'customSubject' => fn ($q) => $q->with('jurusan')])]);
 
         $classNames = $user->teachingAssignments->pluck('class_name')->unique();
         $studentsPerClass = [];
         foreach ($classNames as $class) {
-            $count = \App\Models\Student::where('class_name', $class)->where('status', 'active')->count();
+            $count = Student::where('class_name', $class)->where('status', 'active')->count();
             $studentsPerClass[$class] = $count;
         }
 
@@ -125,13 +129,14 @@ class AdminController extends Controller
             ->filter()
             ->unique('id')
             ->values()
-            ->map(fn($s) => ['id' => $s->id, 'code' => $s->code, 'name' => $s->name]);
+            ->map(fn ($s) => ['id' => $s->id, 'code' => $s->code, 'name' => $s->name]);
 
         $customSubjects = $user->teachingAssignments
-            ->filter(fn($ta) => $ta->customSubject)
-            ->groupBy(fn($ta) => $ta->custom_subject_id)
+            ->filter(fn ($ta) => $ta->customSubject)
+            ->groupBy(fn ($ta) => $ta->custom_subject_id)
             ->map(function ($assignments, $id) {
                 $cs = $assignments->first()->customSubject;
+
                 return [
                     'id' => (int) $id,
                     'code' => $cs->kode,
@@ -142,7 +147,7 @@ class AdminController extends Controller
             })
             ->values();
 
-        $homeroomKelas = \App\Models\Kelas::where('homeroom_teacher_id', $user->id)->first();
+        $homeroomKelas = Kelas::where('homeroom_teacher_id', $user->id)->first();
 
         return response()->json([
             'id' => $user->id,
@@ -178,10 +183,10 @@ class AdminController extends Controller
 
         $assignments = TeachingAssignment::where('teacher_id', $user->id)
             ->where('class_name', $className)
-            ->when($period, fn($q) => $q->where('period_id', $period->id))
+            ->when($period, fn ($q) => $q->where('period_id', $period->id))
             ->with([
                 'subject', 'customSubject',
-                'assessments' => fn($q) => $q->whereNotNull('published_at'),
+                'assessments' => fn ($q) => $q->whereNotNull('published_at'),
                 'assessments.scores',
             ])
             ->get();
@@ -189,13 +194,15 @@ class AdminController extends Controller
         $subjects = [];
         foreach ($assignments as $ta) {
             $model = $ta->subject ?? $ta->customSubject;
-            if (!$model) continue;
-            $key = $ta->subject_id ? 's' . $ta->subject_id : 'c' . $ta->custom_subject_id;
+            if (! $model) {
+                continue;
+            }
+            $key = $ta->subject_id ? 's'.$ta->subject_id : 'c'.$ta->custom_subject_id;
             $subjects[$key] = [
                 'key' => $key,
                 'code' => $ta->subject?->code ?? $ta->customSubject?->kode ?? '-',
                 'name' => $ta->subject?->name ?? $ta->customSubject?->nama ?? '-',
-                'weights' => \App\Helpers\PortalHelper::effectiveWeights($model, $ta),
+                'weights' => PortalHelper::effectiveWeights($model, $ta),
             ];
         }
 
@@ -203,14 +210,18 @@ class AdminController extends Controller
         foreach ($students as $student) {
             foreach ($assignments as $ta) {
                 $model = $ta->subject ?? $ta->customSubject;
-                if (!$model) continue;
+                if (! $model) {
+                    continue;
+                }
 
-                $key = $ta->subject_id ? 's' . $ta->subject_id : 'c' . $ta->custom_subject_id;
+                $key = $ta->subject_id ? 's'.$ta->subject_id : 'c'.$ta->custom_subject_id;
                 $raw = ['quiz' => [], 'homework' => [], 'project' => [], 'assignment' => [], 'uts' => 0, 'uas' => 0];
 
                 foreach ($ta->assessments as $assessment) {
                     $score = $assessment->scores->where('student_id', $student->id)->first()?->score;
-                    if ($score === null) continue;
+                    if ($score === null) {
+                        continue;
+                    }
 
                     if ($assessment->component === 'uts' || $assessment->component === 'uas') {
                         $raw[$assessment->component] = max($raw[$assessment->component], (float) $score);
@@ -219,17 +230,17 @@ class AdminController extends Controller
                     }
                 }
 
-                $components = \App\Helpers\PortalHelper::componentScores($raw);
-                $hasScore = collect($components)->contains(fn($score) => $score > 0);
+                $components = PortalHelper::componentScores($raw);
+                $hasScore = collect($components)->contains(fn ($score) => $score > 0);
                 $weights = $subjects[$key]['weights'];
 
                 $rows[] = [
                     'full_name' => $student->full_name,
                     'nisn' => $student->nisn,
-                    'subject' => $subjects[$key]['code'] . ' — ' . $subjects[$key]['name'],
+                    'subject' => $subjects[$key]['code'].' — '.$subjects[$key]['name'],
                     'components' => $hasScore ? $components : null,
                     'weights' => $weights,
-                    'total' => $hasScore ? \App\Helpers\PortalHelper::finalScore($raw, $weights) : null,
+                    'total' => $hasScore ? PortalHelper::finalScore($raw, $weights) : null,
                 ];
             }
         }
@@ -267,7 +278,7 @@ class AdminController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        AuditService::log('user.create', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
+        AuditService::log('user.create', 'User', $user->id, ($user->full_name ?: $user->name).' ('.($this->roleLabels[$user->role] ?? $user->role).')');
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Pengguna berhasil ditambahkan.', 'user' => $user]);
@@ -295,12 +306,12 @@ class AdminController extends Controller
 
     public function usersUpdate(Request $request, User $user)
     {
-$validated = $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'full_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
             'role' => 'required|in:parent,teacher,homeroom,admin,principal,student,alumni',
-            'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(6)],
+            'password' => ['nullable', 'confirmed', Password::min(6)],
         ], [
             'email.unique' => 'Email sudah terdaftar.',
         ]);
@@ -312,13 +323,13 @@ $validated = $request->validate([
             'role' => $validated['role'],
         ];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);
         }
 
         $user->update($data);
 
-        AuditService::log('user.update', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
+        AuditService::log('user.update', 'User', $user->id, ($user->full_name ?: $user->name).' ('.($this->roleLabels[$user->role] ?? $user->role).')');
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Pengguna berhasil diperbarui.', 'user' => $user]);
@@ -329,10 +340,10 @@ $validated = $request->validate([
 
     public function usersToggle(Request $request, User $user)
     {
-        $user->update(['is_active' => !$user->is_active]);
+        $user->update(['is_active' => ! $user->is_active]);
         $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
-        AuditService::log('user.toggle', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
+        AuditService::log('user.toggle', 'User', $user->id, ($user->full_name ?: $user->name).' ('.($this->roleLabels[$user->role] ?? $user->role).')');
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => "Akun {$user->name} berhasil {$status}.", 'is_active' => $user->is_active]);
@@ -350,7 +361,7 @@ $validated = $request->validate([
 
         $users = User::whereIn('id', $ids)->get(['id', 'last_login_at']);
 
-        return response()->json($users->mapWithKeys(fn($u) => [
+        return response()->json($users->mapWithKeys(fn ($u) => [
             (string) $u->id => [
                 'last_login_at' => $u->last_login_at ? $u->last_login_at->toDateTimeString() : null,
                 'human' => $u->last_login_at ? $u->last_login_at->diffForHumans() : null,
@@ -358,14 +369,16 @@ $validated = $request->validate([
         ]));
     }
 
-    public function usersResetPassword(Request $request, User $user) {
+    public function usersResetPassword(Request $request, User $user)
+    {
         $validated = $request->validate([
             'new_password' => ['required', Password::min(6)],
         ]);
 
         $user->update(['password' => Hash::make($validated['new_password'])]);
 
-        AuditService::log('user.reset-password', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
+        AuditService::log('user.reset-password', 'User', $user->id, ($user->full_name ?: $user->name).' ('.($this->roleLabels[$user->role] ?? $user->role).')');
+
         return back()->with('success', "Password {$user->name} berhasil direset.");
     }
 
@@ -375,6 +388,7 @@ $validated = $request->validate([
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Tidak bisa menghapus akun sendiri.']);
             }
+
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
         }
 
@@ -383,7 +397,7 @@ $validated = $request->validate([
         $user->teachingAssignments()->update(['teacher_id' => null]);
         $user->homeroomStudents()->update(['homeroom_teacher_id' => null]);
 
-        AuditService::log('user.delete', 'User', $user->id, ($user->full_name ?: $user->name) . ' (' . ($this->roleLabels[$user->role] ?? $user->role) . ')');
+        AuditService::log('user.delete', 'User', $user->id, ($user->full_name ?: $user->name).' ('.($this->roleLabels[$user->role] ?? $user->role).')');
         $user->delete();
 
         if ($request->ajax()) {
@@ -391,6 +405,7 @@ $validated = $request->validate([
             if ($mapelCount > 0) {
                 $msg .= " {$mapelCount} penugasan mapel menjadi kosong.";
             }
+
             return response()->json(['success' => true, 'message' => $msg]);
         }
 
@@ -413,7 +428,7 @@ $validated = $request->validate([
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%")
-                  ->orWhere('nisn', 'like', "%{$search}%");
+                    ->orWhere('nisn', 'like', "%{$search}%");
             });
         }
 
@@ -437,43 +452,44 @@ $validated = $request->validate([
         if ($applicantSearch = $request->query('search')) {
             $applicantQuery->where(function ($q) use ($applicantSearch) {
                 $q->where('full_name', 'like', "%{$applicantSearch}%")
-                  ->orWhere('asal_sekolah', 'like', "%{$applicantSearch}%");
+                    ->orWhere('asal_sekolah', 'like', "%{$applicantSearch}%");
             });
         }
         $applicants = $applicantQuery->latest()->paginate(15, ['*'], 'applicants_page')->withQueryString();
 
-$applicantStatusCounts = [
-        'all' => Applicant::count(),
-        'draft' => Applicant::where('status', 'draft')->count(),
-        'submitted' => Applicant::where('status', 'submitted')->count(),
-        'verified' => Applicant::where('status', 'verified')->count(),
-        'paid' => Applicant::where('status', 'paid')->count(),
-        'rejected' => Applicant::where('status', 'rejected')->count(),
-    ];
+        $applicantStatusCounts = [
+            'all' => Applicant::count(),
+            'draft' => Applicant::where('status', 'draft')->count(),
+            'submitted' => Applicant::where('status', 'submitted')->count(),
+            'verified' => Applicant::where('status', 'verified')->count(),
+            'paid' => Applicant::where('status', 'paid')->count(),
+            'rejected' => Applicant::where('status', 'rejected')->count(),
+        ];
 
-    $classNames = Student::where('status', 'active')
-        ->whereNotNull('class_name')
-        ->distinct()
-        ->pluck('class_name')
-        ->sort()
-        ->values();
+        $classNames = Student::where('status', 'active')
+            ->whereNotNull('class_name')
+            ->distinct()
+            ->pluck('class_name')
+            ->sort()
+            ->values();
 
-    return view('admin.students', compact(
-        'students', 'jurusans', 'kelasList', 'teachers',
-        'tabCounts', 'applicants', 'applicantStatusCounts', 'classNames'
-    ));
+        return view('admin.students', compact(
+            'students', 'jurusans', 'kelasList', 'teachers',
+            'tabCounts', 'applicants', 'applicantStatusCounts', 'classNames'
+        ));
     }
 
     public function studentsCreate()
     {
         $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
+
         return view('admin.student-form', ['student' => null, 'teachers' => $teachers]);
     }
 
     public function studentData(Student $student)
     {
         $student->load('jurusan', 'kelas');
-        $parents = $student->parents()->get()->map(fn($p) => [
+        $parents = $student->parents()->get()->map(fn ($p) => [
             'id' => $p->id,
             'name' => $p->full_name ?: $p->name,
             'email' => $p->email,
@@ -506,7 +522,7 @@ $applicantStatusCounts = [
             ->withCount('students')
             ->orderBy('name')
             ->get()
-            ->map(fn($p) => [
+            ->map(fn ($p) => [
                 'id' => $p->id,
                 'name' => $p->full_name ?: $p->name,
                 'email' => $p->email,
@@ -519,15 +535,15 @@ $applicantStatusCounts = [
     public function checkEmail(Request $request)
     {
         $email = $request->query('email');
-        if (!$email) {
+        if (! $email) {
             return response()->json(['available' => true]);
         }
 
         $exists = User::where('email', $email)->exists();
 
         return response()->json([
-            'available' => !$exists,
-            'message' => $exists ? 'Email ini sudah terdaftar sebagai ' . User::where('email', $email)->value('role') . '.' : 'Email tersedia.',
+            'available' => ! $exists,
+            'message' => $exists ? 'Email ini sudah terdaftar sebagai '.User::where('email', $email)->value('role').'.' : 'Email tersedia.',
         ]);
     }
 
@@ -560,25 +576,25 @@ $applicantStatusCounts = [
                 $validated['parent_password'] = null;
             }
 
-            $kelas = !empty($validated['kelas_id']) ? Kelas::with('jurusan')->find($validated['kelas_id']) : null;
+            $kelas = ! empty($validated['kelas_id']) ? Kelas::with('jurusan')->find($validated['kelas_id']) : null;
             $student = Student::create([
                 'nisn' => $validated['nisn'],
                 'full_name' => $validated['full_name'],
                 'birth_date' => $validated['birth_date'] ?? null,
                 'jurusan_id' => $validated['jurusan_id'] ?? $kelas?->jurusan_id,
                 'kelas_id' => $validated['kelas_id'] ?? null,
-                'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap ?? ($validated['full_name'] . ' (tanpa kelas)'),
+                'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap ?? ($validated['full_name'].' (tanpa kelas)'),
                 'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama ?? '-',
                 'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? $kelas?->homeroom_teacher_id,
                 'status' => $validated['status'],
             ]);
 
             $year = now()->format('Y');
-            $lastNis = Student::where('nis', 'like', $year . '%')->max('nis');
+            $lastNis = Student::where('nis', 'like', $year.'%')->max('nis');
             $nextNumber = $lastNis ? intval(substr($lastNis, -4)) + 1 : 1;
-            $nis = $year . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $nis = $year.str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
-            $password = !empty($validated['student_password'])
+            $password = ! empty($validated['student_password'])
                 ? $validated['student_password']
                 : (string) random_int(10000000, 99999999);
 
@@ -599,16 +615,16 @@ $applicantStatusCounts = [
                     programName: $student->program_name, nis: $nis, password: $password,
                 ));
             } catch (\Exception $e) {
-                \Log::error('Gagal kirim email siswa: ' . $e->getMessage());
+                \Log::error('Gagal kirim email siswa: '.$e->getMessage());
             }
 
-            if ($validated['parent_action'] === 'existing' && !empty($validated['parent_id'])) {
+            if ($validated['parent_action'] === 'existing' && ! empty($validated['parent_id'])) {
                 $parentId = $validated['parent_id'];
                 DB::table('parent_student')->insert([
                     'parent_id' => $parentId, 'student_id' => $student->id,
                     'relationship' => $validated['parent_relationship'] ?? 'Orang Tua', 'is_primary' => true,
                 ]);
-            } elseif ($validated['parent_action'] === 'new' && !empty($validated['parent_name']) && !empty($validated['parent_email'])) {
+            } elseif ($validated['parent_action'] === 'new' && ! empty($validated['parent_name']) && ! empty($validated['parent_email'])) {
                 $parent = User::create([
                     'name' => $validated['parent_name'], 'full_name' => $validated['parent_name'],
                     'email' => $validated['parent_email'], 'password' => Hash::make($validated['parent_password']),
@@ -624,16 +640,18 @@ $applicantStatusCounts = [
                         password: $validated['parent_password'], studentName: $validated['full_name'],
                     ));
                 } catch (\Exception $e) {
-                    \Log::error('Gagal kirim email orang tua: ' . $e->getMessage());
+                    \Log::error('Gagal kirim email orang tua: '.$e->getMessage());
                 }
             }
 
             AuditService::log('student.create', 'Student', $student->id, $student->full_name);
-            return response()->json(['success' => true, 'message' => 'Siswa berhasil ditambahkan. Kredensial terkirim ke email ' . $validated['student_email'] . '.']);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+
+            return response()->json(['success' => true, 'message' => 'Siswa berhasil ditambahkan. Kredensial terkirim ke email '.$validated['student_email'].'.']);
+        } catch (ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            \Log::error('Student store error: ' . $e->getMessage());
+            \Log::error('Student store error: '.$e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
@@ -641,6 +659,7 @@ $applicantStatusCounts = [
     public function studentsEdit(Student $student)
     {
         $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
+
         return view('admin.student-form', ['student' => $student, 'teachers' => $teachers]);
     }
 
@@ -648,7 +667,7 @@ $applicantStatusCounts = [
     {
         try {
             $validated = $request->validate([
-                'nisn' => 'required|string|max:20|unique:students,nisn,' . $student->id,
+                'nisn' => 'required|string|max:20|unique:students,nisn,'.$student->id,
                 'full_name' => 'required|string|max:150',
                 'birth_date' => 'nullable|date',
                 'jurusan_id' => 'nullable|exists:jurusans,id',
@@ -657,7 +676,7 @@ $applicantStatusCounts = [
                 'program_name' => 'nullable|string|max:120',
                 'homeroom_teacher_id' => 'nullable|exists:users,id',
                 'status' => 'required|in:active,graduated,inactive',
-                'student_email' => 'nullable|email|unique:users,email,' . ($student->user_id ?? 'NULL'),
+                'student_email' => 'nullable|email|unique:users,email,'.($student->user_id ?? 'NULL'),
                 'student_password' => 'nullable|string|min:6|confirmed',
                 'parent_action' => 'nullable|in:existing,new,none,disconnect',
                 'parent_id' => 'required_if:parent_action,existing|nullable|exists:users,id',
@@ -668,7 +687,7 @@ $applicantStatusCounts = [
                 'disconnect_parent_id' => 'nullable|exists:users,id',
             ]);
 
-            $kelas = !empty($validated['kelas_id']) ? Kelas::with('jurusan')->find($validated['kelas_id']) : null;
+            $kelas = ! empty($validated['kelas_id']) ? Kelas::with('jurusan')->find($validated['kelas_id']) : null;
 
             $student->update([
                 'nisn' => $validated['nisn'],
@@ -676,11 +695,11 @@ $applicantStatusCounts = [
                 'birth_date' => $validated['birth_date'] ?? null,
                 'jurusan_id' => $validated['jurusan_id'] ?? $kelas?->jurusan_id ?? $student->jurusan_id,
                 'kelas_id' => $validated['kelas_id'] ?? $student->kelas_id,
-                'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap ?? $student->class_name ?? ($validated['full_name'] . ' (tanpa kelas)'),
+                'class_name' => $validated['class_name'] ?? $kelas?->nama_lengkap ?? $student->class_name ?? ($validated['full_name'].' (tanpa kelas)'),
                 'program_name' => $validated['program_name'] ?? $kelas?->jurusan?->nama ?? $student->program_name ?? '-',
                 'homeroom_teacher_id' => $validated['homeroom_teacher_id'] ?? $kelas?->homeroom_teacher_id ?? $student->homeroom_teacher_id,
                 'status' => $validated['status'],
-                'graduation_year' => $validated['status'] === 'graduated' && !$student->graduation_year
+                'graduation_year' => $validated['status'] === 'graduated' && ! $student->graduation_year
                     ? (int) now()->format('Y') : $student->graduation_year,
             ]);
 
@@ -688,22 +707,22 @@ $applicantStatusCounts = [
                 $student->user->update(['role' => 'alumni']);
             }
 
-            if (!empty($validated['student_email']) && $student->user) {
+            if (! empty($validated['student_email']) && $student->user) {
                 $student->user->update(['email' => $validated['student_email']]);
             }
 
-            if (!empty($validated['student_password']) && $student->user) {
+            if (! empty($validated['student_password']) && $student->user) {
                 $student->user->update(['password' => Hash::make($validated['student_password'])]);
             }
 
-            if (!empty($validated['disconnect_parent_id'])) {
+            if (! empty($validated['disconnect_parent_id'])) {
                 $student->parents()->detach($validated['disconnect_parent_id']);
             }
 
-            if (!empty($validated['parent_action']) && $validated['parent_action'] !== 'none') {
-                if ($validated['parent_action'] === 'existing' && !empty($validated['parent_id'])) {
+            if (! empty($validated['parent_action']) && $validated['parent_action'] !== 'none') {
+                if ($validated['parent_action'] === 'existing' && ! empty($validated['parent_id'])) {
                     $parentId = $validated['parent_id'];
-                } elseif ($validated['parent_action'] === 'new' && !empty($validated['parent_name']) && !empty($validated['parent_email'])) {
+                } elseif ($validated['parent_action'] === 'new' && ! empty($validated['parent_name']) && ! empty($validated['parent_email'])) {
                     $parent = User::create([
                         'name' => $validated['parent_name'], 'full_name' => $validated['parent_name'],
                         'email' => $validated['parent_email'], 'password' => Hash::make($validated['parent_password']),
@@ -714,7 +733,7 @@ $applicantStatusCounts = [
                     $parentId = null;
                 }
 
-                if ($parentId && !$student->parents()->where('parent_id', $parentId)->exists()) {
+                if ($parentId && ! $student->parents()->where('parent_id', $parentId)->exists()) {
                     DB::table('parent_student')->insert([
                         'parent_id' => $parentId, 'student_id' => $student->id,
                         'relationship' => $validated['parent_relationship'] ?? 'Orang Tua', 'is_primary' => true,
@@ -723,11 +742,13 @@ $applicantStatusCounts = [
             }
 
             AuditService::log('student.update', 'Student', $student->id, $student->full_name);
+
             return response()->json(['success' => true, 'message' => 'Data siswa berhasil diperbarui.']);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            \Log::error('Student update error: ' . $e->getMessage());
+            \Log::error('Student update error: '.$e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server.'], 500);
         }
     }
@@ -745,7 +766,7 @@ $applicantStatusCounts = [
         $romawiMap = ['X' => 10, 'XI' => 11, 'XII' => 12];
         $tingkat = $romawiMap[$request->input('tingkat')] ?? null;
 
-        if (!$tingkat) {
+        if (! $tingkat) {
             return response()->json(['success' => false, 'message' => 'Pilih tingkat (X/XI/XII) terlebih dahulu.'], 400);
         }
 
@@ -775,7 +796,7 @@ $applicantStatusCounts = [
 
     public function studentResetPassword(Request $request, Student $student)
     {
-        if (!$student->user) {
+        if (! $student->user) {
             return response()->json(['success' => false, 'message' => 'Siswa ini tidak memiliki akun pengguna.'], 400);
         }
 
@@ -791,12 +812,12 @@ $applicantStatusCounts = [
                 password: $password,
             ));
         } catch (\Exception $e) {
-            \Log::error('Gagal kirim email reset password: ' . $e->getMessage());
+            \Log::error('Gagal kirim email reset password: '.$e->getMessage());
         }
 
         AuditService::log('student.reset-password', 'Student', $student->id, $student->full_name);
 
-        return response()->json(['success' => true, 'message' => 'Password berhasil direset. Kredensial baru terkirim ke email ' . $student->user->email . '.']);
+        return response()->json(['success' => true, 'message' => 'Password berhasil direset. Kredensial baru terkirim ke email '.$student->user->email.'.']);
     }
 
     public function studentImportForm()
@@ -811,7 +832,7 @@ $applicantStatusCounts = [
         ]);
 
         try {
-            $importer = (new \App\Imports\StudentImport($request->file('csv_file')->getRealPath()))
+            $importer = (new StudentImport($request->file('csv_file')->getRealPath()))
                 ->load()
                 ->run();
 
@@ -821,6 +842,7 @@ $applicantStatusCounts = [
                 foreach ($importer->errorDetails as $err) {
                     Log::warning("StudentImport: $err");
                 }
+
                 return redirect()->route('admin.students.import')
                     ->with('warning', $msg)
                     ->with('import_errors', $importer->errorDetails);
@@ -829,9 +851,10 @@ $applicantStatusCounts = [
             return redirect()->route('admin.students.index')
                 ->with('success', $msg);
         } catch (\Exception $e) {
-            Log::error('Student import error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Student import error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
             return redirect()->route('admin.students.import')
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -842,26 +865,26 @@ $applicantStatusCounts = [
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%");
+                    ->orWhere('name', 'like', "%{$search}%");
             });
         }
 
         $subjects = $query->orderBy('code')->paginate(5)->withQueryString();
         $teachers = User::whereIn('role', ['teacher', 'homeroom'])->orderBy('name')->get();
 
-        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
 
-        $jurusans = \App\Models\Jurusan::with([
-                'customSubjects' => fn($q) => $q->with('kelas'),
-                'kelas' => fn($q) => $q->orderBy('tingkat')->orderBy('nama'),
-            ])
+        $jurusans = Jurusan::with([
+            'customSubjects' => fn ($q) => $q->with('kelas'),
+            'kelas' => fn ($q) => $q->orderBy('tingkat')->orderBy('nama'),
+        ])
             ->orderBy('kode')
             ->get();
 
         $csAssignments = collect();
         if ($activePeriod) {
             $allClassNames = $jurusans->flatMap->kelas->map->nama_lengkap->unique();
-            $csAssignments = \App\Models\TeachingAssignment::with('teacher')
+            $csAssignments = TeachingAssignment::with('teacher')
                 ->whereNotNull('custom_subject_id')
                 ->where('period_id', $activePeriod->id)
                 ->whereIn('class_name', $allClassNames)
@@ -874,16 +897,18 @@ $applicantStatusCounts = [
 
     public function subjectAssignCSStore(Request $request)
     {
-        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
         $csData = $request->input('cs_data', []);
 
-        if (!$activePeriod) {
+        if (! $activePeriod) {
             return response()->json(['success' => false, 'message' => 'Tidak ada periode aktif.']);
         }
 
         foreach ($csData as $csId => $data) {
-            $customSubject = \App\Models\JurusanCustomSubject::find($csId);
-            if (!$customSubject) continue;
+            $customSubject = JurusanCustomSubject::find($csId);
+            if (! $customSubject) {
+                continue;
+            }
 
             // Sync checked kelas ke pivot kelas_custom_subject
             $kelasIds = $data['kelas_ids'] ?? [];
@@ -891,12 +916,12 @@ $applicantStatusCounts = [
 
             // Simpan teacher assignments untuk kelas yang dicentang
             $teachers = $data['teachers'] ?? [];
-            if (!empty($kelasIds)) {
-                $kelasModels = \App\Models\Kelas::whereIn('id', $kelasIds)->get();
+            if (! empty($kelasIds)) {
+                $kelasModels = Kelas::whereIn('id', $kelasIds)->get();
                 foreach ($kelasModels as $kelas) {
                     $className = $kelas->nama_lengkap;
                     $teacherId = $teachers[$className] ?? '';
-                    if (!empty($teacherId)) {
+                    if (! empty($teacherId)) {
                         TeachingAssignment::updateOrCreate(
                             [
                                 'period_id' => $activePeriod->id,
@@ -910,7 +935,7 @@ $applicantStatusCounts = [
             }
 
             // Hapus teacher assignments untuk kelas yang tidak dicentang
-            if (!empty($kelasIds)) {
+            if (! empty($kelasIds)) {
                 $keptClassNames = $kelasModels->pluck('nama_lengkap')->toArray();
                 TeachingAssignment::where('custom_subject_id', $csId)
                     ->where('period_id', $activePeriod->id)
@@ -951,21 +976,21 @@ $applicantStatusCounts = [
 
     public function subjectDetail(Subject $subject)
     {
-        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
 
         $subject->load('gurus');
 
-        $assignedKelasIds = \App\Models\Kelas::whereHas('subjects', fn($q) => $q->where('subject_id', $subject->id))
+        $assignedKelasIds = Kelas::whereHas('subjects', fn ($q) => $q->where('subject_id', $subject->id))
             ->pluck('id');
 
-        $allKelas = \App\Models\Kelas::where('is_active', true)
+        $allKelas = Kelas::where('is_active', true)
             ->with('jurusan')
             ->orderBy('tingkat')
             ->orderBy('nama')
             ->get()
-            ->groupBy(fn($k) => $k->jurusan?->nama ?? 'Tanpa Jurusan');
+            ->groupBy(fn ($k) => $k->jurusan?->nama ?? 'Tanpa Jurusan');
 
-        $assignments = \App\Models\TeachingAssignment::where('subject_id', $subject->id)
+        $assignments = TeachingAssignment::where('subject_id', $subject->id)
             ->where('period_id', $activePeriod?->id)
             ->with('teacher')
             ->get()
@@ -977,11 +1002,11 @@ $applicantStatusCounts = [
                 'code' => $subject->code,
                 'name' => $subject->name,
                 'kkm' => $subject->kkm,
-                'gurus' => $subject->gurus->map(fn($g) => ['id' => $g->id, 'name' => $g->full_name ?? $g->name]),
+                'gurus' => $subject->gurus->map(fn ($g) => ['id' => $g->id, 'name' => $g->full_name ?? $g->name]),
             ],
-            'all_kelas' => $allKelas->map(fn($kelas, $jurusanNama) => [
+            'all_kelas' => $allKelas->map(fn ($kelas, $jurusanNama) => [
                 'jurusan' => $jurusanNama,
-                'kelas' => $kelas->map(fn($k) => [
+                'kelas' => $kelas->map(fn ($k) => [
                     'id' => $k->id,
                     'nama_lengkap' => $k->nama_lengkap,
                     'assigned' => $assignedKelasIds->contains($k->id),
@@ -1013,12 +1038,12 @@ $applicantStatusCounts = [
         $keys = ['weight_quiz', 'weight_homework', 'weight_project', 'weight_assignment', 'weight_uts', 'weight_uas'];
         $weights = $request->only($keys);
 
-        $hasAny = collect($weights)->contains(fn($w) => $w !== null && $w !== '');
-        if (!$hasAny) {
+        $hasAny = collect($weights)->contains(fn ($w) => $w !== null && $w !== '');
+        if (! $hasAny) {
             return array_fill_keys($keys, null);
         }
 
-        $validated = \Illuminate\Support\Facades\Validator::make($weights, [
+        $validated = Validator::make($weights, [
             'weight_quiz' => 'required|numeric|min:0|max:100',
             'weight_homework' => 'required|numeric|min:0|max:100',
             'weight_project' => 'required|numeric|min:0|max:100',
@@ -1029,8 +1054,8 @@ $applicantStatusCounts = [
 
         $sum = array_sum(array_map('floatval', $validated));
         if (abs($sum - 100) > 0.5) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'bobot' => 'Total bobot harus 100%. Saat ini ' . round($sum, 1) . '%.',
+            throw ValidationException::withMessages([
+                'bobot' => 'Total bobot harus 100%. Saat ini '.round($sum, 1).'%.',
             ]);
         }
 
@@ -1049,8 +1074,8 @@ $applicantStatusCounts = [
 
         $subject = Subject::create(array_merge($validated, $this->weightInputs($request)));
 
-        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
-        if (!empty($validated['guru_ids']) && $activePeriod) {
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
+        if (! empty($validated['guru_ids']) && $activePeriod) {
             $subject->gurus()->syncWithPivotValues($validated['guru_ids'], ['semester_id' => $activePeriod->id]);
         }
 
@@ -1066,7 +1091,7 @@ $applicantStatusCounts = [
     public function subjectsUpdate(Request $request, Subject $subject)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:20|unique:subjects,code,' . $subject->id,
+            'code' => 'required|string|max:20|unique:subjects,code,'.$subject->id,
             'name' => 'required|string|max:120',
             'kkm' => 'required|numeric|min:0|max:100',
             'guru_ids' => 'nullable|array',
@@ -1075,7 +1100,7 @@ $applicantStatusCounts = [
 
         $subject->update(array_merge($validated, $this->weightInputs($request)));
 
-        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
         $subject->gurus()->syncWithPivotValues($validated['guru_ids'] ?? [], ['semester_id' => $activePeriod?->id]);
 
         AuditService::log('subject.update', 'Subject', $subject->id, $subject->name);
@@ -1108,7 +1133,7 @@ $applicantStatusCounts = [
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('kode', 'like', "%{$search}%");
+                    ->orWhere('kode', 'like', "%{$search}%");
             });
         }
 
@@ -1135,7 +1160,9 @@ $applicantStatusCounts = [
 
         if ($kelasData = $request->input('kelas')) {
             foreach ($kelasData as $item) {
-                if (empty($item['tingkat']) || empty($item['nama'])) continue;
+                if (empty($item['tingkat']) || empty($item['nama'])) {
+                    continue;
+                }
 
                 $jurusan->kelas()->create([
                     'tingkat' => $item['tingkat'],
@@ -1157,7 +1184,7 @@ $applicantStatusCounts = [
     public function jurusansUpdate(Request $request, Jurusan $jurusan)
     {
         $validated = $request->validate([
-            'kode' => 'required|string|max:20|unique:jurusans,kode,' . $jurusan->id,
+            'kode' => 'required|string|max:20|unique:jurusans,kode,'.$jurusan->id,
             'nama' => 'required|string|max:120',
             'deskripsi' => 'nullable|string',
             'is_active' => 'boolean',
@@ -1170,9 +1197,11 @@ $applicantStatusCounts = [
             $submittedIds = [];
 
             foreach ($kelasData as $item) {
-                if (empty($item['tingkat']) || empty($item['nama'])) continue;
+                if (empty($item['tingkat']) || empty($item['nama'])) {
+                    continue;
+                }
 
-                if (!empty($item['id'])) {
+                if (! empty($item['id'])) {
                     $kelas = $jurusan->kelas()->find($item['id']);
                     if ($kelas) {
                         $kelas->update([
@@ -1192,7 +1221,7 @@ $applicantStatusCounts = [
             }
 
             $toDelete = array_diff($existingIds, $submittedIds);
-            if (!empty($toDelete)) {
+            if (! empty($toDelete)) {
                 $jurusan->kelas()->whereIn('id', $toDelete)->delete();
             }
         }
@@ -1229,13 +1258,13 @@ $applicantStatusCounts = [
             ->orderBy('name')
             ->get(['id', 'name', 'full_name']);
 
-        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
 
         // Pool guru per mapel — dari guru_mapel (yang udah di-link di admin/mapel)
         $subjectTeacherPool = [];
         foreach ($allSubjects as $subject) {
             $gurus = $subject->gurus()->get(['users.id', 'users.name', 'users.full_name']);
-            $subjectTeacherPool[$subject->id] = $gurus->map(fn($g) => [
+            $subjectTeacherPool[$subject->id] = $gurus->map(fn ($g) => [
                 'id' => $g->id,
                 'name' => $g->full_name ?? $g->name,
             ]);
@@ -1273,7 +1302,7 @@ $applicantStatusCounts = [
         $subjectTeachers = $request->input('subject_teachers', []);
         $customSubjectTeachers = $request->input('custom_subject_teachers', []);
 
-        $activePeriod = \App\Models\AcademicPeriod::where('is_active', true)->first();
+        $activePeriod = AcademicPeriod::where('is_active', true)->first();
         $removedIds = [];
 
         foreach ($jurusan->kelas as $kelas) {
@@ -1299,7 +1328,7 @@ $applicantStatusCounts = [
                     }
                 }
 
-                if ($oldTeacherId && !$newTeacherId) {
+                if ($oldTeacherId && ! $newTeacherId) {
                     $removedIds[] = $oldTeacherId;
                 }
             }
@@ -1353,7 +1382,7 @@ $applicantStatusCounts = [
 
         foreach (array_unique($removedIds) as $teacherId) {
             $stillHomeroom = Kelas::where('homeroom_teacher_id', $teacherId)->exists();
-            if (!$stillHomeroom) {
+            if (! $stillHomeroom) {
                 User::where('id', $teacherId)->where('role', 'homeroom')->update(['role' => 'teacher']);
             }
         }
@@ -1432,9 +1461,9 @@ $applicantStatusCounts = [
 
         $romawi = [10 => 'X', 11 => 'XI', 12 => 'XII'];
 
-        $result = $kelas->map(fn($k) => [
+        $result = $kelas->map(fn ($k) => [
             'id' => $k->id,
-            'nama_lengkap' => ($romawi[$k->tingkat] ?? $k->tingkat) . ' ' . $k->nama,
+            'nama_lengkap' => ($romawi[$k->tingkat] ?? $k->tingkat).' '.$k->nama,
             'homeroom_teacher_id' => $k->homeroom_teacher_id,
             'wali_nama' => $k->homeroomTeacher?->full_name ?: $k->homeroomTeacher?->name ?: null,
         ]);
@@ -1449,7 +1478,7 @@ $applicantStatusCounts = [
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('academic_year', 'like', "%{$search}%")
-                  ->orWhere('semester', 'like', "%{$search}%");
+                    ->orWhere('semester', 'like', "%{$search}%");
             });
         }
 
@@ -1518,7 +1547,7 @@ $applicantStatusCounts = [
 
         $period->update($validated);
 
-        AuditService::log('period.update', 'AcademicPeriod', $period->id, $period->academic_year . ' ' . $period->semester);
+        AuditService::log('period.update', 'AcademicPeriod', $period->id, $period->academic_year.' '.$period->semester);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Periode akademik berhasil diperbarui.']);
@@ -1534,6 +1563,7 @@ $applicantStatusCounts = [
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $message]);
             }
+
             return back()->with('error', $message);
         }
 
@@ -1543,17 +1573,24 @@ $applicantStatusCounts = [
 
         if ($teachingCount > 0 || $notesCount > 0 || $behaviorCount > 0) {
             $parts = [];
-            if ($teachingCount > 0) $parts[] = "{$teachingCount} penugasan";
-            if ($notesCount > 0) $parts[] = "{$notesCount} catatan";
-            if ($behaviorCount > 0) $parts[] = "{$behaviorCount} nilai sikap";
-            $message = 'Periode ini masih memiliki data terkait (' . implode(', ', $parts) . '). Hapus data tersebut terlebih dahulu atau biarkan periode ini.';
+            if ($teachingCount > 0) {
+                $parts[] = "{$teachingCount} penugasan";
+            }
+            if ($notesCount > 0) {
+                $parts[] = "{$notesCount} catatan";
+            }
+            if ($behaviorCount > 0) {
+                $parts[] = "{$behaviorCount} nilai sikap";
+            }
+            $message = 'Periode ini masih memiliki data terkait ('.implode(', ', $parts).'). Hapus data tersebut terlebih dahulu atau biarkan periode ini.';
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $message]);
             }
+
             return back()->with('error', $message);
         }
 
-        AuditService::log('period.delete', 'AcademicPeriod', $period->id, $period->academic_year . ' ' . $period->semester);
+        AuditService::log('period.delete', 'AcademicPeriod', $period->id, $period->academic_year.' '.$period->semester);
         $period->delete();
 
         if ($request->ajax()) {
@@ -1568,7 +1605,7 @@ $applicantStatusCounts = [
         AcademicPeriod::where('is_active', true)->update(['is_active' => false]);
         $period->update(['is_active' => true]);
 
-        AuditService::log('period.activate', 'AcademicPeriod', $period->id, $period->academic_year . ' ' . $period->semester);
+        AuditService::log('period.activate', 'AcademicPeriod', $period->id, $period->academic_year.' '.$period->semester);
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => "Periode {$period->academic_year} {$period->semester} diaktifkan."]);
@@ -1587,9 +1624,9 @@ $applicantStatusCounts = [
 
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
-                $q->whereHas('teacher', fn($tq) => $tq->where('name', 'like', "%{$search}%")->orWhere('full_name', 'like', "%{$search}%"))
-                  ->orWhereHas('subject', fn($sq) => $sq->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"))
-                  ->orWhere('class_name', 'like', "%{$search}%");
+                $q->whereHas('teacher', fn ($tq) => $tq->where('name', 'like', "%{$search}%")->orWhere('full_name', 'like', "%{$search}%"))
+                    ->orWhereHas('subject', fn ($sq) => $sq->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"))
+                    ->orWhere('class_name', 'like', "%{$search}%");
             });
         }
 
@@ -1622,8 +1659,8 @@ $applicantStatusCounts = [
             'subject_id' => $assignment->subject_id,
             'teacher_id' => $assignment->teacher_id,
             'class_name' => $assignment->class_name,
-            'period_label' => $assignment->period->academic_year . ' ' . ucfirst($assignment->period->semester),
-            'subject_label' => $assignment->subject->code . ' — ' . $assignment->subject->name,
+            'period_label' => $assignment->period->academic_year.' '.ucfirst($assignment->period->semester),
+            'subject_label' => $assignment->subject->code.' — '.$assignment->subject->name,
             'teacher_label' => $assignment->teacher->full_name ?? $assignment->teacher->name,
         ]);
     }
@@ -1642,6 +1679,7 @@ $applicantStatusCounts = [
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Penugasan ini sudah ada.']);
             }
+
             return back()->with('error', 'Penugasan ini sudah ada.');
         }
 
@@ -1670,6 +1708,7 @@ $applicantStatusCounts = [
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Penugasan ini sudah ada.']);
             }
+
             return back()->with('error', 'Penugasan ini sudah ada.');
         }
 
@@ -1735,6 +1774,7 @@ $applicantStatusCounts = [
         ]);
 
         AuditService::log('parent-student.create', 'ParentStudent', $validated['student_id'], null);
+
         return back()->with('success', 'Hubungan orang tua–siswa berhasil ditambahkan.');
     }
 
@@ -1780,9 +1820,9 @@ $applicantStatusCounts = [
         }
         if ($role = $request->query('role')) {
             if ($role === 'guru') {
-                $query->whereHas('user', fn($q) => $q->whereIn('role', ['teacher', 'homeroom', 'principal']));
+                $query->whereHas('user', fn ($q) => $q->whereIn('role', ['teacher', 'homeroom', 'principal']));
             } else {
-                $query->whereHas('user', fn($q) => $q->where('role', $role));
+                $query->whereHas('user', fn ($q) => $q->where('role', $role));
             }
         }
 
@@ -1791,9 +1831,9 @@ $applicantStatusCounts = [
 
         $tabCounts = [
             'all' => AuditLog::count(),
-            'admin' => AuditLog::whereHas('user', fn($q) => $q->where('role', 'admin'))->count(),
-            'guru' => AuditLog::whereHas('user', fn($q) => $q->whereIn('role', ['teacher', 'homeroom', 'principal']))->count(),
-            'parent' => AuditLog::whereHas('user', fn($q) => $q->where('role', 'parent'))->count(),
+            'admin' => AuditLog::whereHas('user', fn ($q) => $q->where('role', 'admin'))->count(),
+            'guru' => AuditLog::whereHas('user', fn ($q) => $q->whereIn('role', ['teacher', 'homeroom', 'principal']))->count(),
+            'parent' => AuditLog::whereHas('user', fn ($q) => $q->where('role', 'parent'))->count(),
         ];
 
         return view('admin.audit', compact('logs', 'users', 'tabCounts'));
@@ -1809,7 +1849,7 @@ $applicantStatusCounts = [
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%")
-                  ->orWhere('asal_sekolah', 'like', "%{$search}%");
+                    ->orWhere('asal_sekolah', 'like', "%{$search}%");
             });
         }
 
@@ -1856,7 +1896,7 @@ $applicantStatusCounts = [
         $ids = explode(',', $validated['ids']);
         $applicants = Applicant::whereIn('id', $ids)->get();
 
-        $service = app(\App\Services\StudentRegistrationService::class);
+        $service = app(StudentRegistrationService::class);
 
         foreach ($applicants as $applicant) {
             $applicant->update(['status' => $validated['status']]);
@@ -1869,7 +1909,7 @@ $applicantStatusCounts = [
             }
         }
 
-        return back()->with('success', count($applicants) . ' pendaftar berhasil diperbarui ke status ' . $validated['status'] . '.');
+        return back()->with('success', count($applicants).' pendaftar berhasil diperbarui ke status '.$validated['status'].'.');
     }
 
     public function applicantDestroy(Applicant $applicant)
@@ -1898,12 +1938,12 @@ $applicantStatusCounts = [
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhereHas('student', fn($sq) => $sq->where('full_name', 'like', "%{$search}%"));
+                    ->orWhereHas('student', fn ($sq) => $sq->where('full_name', 'like', "%{$search}%"));
             });
         }
 
         if ($classFilter) {
-            $query->whereHas('student', fn($sq) => $sq->where('class_name', $classFilter));
+            $query->whereHas('student', fn ($sq) => $sq->where('class_name', $classFilter));
         }
 
         if ($statusFilter) {
@@ -1934,7 +1974,7 @@ $applicantStatusCounts = [
         ]);
 
         $query = Student::where('status', 'active');
-        if ($validated['target_type'] === 'class' && !empty($validated['target_class'])) {
+        if ($validated['target_type'] === 'class' && ! empty($validated['target_class'])) {
             $query->where('class_name', $validated['target_class']);
         }
 
@@ -1960,13 +2000,13 @@ $applicantStatusCounts = [
 
         Billing::insert($data);
 
-        AuditService::log('billing.create', 'Billing', null, $validated['name'] . ' (' . count($data) . ' siswa)');
+        AuditService::log('billing.create', 'Billing', null, $validated['name'].' ('.count($data).' siswa)');
 
         if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Tagihan berhasil dibuat untuk ' . count($data) . ' siswa.']);
+            return response()->json(['success' => true, 'message' => 'Tagihan berhasil dibuat untuk '.count($data).' siswa.']);
         }
 
-        return redirect()->route('admin.billing.index')->with('success', 'Tagihan berhasil dibuat untuk ' . count($data) . ' siswa.');
+        return redirect()->route('admin.billing.index')->with('success', 'Tagihan berhasil dibuat untuk '.count($data).' siswa.');
     }
 
     public function billingUpdate(Request $request, Billing $billing)
@@ -2016,13 +2056,12 @@ $applicantStatusCounts = [
             ->orderBy('full_name')
             ->get()
             ->map(function ($s) {
-                $scores = AssessmentScore::whereHas('assessment', fn($q) =>
-                    $q->whereHas('teachingAssignment', fn($ta) =>
-                        $ta->where('class_name', $s->class_name)
-                    )
+                $scores = AssessmentScore::whereHas('assessment', fn ($q) => $q->whereHas('teachingAssignment', fn ($ta) => $ta->where('class_name', $s->class_name)
+                )
                 )->where('student_id', $s->id)->pluck('score')->filter();
                 $finalScore = $scores->isNotEmpty() ? round($scores->avg(), 1) : null;
                 $s->final_score = $finalScore;
+
                 return $s;
             });
 
@@ -2033,11 +2072,11 @@ $applicantStatusCounts = [
     {
         $scores = AssessmentScore::where('student_id', $student->id)
             ->with('assessment:id,title,component,teaching_assignment_id',
-                  'assessment.teachingAssignment:id,subject_id,custom_subject_id',
-                  'assessment.teachingAssignment.subject:id,name,code',
-                  'assessment.teachingAssignment.customSubject:id,nama,kode')
+                'assessment.teachingAssignment:id,subject_id,custom_subject_id',
+                'assessment.teachingAssignment.subject:id,name,code',
+                'assessment.teachingAssignment.customSubject:id,nama,kode')
             ->get()
-            ->groupBy(fn($s) => $s->assessment->teachingAssignment?->subject?->name
+            ->groupBy(fn ($s) => $s->assessment->teachingAssignment?->subject?->name
                 ?? $s->assessment->teachingAssignment?->customSubject?->nama
                 ?? 'Unknown');
 
@@ -2099,11 +2138,11 @@ $applicantStatusCounts = [
     {
         $scores = AssessmentScore::where('student_id', $student->id)
             ->with('assessment:id,title,component,teaching_assignment_id',
-                  'assessment.teachingAssignment:id,subject_id,custom_subject_id',
-                  'assessment.teachingAssignment.subject:id,name,code,kkm',
-                  'assessment.teachingAssignment.customSubject:id,nama,kode,kkm')
+                'assessment.teachingAssignment:id,subject_id,custom_subject_id',
+                'assessment.teachingAssignment.subject:id,name,code,kkm',
+                'assessment.teachingAssignment.customSubject:id,nama,kode,kkm')
             ->get()
-            ->groupBy(fn($s) => $s->assessment->teachingAssignment?->subject?->name
+            ->groupBy(fn ($s) => $s->assessment->teachingAssignment?->subject?->name
                 ?? $s->assessment->teachingAssignment?->customSubject?->nama
                 ?? 'Unknown');
 
@@ -2137,9 +2176,9 @@ $applicantStatusCounts = [
         if ($search = trim($request->query('search', ''))) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('author', 'like', "%{$search}%")
-                  ->orWhere('publisher', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                    ->orWhere('author', 'like', "%{$search}%")
+                    ->orWhere('publisher', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
@@ -2262,7 +2301,7 @@ $applicantStatusCounts = [
 
     public function perpustakaanToggle(Request $request, Book $book)
     {
-        $book->update(['is_active' => !$book->is_active]);
+        $book->update(['is_active' => ! $book->is_active]);
 
         AuditService::log(
             $book->is_active ? 'library.publish' : 'library.unpublish',
@@ -2304,6 +2343,7 @@ $applicantStatusCounts = [
     {
         $request->validate([
             'import_files' => 'required|array|max:50',
+            'covers' => 'nullable|array|max:50',
         ]);
 
         $allowed = ['pdf', 'epub', 'mobi', 'doc', 'docx', 'ppt', 'pptx'];
@@ -2311,17 +2351,20 @@ $applicantStatusCounts = [
         $imported = 0;
         $failed = [];
 
-        foreach ($request->file('import_files') as $file) {
+        $covers = $request->file('covers', []);
+
+        foreach ($request->file('import_files') as $index => $file) {
             $ext = strtolower($file->getClientOriginalExtension());
 
-            if (!$file->isValid() || !in_array($ext, $allowed) || $file->getSize() > $maxBytes) {
+            if (! $file->isValid() || ! in_array($ext, $allowed) || $file->getSize() > $maxBytes) {
                 $failed[] = $file->getClientOriginalName();
+
                 continue;
             }
 
             $title = $this->bookTitleFromFilename($file->getClientOriginalName());
 
-            $book = Book::create([
+            $data = [
                 'title' => $title,
                 'author' => null,
                 'category' => null,
@@ -2331,7 +2374,17 @@ $applicantStatusCounts = [
                 'file_name' => $file->getClientOriginalName(),
                 'file_size' => $file->getSize(),
                 'file_type' => $file->getClientOriginalExtension(),
-            ]);
+            ];
+
+            $cover = $covers[$index] ?? null;
+            if ($cover && $cover->isValid() && $cover->getSize() <= 2048 * 1024) {
+                $mime = $cover->getMimeType();
+                if (in_array($mime, ['image/jpeg', 'image/png', 'image/webp'])) {
+                    $data['cover_path'] = $cover->store('perpustakaan/covers', 'public');
+                }
+            }
+
+            $book = Book::create($data);
 
             AuditService::log('library.import', 'Book', $book->id, $book->title);
             $imported++;
@@ -2339,8 +2392,8 @@ $applicantStatusCounts = [
 
         $message = "{$imported} buku berhasil diimpor.";
 
-        if (!empty($failed)) {
-            $message .= ' Gagal: ' . implode(', ', array_slice($failed, 0, 5)) . (count($failed) > 5 ? ', dan lainnya.' : '.');
+        if (! empty($failed)) {
+            $message .= ' Gagal: '.implode(', ', array_slice($failed, 0, 5)).(count($failed) > 5 ? ', dan lainnya.' : '.');
         }
 
         if ($request->ajax()) {
@@ -2361,7 +2414,7 @@ $applicantStatusCounts = [
         $title = str_replace(['_', '-'], ' ', trim($base));
         $title = preg_replace('/\s+/', ' ', $title);
 
-        return $title !== '' ? mb_strtoupper(mb_substr($title, 0, 1)) . mb_substr($title, 1) : 'Tanpa Judul';
+        return $title !== '' ? mb_strtoupper(mb_substr($title, 0, 1)).mb_substr($title, 1) : 'Tanpa Judul';
     }
 
     private function validateBook(Request $request, ?Book $book = null): array
@@ -2389,6 +2442,7 @@ $applicantStatusCounts = [
         if ($value === null || $value === '' || $value === 'null' || $value === '0' || $value === 0) {
             return null;
         }
+
         return (int) $value;
     }
 }

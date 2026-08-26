@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\Submission;
 use App\Models\TeachingAssignment;
 use App\Services\AuditService;
+use App\Jobs\SendGradeTelegramNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -283,7 +284,7 @@ class TugasController extends Controller
             ]
         );
 
-        AssessmentScore::updateOrCreate(
+        $assessmentScore = AssessmentScore::updateOrCreate(
             [
                 'assessment_id' => $assessment->id,
                 'student_id' => $submission->student_id,
@@ -294,6 +295,7 @@ class TugasController extends Controller
                 'graded_at' => now(),
             ]
         );
+        SendGradeTelegramNotification::dispatchForScore($assessmentScore->assessment_id, $assessmentScore->student_id);
 
         AuditService::log('submission.grade', 'Submission', $submission->id, null);
 

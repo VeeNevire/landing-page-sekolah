@@ -180,11 +180,13 @@ class StudentController extends Controller
         if (!$data) {
             return view('portal.profil', array_merge(
                 $data ?? [],
-                ['students' => collect(), 'selectedStudent' => null, 'selectedStudentId' => null, 'selectedStudentInitials' => 'S']
+                ['students' => collect(), 'selectedStudent' => null, 'selectedStudentId' => null, 'selectedStudentInitials' => 'S', 'telegramConnected' => false]
             ));
         }
 
-        return view('portal.profil', $data);
+        return view('portal.profil', array_merge($data, [
+            'telegramConnected' => (bool) $request->user()->telegram_chat_id,
+        ]));
     }
 
     public function notifikasi(Request $request)

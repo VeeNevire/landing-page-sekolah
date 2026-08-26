@@ -264,6 +264,73 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 .competency-label{font-weight:600;font-size:.92rem}
 .competency-value{font-weight:900;font-size:1.1rem;color:var(--primary-2);padding:4px 14px;border-radius:10px;background:color-mix(in srgb,var(--primary-2) 8%,transparent)}
 .security-note{font-size:.82rem;color:var(--muted);margin-top:18px}
+.portal-panel.telegram-card{
+  --tg:#229ed9;--tg-deep:#0879b1;position:relative;isolation:isolate;overflow:hidden;
+  border-color:color-mix(in srgb,var(--tg) 22%,var(--line));
+  background:linear-gradient(145deg,color-mix(in srgb,var(--tg) 8%,var(--card)),var(--card) 55%)
+}
+.telegram-card::before{
+  content:"";position:absolute;inset:0 0 auto;height:4px;
+  background:linear-gradient(90deg,var(--tg-deep),#35bdf3 70%,transparent)
+}
+.telegram-card-watermark{
+  position:absolute;right:-34px;top:45px;width:150px;height:150px;z-index:-1;
+  fill:none;stroke:var(--tg);stroke-width:.8;opacity:.065;transform:rotate(-9deg)
+}
+.telegram-card-head{display:flex;align-items:center;gap:11px;margin-bottom:20px;position:relative}
+.telegram-card-icon{
+  width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;border-radius:14px;
+  color:#fff;background:linear-gradient(145deg,#35bdf3,var(--tg-deep));box-shadow:0 8px 20px rgba(34,158,217,.24)
+}
+.telegram-card-icon svg,.telegram-action svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.telegram-card-title{min-width:0;flex:1}
+.telegram-card-title > span{display:block;color:var(--tg-deep);font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.075em;margin-bottom:2px}
+.telegram-card-title h3{font-size:1rem;margin:0;letter-spacing:-.025em}
+.telegram-status{display:inline-flex;align-items:center;gap:6px;flex:none;padding:6px 9px;border-radius:999px;font-size:.67rem;font-weight:800;white-space:nowrap}
+.telegram-status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 13%,transparent)}
+.telegram-card.is-connected .telegram-status{color:#087a55;background:color-mix(in srgb,#10b981 12%,var(--card))}
+.telegram-card.is-disconnected .telegram-status{color:#806116;background:color-mix(in srgb,#eab308 14%,var(--card))}
+.telegram-card-copy{position:relative;margin-bottom:17px}
+.telegram-card-copy strong{display:block;font-size:.94rem;line-height:1.45;color:var(--ink)}
+.telegram-card-copy p{font-size:.82rem;line-height:1.6;color:var(--muted);margin:5px 0 0}
+.telegram-message-preview{
+  display:flex;align-items:center;gap:11px;padding:12px;margin-bottom:17px;border:1px solid color-mix(in srgb,var(--tg) 16%,var(--line));
+  border-radius:14px;background:color-mix(in srgb,var(--tg) 6%,var(--card));box-shadow:inset 3px 0 0 color-mix(in srgb,var(--tg) 65%,transparent)
+}
+.telegram-preview-mark{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:10px;background:var(--tg);color:#fff;font-size:.76rem;font-weight:900}
+.telegram-message-preview > div{min-width:0;flex:1}
+.telegram-preview-label{display:block;color:var(--tg-deep);font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.telegram-message-preview strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem;margin:2px 0}
+.telegram-message-preview small{display:block;color:var(--muted);font-size:.67rem;line-height:1.35}
+.telegram-preview-check{align-self:flex-end;color:var(--tg);font-size:.68rem;font-weight:900;letter-spacing:-.18em}
+.telegram-benefits{list-style:none;padding:0;margin:0 0 18px;display:grid;gap:9px}
+.telegram-benefits li{display:flex;align-items:center;gap:9px;color:var(--ink);font-size:.78rem;font-weight:650}
+.telegram-benefits li span{display:grid;place-items:center;width:20px;height:20px;border-radius:7px;color:var(--tg-deep);background:color-mix(in srgb,var(--tg) 12%,var(--card));font-size:.7rem;font-weight:900}
+.telegram-action{
+  min-height:42px;border:0;border-radius:12px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease
+}
+.telegram-action:hover{transform:translateY(-1px)}
+.telegram-action:focus-visible{outline:3px solid color-mix(in srgb,var(--tg) 35%,transparent);outline-offset:3px}
+.telegram-action-primary{width:100%;color:#fff;background:var(--tg-deep);box-shadow:0 8px 18px rgba(8,121,177,.2)}
+.telegram-action-primary > span{margin-left:auto;font-size:1rem}
+.telegram-action-primary:hover{background:#066d9f;box-shadow:0 10px 22px rgba(8,121,177,.26)}
+.telegram-action-secondary{color:#9f2d2d;background:color-mix(in srgb,#ef4444 10%,var(--card));border:1px solid color-mix(in srgb,#ef4444 18%,var(--line))}
+.telegram-card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.telegram-secure-note{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.66rem;line-height:1.35}
+.telegram-secure-note svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.telegram-privacy{margin:11px 0 0;text-align:center;color:var(--muted);font-size:.64rem;line-height:1.45}
+body.dark .portal-panel.telegram-card{--tg-deep:#4fc3ef;background:linear-gradient(145deg,rgba(34,158,217,.12),rgba(15,32,53,.68) 58%);border-color:rgba(79,195,239,.18)}
+body.dark .telegram-card-icon{color:#07263a}
+body.dark .telegram-action-primary{color:#062337;background:#4fc3ef}
+body.dark .telegram-action-primary:hover{background:#71d0f2}
+@media(max-width:520px){
+  .telegram-card-head{align-items:flex-start;flex-wrap:wrap}
+  .telegram-status{margin-left:55px;margin-top:-7px}
+  .telegram-card-footer{align-items:stretch;flex-direction:column}
+  .telegram-card-footer form,.telegram-action-secondary{width:100%}
+}
+@media(prefers-reduced-motion:reduce){.telegram-action{transition:none}}
 .portal-empty{padding:30px;text-align:center;color:var(--muted)}
 @media print{
   .portal-sidebar,.portal-topbar,.no-print,.back-top{display:none!important}

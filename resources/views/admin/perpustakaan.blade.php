@@ -350,8 +350,12 @@ $currentStatus = request('status', '');
 </div>
 
 @push('scripts')
+@vite('resources/js/pdf-cover.js')
 <script>
   const CSRF_TOKEN = '{{ csrf_token() }}';
+
+  let autoCoverBlob = null;
+  let coverUploadedManually = false;
 
   function openCreateModal() {
     clearErrors();
@@ -368,6 +372,8 @@ $currentStatus = request('status', '');
     document.getElementById('m_description').value = '';
     document.getElementById('m_stock').value = '1';
     document.getElementById('m_is_active').checked = true;
+    autoCoverBlob = null;
+    coverUploadedManually = false;
     resetCover();
     resetFile();
     document.getElementById('bookModal').classList.add('open');
@@ -380,6 +386,8 @@ $currentStatus = request('status', '');
     document.getElementById('formMethod').value = 'PUT';
     document.getElementById('formBookId').value = bookId;
     document.getElementById('bookForm').action = '/admin/perpustakaan/' + bookId;
+    autoCoverBlob = null;
+    coverUploadedManually = false;
     resetCover();
     resetFile();
 
@@ -426,6 +434,7 @@ $currentStatus = request('status', '');
   }
 
   function resetCover() {
+    resetAutoCoverPreview();
     document.getElementById('m_cover').value = '';
     document.getElementById('coverEmpty').style.display = 'flex';
     document.getElementById('coverSelected').style.display = 'none';
@@ -462,6 +471,30 @@ $currentStatus = request('status', '');
     document.getElementById('fileRemove').style.display = 'flex';
   }
 
+  function generateAutoCover(file) {
+    autoCoverBlob = null;
+    resetAutoCoverPreview();
+    setCoverPreview('', 'Membuat cover dari halaman 1 PDF...');
+    window.renderPdfCover(file)
+      .then((blob) => {
+        autoCoverBlob = blob;
+        const url = URL.createObjectURL(blob);
+        setCoverPreview(url, 'Cover otomatis dari PDF');
+        coverUploadedManually = false;
+      })
+      .catch(() => {
+        autoCoverBlob = null;
+        resetAutoCoverPreview();
+      });
+  }
+
+  function resetAutoCoverPreview() {
+    const preview = document.getElementById('coverPreview');
+    if (preview && preview.src) {
+      URL.revokeObjectURL(preview.src);
+    }
+  }
+
   function closeModal() {
     document.getElementById('bookModal').classList.remove('open');
     clearErrors();
@@ -493,6 +526,11 @@ $currentStatus = request('status', '');
     clearErrors();
     const form = document.getElementById('bookForm');
     const formData = new FormData(form);
+
+    if (autoCoverBlob && !coverUploadedManually) {
+      const title = (document.getElementById('m_title').value || 'buku').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      formData.append('cover', autoCoverBlob, (title || 'buku') + '-cover.png');
+    }
 
     fetch(form.action, {
         method: 'POST',
@@ -609,6 +647,8 @@ $currentStatus = request('status', '');
   document.getElementById('m_cover').addEventListener('change', function() {
     const file = this.files[0];
     if (file) {
+      coverUploadedManually = true;
+      autoCoverBlob = null;
       const reader = new FileReader();
       reader.onload = function(e) {
         setCoverPreview(e.target.result, file.name);
@@ -623,6 +663,13 @@ $currentStatus = request('status', '');
     const file = this.files[0];
     if (file) {
       setFileState(file);
+      coverUploadedManually = false;
+      if (window.renderPdfCover && isPdfFile(file)) {
+        generateAutoCover(file);
+      } else {
+        autoCoverBlob = null;
+        resetAutoCoverPreview();
+      }
     } else {
       resetFile();
     }
@@ -658,6 +705,7 @@ $currentStatus = request('status', '');
   });
 
   function openImportModal() {
+    importCovers = {};
     document.getElementById('importFilesList').innerHTML = '';
     document.getElementById('importEmpty').style.display = 'flex';
     document.getElementById('importFilesList').style.display = 'none';
@@ -670,21 +718,51 @@ $currentStatus = request('status', '');
     document.getElementById('importModal').classList.remove('open');
   }
 
+  let importCovers = {};
+
   function renderImportFiles(files) {
     const list = document.getElementById('importFilesList');
+    importCovers = {};
     list.innerHTML = '';
-    Array.from(files).forEach(function(f) {
+    Array.from(files).forEach(function(f, index) {
       const item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line)';
       item.innerHTML =
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>' +
         '<div style="flex:1;min-width:0"><div style="font-size:.82rem;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + f.name + '</div>' +
-        '<div style="font-size:.7rem;color:var(--muted)">' + formatBytes(f.size) + '</div></div>';
+        '<div style="font-size:.7rem;color:var(--muted)">' + formatBytes(f.size) + '</div></div>' +
+        '<span class="importCoverState" style="flex-shrink:0;font-size:.7rem;font-weight:600;color:var(--muted)"></span>';
       list.appendChild(item);
     });
     document.getElementById('importEmpty').style.display = 'none';
     list.style.display = 'block';
     document.getElementById('importSubmitBtn').disabled = files.length === 0;
+
+    Array.from(files).forEach(function(f, index) {
+      if (window.renderPdfCover && isPdfFile(f)) {
+        const stateEl = list.querySelectorAll('.importCoverState')[index];
+        stateEl.textContent = 'Membuat cover...';
+        window.renderPdfCover(f)
+          .then((blob) => {
+            importCovers[index] = blob;
+            const state = list.querySelectorAll('.importCoverState')[index];
+            if (state) {
+              state.textContent = 'Cover OK';
+              state.style.color = '#16a34a';
+            }
+          })
+          .catch(() => {
+            const state = list.querySelectorAll('.importCoverState')[index];
+            if (state) {
+              state.textContent = 'Tanpa cover';
+              state.style.color = 'var(--muted)';
+            }
+          });
+      } else {
+        const stateEl = list.querySelectorAll('.importCoverState')[index];
+        if (stateEl) stateEl.textContent = 'Tanpa cover';
+      }
+    });
   }
 
   document.getElementById('m_import_files').addEventListener('change', function() {
@@ -719,6 +797,11 @@ $currentStatus = request('status', '');
     const btn = document.getElementById('importSubmitBtn');
     btn.disabled = true;
     const formData = new FormData(document.getElementById('importForm'));
+
+    Object.entries(importCovers).forEach(function([index, blob]) {
+      const fileName = (document.getElementById('m_import_files').files[index]?.name || 'buku').toLowerCase().replace(/\.pdf$/i, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      formData.append('covers[]', blob, (fileName || 'buku') + '-cover.png');
+    });
 
     fetch('{{ route("admin.perpustakaan.import") }}', {
         method: 'POST',

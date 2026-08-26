@@ -23,6 +23,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
+            'telegram_link_token_expires_at' => 'datetime',
         ];
     }
 

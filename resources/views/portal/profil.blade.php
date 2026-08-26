@@ -3,6 +3,12 @@
 @section('title', 'Profil Siswa')
 
 @section('content')
+@if (session('success'))
+  <div class="portal-panel" style="margin-bottom:20px;color:#166534;background:#f0fdf4">{{ session('success') }}</div>
+@endif
+@if (session('error'))
+  <div class="portal-panel" style="margin-bottom:20px;color:#991b1b;background:#fef2f2">{{ session('error') }}</div>
+@endif
 @if (!$selectedStudent)
   <div class="portal-empty">
     <h2>Belum ada siswa terdaftar</h2>
@@ -64,7 +70,72 @@
               </div>
             @endforeach
           </div>
-        </section>
+      </section>
+
+      <section class="portal-panel telegram-card {{ $telegramConnected ? 'is-connected' : 'is-disconnected' }}">
+        <svg class="telegram-card-watermark" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/>
+        </svg>
+        <div class="telegram-card-head">
+          <span class="telegram-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>
+          </span>
+          <div class="telegram-card-title">
+            <span>Terhubung langsung</span>
+            <h3>Notifikasi Telegram</h3>
+          </div>
+          <span class="telegram-status" role="status">
+            <span class="telegram-status-dot"></span>
+            {{ $telegramConnected ? 'Aktif' : 'Belum aktif' }}
+          </span>
+        </div>
+
+        @if ($telegramConnected)
+          <div class="telegram-card-copy">
+            <strong>Semua siap, Bapak/Ibu.</strong>
+            <p>Informasi nilai baru akan langsung masuk ke akun Telegram yang terhubung.</p>
+          </div>
+          <div class="telegram-message-preview" aria-label="Contoh notifikasi Telegram">
+            <span class="telegram-preview-mark" aria-hidden="true">N</span>
+            <div>
+              <span class="telegram-preview-label">Notifikasi nilai</span>
+              <strong>{{ $selectedStudent->full_name }}</strong>
+              <small>Nilai, status KKM, dan catatan guru</small>
+            </div>
+            <span class="telegram-preview-check" aria-hidden="true">✓✓</span>
+          </div>
+          <div class="telegram-card-footer">
+            <span class="telegram-secure-note">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Khusus informasi sekolah
+            </span>
+            <form method="POST" action="{{ route('portal.telegram.disconnect') }}">
+              @csrf
+              @method('DELETE')
+              <button type="submit" class="telegram-action telegram-action-secondary">Putuskan</button>
+            </form>
+          </div>
+        @else
+          <div class="telegram-card-copy">
+            <strong>Nilai terbaru, tanpa perlu mengecek portal.</strong>
+            <p>Hubungkan Telegram untuk menerima pembaruan akademik saat guru selesai menilai.</p>
+          </div>
+          <ul class="telegram-benefits" aria-label="Manfaat notifikasi Telegram">
+            <li><span>✓</span> Nilai dan status KKM</li>
+            <li><span>✓</span> Catatan langsung dari guru</li>
+            <li><span>✓</span> Terkirim otomatis dan pribadi</li>
+          </ul>
+          <form method="POST" action="{{ route('portal.telegram.connect') }}">
+            @csrf
+            <button type="submit" class="telegram-action telegram-action-primary">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>
+              Hubungkan Telegram
+              <span aria-hidden="true">→</span>
+            </button>
+          </form>
+          <p class="telegram-privacy">Bot hanya mengirim informasi sekolah. Tidak ada pesan promosi.</p>
+        @endif
+      </section>
       </div>
     </div>
 @endif

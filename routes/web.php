@@ -11,6 +11,7 @@ use App\Http\Controllers\Portal\IzinController;
 use App\Http\Controllers\Portal\PklController as PortalPklController;
 use App\Http\Controllers\Portal\ReportController;
 use App\Http\Controllers\Portal\StudentController;
+use App\Http\Controllers\Portal\TelegramController;
 use App\Http\Controllers\Guru\BankSoalController;
 use App\Http\Controllers\Guru\GuruController;
 use App\Http\Controllers\Guru\GuruPklController;
@@ -76,6 +77,8 @@ Route::middleware(['auth', 'role:parent'])->prefix('portal')->name('portal.')->g
     Route::post('/tagihan/{billing}/bayar', [StudentController::class, 'tagihanBayar'])->name('tagihan.bayar');
     Route::get('/profil', [StudentController::class, 'profil'])->name('profil');
     Route::get('/notifikasi', [StudentController::class, 'notifikasi'])->name('notifikasi');
+    Route::post('/telegram/connect', [TelegramController::class, 'connect'])->name('telegram.connect');
+    Route::delete('/telegram/disconnect', [TelegramController::class, 'disconnect'])->name('telegram.disconnect');
 });
 
 Route::middleware(['auth', 'role:student'])->prefix('siswa')->name('siswa.')->group(function () {

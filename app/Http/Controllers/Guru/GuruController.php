@@ -17,6 +17,7 @@ use App\Models\TeachingAssignment;
 use App\Models\TeacherNote;
 use App\Models\CourseModule;
 use App\Services\AuditService;
+use App\Jobs\SendGradeTelegramNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -463,6 +464,7 @@ class GuruController extends Controller
                     'score' => $score,
                     'graded_at' => now(),
                 ]);
+                SendGradeTelegramNotification::dispatchForScore($assessment->id, (int) $studentId);
             }
         }
 
@@ -494,6 +496,7 @@ class GuruController extends Controller
                 ['assessment_id' => $assessment->id, 'student_id' => $studentId],
                 ['score' => $score, 'graded_at' => now()]
             );
+            SendGradeTelegramNotification::dispatchForScore($assessment->id, (int) $studentId);
         } else {
             DB::table('assessment_scores')->updateOrInsert(
                 ['assessment_id' => $assessment->id, 'student_id' => $studentId],
