@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Billing;
 use App\Models\Notification;
 use App\Models\TeachingAssignment;
+use App\Models\TelegramBot;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -180,12 +181,13 @@ class StudentController extends Controller
         if (!$data) {
             return view('portal.profil', array_merge(
                 $data ?? [],
-                ['students' => collect(), 'selectedStudent' => null, 'selectedStudentId' => null, 'selectedStudentInitials' => 'S', 'telegramConnected' => false]
+                ['students' => collect(), 'selectedStudent' => null, 'selectedStudentId' => null, 'selectedStudentInitials' => 'S', 'telegramConnected' => false, 'telegramBots' => collect()]
             ));
         }
 
         return view('portal.profil', array_merge($data, [
             'telegramConnected' => (bool) $request->user()->telegram_chat_id,
+            'telegramBots' => TelegramBot::where('is_active', true)->with(['connections' => fn ($q) => $q->where('user_id', $request->user()->id)])->get(),
         ]));
     }
 

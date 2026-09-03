@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Models\AssessmentScore;
 use App\Models\Student;
+use App\Models\TelegramConnection;
+use App\Models\TelegramTemplate;
 use App\Services\TelegramService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,6 +25,8 @@ class SendGradeTelegramNotification implements ShouldQueue
         public int $assessmentId,
         public int $studentId,
         public int $parentId,
+        public ?int $templateId = null,
+        public ?int $botId = null,
     ) {}
 
     public static function dispatchForScore(int $assessmentId, int $studentId): void
@@ -33,6 +37,21 @@ class SendGradeTelegramNotification implements ShouldQueue
             ->whereNotNull('telegram_chat_id')
             ->pluck('users.id')
             ->each(fn ($parentId) => self::dispatch($assessmentId, $studentId, (int) $parentId)->afterCommit());
+    }
+
+    public static function dispatchForPublishedScore(int $assessmentId, int $studentId, int $templateId, ?int $botId = null): void
+    {
+        $template = TelegramTemplate::with('bot')->find($templateId);
+        $student = Student::find($studentId);
+        if (! $template || ! $template->is_active || ! $student) return;
+        $botId = $botId ?: $template->telegram_bot_id;
+        if (! $botId) return;
+
+        TelegramConnection::where('telegram_bot_id', $botId)
+            ->whereNotNull('chat_id')
+            ->whereHas('user', fn ($q) => $q->whereHas('students', fn ($sq) => $sq->whereKey($studentId)))
+            ->pluck('user_id')
+            ->each(fn ($parentId) => self::dispatch($assessmentId, $studentId, (int) $parentId, $templateId, $botId)->afterCommit());
     }
 
     public function handle(TelegramService $telegram): void
@@ -50,12 +69,16 @@ class SendGradeTelegramNotification implements ShouldQueue
             return;
         }
 
-        $parent = $score->student->parents()
-            ->whereKey($this->parentId)
-            ->whereNotNull('telegram_chat_id')
-            ->first();
+        $parent = $score->student->parents()->whereKey($this->parentId)->first();
+        if (! $parent) return;
 
-        if (! $parent) {
+        $connection = null;
+        $template = $this->templateId ? TelegramTemplate::with('bot')->find($this->templateId) : null;
+        if ($template) {
+            $bot = $this->botId ? \App\Models\TelegramBot::find($this->botId) : $template->bot;
+            $connection = TelegramConnection::where('user_id', $parent->id)->where('telegram_bot_id', $bot?->id)->whereNotNull('chat_id')->first();
+            if (! $connection) return;
+        } elseif (! $parent->telegram_chat_id) {
             return;
         }
 
@@ -93,7 +116,24 @@ class SendGradeTelegramNotification implements ShouldQueue
             ."{$advice}\n\n"
             ."Salam,\n{$schoolName}";
 
-        $telegram->sendMessage($parent->telegram_chat_id, $message);
+        if ($template) {
+            $message = strtr($template->body, [
+                '{{nama_siswa}}' => $score->student->full_name,
+                '{{mata_pelajaran}}' => $subject,
+                '{{penilaian}}' => $score->assessment->title,
+                '{{nilai}}' => $scoreValue,
+                '{{nilai_maksimal}}' => $maxScore,
+                '{{kkm}}' => $kkmValue,
+                '{{status}}' => strip_tags($status),
+                '{{guru}}' => $teacher,
+                '{{tanggal}}' => $date,
+                '{{catatan}}' => $score->feedback ?: '-',
+                '{{link_detail}}' => $portalUrl,
+                '{{nama_sekolah}}' => $schoolName,
+            ]);
+        }
+
+        $telegram->sendMessage($connection?->chat_id ?: $parent->telegram_chat_id, $message, $bot ?? $template?->bot);
     }
 
     private function formatNumber(float|string $value): string

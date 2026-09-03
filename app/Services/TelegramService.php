@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\TelegramBot;
+use App\Models\TelegramConnection;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -10,18 +12,18 @@ use Illuminate\Support\Str;
 
 class TelegramService
 {
-    public function disableWebhook(): void
+    public function disableWebhook(?TelegramBot $bot = null): void
     {
-        $response = $this->client()->post($this->apiUrl('deleteWebhook'), [
+        $response = $this->client()->post($this->apiUrl('deleteWebhook', $bot?->token), [
             'drop_pending_updates' => false,
         ]);
 
         $this->assertSuccessful($response->json());
     }
 
-    public function getUpdates(?int $offset, int $timeout = 25): array
+    public function getUpdates(?int $offset, int $timeout = 25, ?TelegramBot $bot = null): array
     {
-        $response = $this->client($timeout + 10)->post($this->apiUrl('getUpdates'), [
+        $response = $this->client($timeout + 10)->post($this->apiUrl('getUpdates', $bot?->token), [
             'offset' => $offset,
             'timeout' => $timeout,
             'allowed_updates' => ['message'],
@@ -33,28 +35,36 @@ class TelegramService
         return is_array($payload['result'] ?? null) ? $payload['result'] : [];
     }
 
-    public function processUpdate(array $update): void
+    public function processUpdate(array $update, ?TelegramBot $bot = null): void
     {
         $chatId = data_get($update, 'message.chat.id');
         $text = (string) data_get($update, 'message.text', '');
 
         if ($chatId && preg_match('/^\/start(?:@\w+)?\s+(\S+)$/', $text, $matches)) {
-            $this->linkParentFromStart($chatId, $matches[1]);
+            $this->linkParentFromStart($chatId, $matches[1], $bot, data_get($update, 'message.from.username'));
         }
     }
 
-    public function createParentLink(User $parent): ?string
+    public function createParentLink(User $parent, ?TelegramBot $bot = null): ?string
     {
-        if (! config('services.telegram.bot_token')) {
+        if (! $bot && ! config('services.telegram.bot_token')) {
             return null;
         }
 
-        $username = $this->botUsername();
+        $username = $this->botUsername($bot);
         if (! $username) {
             return null;
         }
 
         $token = Str::random(48);
+        if ($bot) {
+            TelegramConnection::updateOrCreate(
+                ['user_id' => $parent->id, 'telegram_bot_id' => $bot->id],
+                ['link_token_hash' => hash('sha256', $token), 'link_token_expires_at' => now()->addMinutes(30), 'chat_id' => null, 'connected_at' => null]
+            );
+            return 'https://t.me/'.ltrim($username, '@').'?start=link_'.$token;
+        }
+
         $parent->forceFill([
             'telegram_link_token_hash' => hash('sha256', $token),
             'telegram_link_token_expires_at' => now()->addMinutes(30),
@@ -63,13 +73,21 @@ class TelegramService
         return 'https://t.me/'.ltrim($username, '@').'?start=link_'.$token;
     }
 
-    public function linkParentFromStart(string|int $chatId, string $startToken): bool
+    public function linkParentFromStart(string|int $chatId, string $startToken, ?TelegramBot $bot = null, ?string $telegramUsername = null): bool
     {
         if (! str_starts_with($startToken, 'link_')) {
             return false;
         }
 
-        $parent = DB::transaction(function () use ($chatId, $startToken) {
+        $parent = DB::transaction(function () use ($chatId, $startToken, $bot, $telegramUsername) {
+            if ($bot) {
+                $connection = TelegramConnection::where('telegram_bot_id', $bot->id)
+                    ->where('link_token_hash', hash('sha256', substr($startToken, 5)))
+                    ->where('link_token_expires_at', '>', now())->lockForUpdate()->first();
+                if (! $connection) return null;
+                $connection->update(['chat_id' => (string) $chatId, 'telegram_username' => $telegramUsername, 'link_token_hash' => null, 'link_token_expires_at' => null, 'connected_at' => now()]);
+                return $connection->user;
+            }
             $parent = User::where('role', 'parent')
                 ->where('telegram_link_token_hash', hash('sha256', substr($startToken, 5)))
                 ->where('telegram_link_token_expires_at', '>', now())
@@ -97,19 +115,19 @@ class TelegramService
             return false;
         }
 
-        $this->sendMessage($chatId, 'Telegram berhasil terhubung. Anda akan menerima notifikasi nilai siswa di sini.');
+        $this->sendMessage($chatId, 'Telegram berhasil terhubung. Anda akan menerima notifikasi nilai siswa di sini.', $bot);
 
         return true;
     }
 
-    public function sendMessage(string|int $chatId, string $text): void
+    public function sendMessage(string|int $chatId, string $text, ?TelegramBot $bot = null): void
     {
-        $token = config('services.telegram.bot_token');
+        $token = $bot?->token ?: config('services.telegram.bot_token');
         if (! $token) {
             throw new \RuntimeException('TELEGRAM_BOT_TOKEN belum dikonfigurasi.');
         }
 
-        $response = $this->client()->post($this->apiUrl('sendMessage'), [
+        $response = $this->client()->post($this->apiUrl('sendMessage', $token), [
             'chat_id' => (string) $chatId,
             'text' => $text,
         ]);
@@ -117,27 +135,35 @@ class TelegramService
         $this->assertSuccessful($response->json());
     }
 
-    private function botUsername(): ?string
+    public function verifyBot(TelegramBot $bot): array
     {
-        $configuredUsername = config('services.telegram.bot_username');
+        $response = $this->client()->get($this->apiUrl('getMe', $bot->token));
+        $payload = $response->json();
+        $this->assertSuccessful($payload);
+        return $payload['result'];
+    }
+
+    private function botUsername(?TelegramBot $bot = null): ?string
+    {
+        $configuredUsername = $bot?->username ?: config('services.telegram.bot_username');
         if ($configuredUsername) {
             return ltrim($configuredUsername, '@');
         }
 
-        $token = config('services.telegram.bot_token');
+        $token = $bot?->token ?: config('services.telegram.bot_token');
         if (! $token) {
             return null;
         }
 
-        $response = $this->client()->get($this->apiUrl('getMe'));
+        $response = $this->client()->get($this->apiUrl('getMe', $token));
         $this->assertSuccessful($response->json());
 
         return $response->json('result.username');
     }
 
-    private function apiUrl(string $method): string
+    private function apiUrl(string $method, ?string $token = null): string
     {
-        return 'https://api.telegram.org/bot'.config('services.telegram.bot_token').'/'.$method;
+        return 'https://api.telegram.org/bot'.($token ?: config('services.telegram.bot_token')).'/'.$method;
     }
 
     private function assertSuccessful(mixed $payload): void

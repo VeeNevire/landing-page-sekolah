@@ -315,6 +315,18 @@ body.dark .portal-demo-box{background:color-mix(in srgb,var(--primary-6) 10%,var
 .telegram-action-primary{width:100%;color:#fff;background:var(--tg-deep);box-shadow:0 8px 18px rgba(8,121,177,.2)}
 .telegram-action-primary > span{margin-left:auto;font-size:1rem}
 .telegram-action-primary:hover{background:#066d9f;box-shadow:0 10px 22px rgba(8,121,177,.26)}
+.telegram-bot-connect{width:auto;color:#fff;background:#0879b1;box-shadow:0 8px 18px rgba(8,121,177,.2);padding:0 14px}
+.telegram-bot-connect:hover{background:#066d9f;box-shadow:0 10px 22px rgba(8,121,177,.26)}
+.telegram-bot-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--card) 88%,var(--primary-2) 12%)}
+.telegram-bot-panel{width:100%;max-width:100%;min-width:0;overflow:hidden}
+.telegram-bot-panel > div{min-width:0;max-width:100%}
+.telegram-bot-row{width:100%;max-width:100%;min-width:0}
+.telegram-bot-info{min-width:0;flex:1}
+.telegram-bot-info strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
+.telegram-bot-info div{color:var(--muted);font-size:.78rem;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.telegram-bot-row .status-pass{white-space:nowrap}
+.telegram-bot-row form{flex:none}
+.telegram-bot-connect{white-space:nowrap}
 .telegram-action-secondary{color:#9f2d2d;background:color-mix(in srgb,#ef4444 10%,var(--card));border:1px solid color-mix(in srgb,#ef4444 18%,var(--line))}
 .telegram-card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .telegram-secure-note{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.66rem;line-height:1.35}
@@ -324,11 +336,15 @@ body.dark .portal-panel.telegram-card{--tg-deep:#4fc3ef;background:linear-gradie
 body.dark .telegram-card-icon{color:#07263a}
 body.dark .telegram-action-primary{color:#062337;background:#4fc3ef}
 body.dark .telegram-action-primary:hover{background:#71d0f2}
+body.dark .telegram-bot-connect{color:#062337;background:#4fc3ef}
+body.dark .telegram-bot-connect:hover{background:#71d0f2}
 @media(max-width:520px){
   .telegram-card-head{align-items:flex-start;flex-wrap:wrap}
   .telegram-status{margin-left:55px;margin-top:-7px}
   .telegram-card-footer{align-items:stretch;flex-direction:column}
   .telegram-card-footer form,.telegram-action-secondary{width:100%}
+  .telegram-bot-row{gap:10px;padding:10px}
+  .telegram-bot-connect{min-height:38px;padding:0 11px;font-size:.72rem}
 }
 @media(prefers-reduced-motion:reduce){.telegram-action{transition:none}}
 .portal-empty{padding:30px;text-align:center;color:var(--muted)}

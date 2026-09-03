@@ -12,6 +12,7 @@ use App\Http\Controllers\Portal\PklController as PortalPklController;
 use App\Http\Controllers\Portal\ReportController;
 use App\Http\Controllers\Portal\StudentController;
 use App\Http\Controllers\Portal\TelegramController;
+use App\Http\Controllers\Admin\TelegramController as AdminTelegramController;
 use App\Http\Controllers\Guru\BankSoalController;
 use App\Http\Controllers\Guru\GuruController;
 use App\Http\Controllers\Guru\GuruPklController;
@@ -79,6 +80,8 @@ Route::middleware(['auth', 'role:parent'])->prefix('portal')->name('portal.')->g
     Route::get('/notifikasi', [StudentController::class, 'notifikasi'])->name('notifikasi');
     Route::post('/telegram/connect', [TelegramController::class, 'connect'])->name('telegram.connect');
     Route::delete('/telegram/disconnect', [TelegramController::class, 'disconnect'])->name('telegram.disconnect');
+    Route::post('/telegram/{bot}/connect', [TelegramController::class, 'connect'])->name('telegram.bot.connect');
+    Route::delete('/telegram/{bot}/disconnect', [TelegramController::class, 'disconnectBot'])->name('telegram.bot.disconnect');
 });
 
 Route::middleware(['auth', 'role:student'])->prefix('siswa')->name('siswa.')->group(function () {
@@ -123,6 +126,7 @@ Route::middleware(['auth', 'role:teacher,homeroom,admin'])->prefix('guru')->name
     Route::post('/catatan', [GuruController::class, 'catatanStore'])->name('catatan.store');
     Route::get('/publikasi', [GuruController::class, 'publikasi'])->name('publikasi');
     Route::post('/publikasi/{class}', [GuruController::class, 'publikasiStore'])->name('publikasi.store');
+    Route::post('/publikasi/{type}/{class}', [GuruController::class, 'publikasiReportStore'])->name('publikasi.report.store');
     Route::get('/materi', [GuruController::class, 'materi'])->name('materi');
     Route::post('/materi', [GuruController::class, 'materiStore'])->name('materi.store');
     Route::delete('/materi/{material}', [GuruController::class, 'materiDestroy'])->name('materi.destroy');
@@ -287,6 +291,15 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     Route::delete('/parent-student', [AdminController::class, 'parentStudentDestroy'])->name('parent-student.destroy');
 
     Route::get('/audit', [AdminController::class, 'audit'])->name('audit.index');
+
+    Route::get('/telegram', [AdminTelegramController::class, 'index'])->name('telegram.index');
+    Route::post('/telegram/bots', [AdminTelegramController::class, 'botStore'])->name('telegram.bots.store');
+    Route::put('/telegram/bots/{bot}', [AdminTelegramController::class, 'botUpdate'])->name('telegram.bots.update');
+    Route::delete('/telegram/bots/{bot}', [AdminTelegramController::class, 'botDestroy'])->name('telegram.bots.destroy');
+    Route::post('/telegram/bots/{bot}/test', [AdminTelegramController::class, 'botTest'])->name('telegram.bots.test');
+    Route::post('/telegram/templates', [AdminTelegramController::class, 'templateStore'])->name('telegram.templates.store');
+    Route::put('/telegram/templates/{template}', [AdminTelegramController::class, 'templateUpdate'])->name('telegram.templates.update');
+    Route::delete('/telegram/templates/{template}', [AdminTelegramController::class, 'templateDestroy'])->name('telegram.templates.destroy');
 
     Route::get('/perpustakaan', [AdminController::class, 'perpustakaan'])->name('perpustakaan.index');
     Route::get('/perpustakaan/{book}/data', [AdminController::class, 'perpustakaanData'])->name('perpustakaan.data');

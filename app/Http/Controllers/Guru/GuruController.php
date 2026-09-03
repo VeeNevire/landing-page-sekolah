@@ -18,6 +18,8 @@ use App\Models\TeacherNote;
 use App\Models\CourseModule;
 use App\Services\AuditService;
 use App\Jobs\SendGradeTelegramNotification;
+use App\Models\TelegramTemplate;
+use App\Models\ReportPublication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -464,7 +466,6 @@ class GuruController extends Controller
                     'score' => $score,
                     'graded_at' => now(),
                 ]);
-                SendGradeTelegramNotification::dispatchForScore($assessment->id, (int) $studentId);
             }
         }
 
@@ -496,7 +497,6 @@ class GuruController extends Controller
                 ['assessment_id' => $assessment->id, 'student_id' => $studentId],
                 ['score' => $score, 'graded_at' => now()]
             );
-            SendGradeTelegramNotification::dispatchForScore($assessment->id, (int) $studentId);
         } else {
             DB::table('assessment_scores')->updateOrInsert(
                 ['assessment_id' => $assessment->id, 'student_id' => $studentId],
@@ -747,6 +747,10 @@ class GuruController extends Controller
             $totalAssessments = Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))->count();
             $publishedCount = Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))
                 ->whereNotNull('published_at')->count();
+            $examQuery = Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))->whereIn('component', ['uts', 'uas']);
+            $examTotal = (clone $examQuery)->count();
+            $examPublished = (clone $examQuery)->whereNotNull('published_at')->count();
+            $attendanceTotal = Attendance::whereIn('student_id', $students->pluck('id'))->count();
 
             $classList[] = [
                 'name' => $class,
@@ -755,22 +759,66 @@ class GuruController extends Controller
                 'total_assessments' => $totalAssessments,
                 'published_count' => $publishedCount,
                 'all_published' => $totalAssessments > 0 && $publishedCount === $totalAssessments,
+                'exam_total' => $examTotal,
+                'exam_published' => $examPublished,
+                'attendance_total' => $attendanceTotal,
             ];
         }
 
         return view('guru.publikasi', [
             'classList' => $classList,
+            'tab' => $request->query('tab', 'nilai'),
+            'telegramTemplates' => TelegramTemplate::with('bot')
+                ->when($request->query('tab') !== 'template', fn ($q) => $q->where('report_type', $request->query('tab') === 'rencana-ujian' ? 'exam_plan' : ($request->query('tab') === 'absensi' ? 'attendance' : 'grade')))
+                ->where('is_active', true)->get(),
+            'telegramBots' => \App\Models\TelegramBot::where('is_active', true)->get(),
+            'reportPublications' => ReportPublication::where('teacher_id', $user->id)->whereIn('report_type', ['exam_plan', 'attendance'])->get()->keyBy(fn ($p) => $p->report_type.'|'.$p->class_name),
         ]);
     }
 
     public function publikasiStore(Request $request, $class)
     {
-        Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))
+        $validated = $request->validate(['telegram_template_id' => 'nullable|exists:telegram_templates,id', 'telegram_bot_id' => 'nullable|exists:telegram_bots,id']);
+        $assessments = Assessment::whereHas('teachingAssignment', fn($q) => $q->where('class_name', $class))
             ->whereNull('published_at')
-            ->update(['published_at' => now()]);
+            ->get();
+
+        foreach ($assessments as $assessment) {
+            $assessment->update([
+                'published_at' => now(),
+                'telegram_template_id' => $validated['telegram_template_id'] ?? null,
+                'telegram_bot_id' => $validated['telegram_bot_id'] ?? null,
+            ]);
+            if (! empty($validated['telegram_template_id'])) {
+                $assessment->scores()->whereNotNull('score')->pluck('student_id')->each(
+                    fn ($studentId) => SendGradeTelegramNotification::dispatchForPublishedScore($assessment->id, (int) $studentId, (int) $validated['telegram_template_id'], isset($validated['telegram_bot_id']) ? (int) $validated['telegram_bot_id'] : null)
+                );
+            }
+        }
 
         AuditService::log('grade.publish', 'Assessment', null, null);
         return back()->with('success', "Nilai untuk kelas {$class} berhasil dipublikasikan.");
+    }
+
+    public function publikasiReportStore(Request $request, string $type, string $class)
+    {
+        abort_unless(in_array($type, ['exam_plan', 'attendance'], true), 404);
+        $validated = $request->validate(['telegram_template_id' => 'nullable|exists:telegram_templates,id', 'telegram_bot_id' => 'nullable|exists:telegram_bots,id']);
+        $template = ! empty($validated['telegram_template_id'])
+            ? TelegramTemplate::whereKey($validated['telegram_template_id'])->where('report_type', $type)->where('is_active', true)->firstOrFail()
+            : null;
+
+        if ($type === 'exam_plan') {
+            Assessment::whereHas('teachingAssignment', fn ($q) => $q->where('class_name', $class))
+                ->whereIn('component', ['uts', 'uas'])->update(['published_at' => now(), 'telegram_template_id' => $template?->id]);
+        }
+
+        ReportPublication::updateOrCreate(
+            ['teacher_id' => $request->user()->id, 'report_type' => $type, 'class_name' => $class, 'report_date' => null],
+            ['telegram_template_id' => $template?->id, 'telegram_bot_id' => $validated['telegram_bot_id'] ?? null, 'published_at' => now()]
+        );
+        AuditService::log($type.'.publish', 'ReportPublication', null, $class);
+        return back()->with('success', ($type === 'exam_plan' ? 'Rencana ujian' : 'Absensi').' kelas '.$class.' berhasil dipublikasikan.');
     }
 
     public function materi(Request $request)

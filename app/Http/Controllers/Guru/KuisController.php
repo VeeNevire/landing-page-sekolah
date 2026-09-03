@@ -348,7 +348,6 @@ class KuisController extends Controller
                 'graded_at' => now(),
             ]
         );
-        SendGradeTelegramNotification::dispatchForScore($assessmentScore->assessment_id, $assessmentScore->student_id);
 
         AuditService::log('quiz.grade_essay', 'QuizAttempt', $attempt->id, null);
 

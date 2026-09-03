@@ -14,6 +14,9 @@ class Assessment extends Model
         'max_score',
         'weight_percent',
         'published_at',
+        'telegram_template_id',
+        'telegram_bot_id',
+        'telegram_notified_at',
     ];
 
     protected function casts(): array
@@ -23,6 +26,7 @@ class Assessment extends Model
             'max_score' => 'decimal:2',
             'weight_percent' => 'decimal:2',
             'published_at' => 'datetime',
+            'telegram_notified_at' => 'datetime',
         ];
     }
 
@@ -34,5 +38,10 @@ class Assessment extends Model
     public function scores()
     {
         return $this->hasMany(AssessmentScore::class);
+    }
+
+    public function telegramTemplate()
+    {
+        return $this->belongsTo(TelegramTemplate::class, 'telegram_template_id');
     }
 }

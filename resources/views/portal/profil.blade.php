@@ -72,6 +72,7 @@
           </div>
       </section>
 
+      @if(!isset($telegramBots) || $telegramBots->isEmpty())
       <section class="portal-panel telegram-card {{ $telegramConnected ? 'is-connected' : 'is-disconnected' }}">
         <svg class="telegram-card-watermark" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/>
@@ -136,6 +137,25 @@
           <p class="telegram-privacy">Bot hanya mengirim informasi sekolah. Tidak ada pesan promosi.</p>
         @endif
       </section>
+      @endif
+      @if(isset($telegramBots) && $telegramBots->isNotEmpty())
+      <section class="portal-panel telegram-bot-panel" style="margin-top:16px">
+        <div class="portal-panel-header"><div><h2>Bot Telegram</h2><p>Tekan Hubungkan lalu tekan <strong>Start</strong> pada masing-masing bot.</p></div></div>
+        <div style="display:grid;gap:10px">
+        @foreach($telegramBots as $bot)
+          @php $connection = $bot->connections->first(); @endphp
+          <div class="telegram-bot-row">
+            <div class="telegram-bot-info"><strong>{{ $bot->name }}</strong><div>{{ $bot->username ? '@'.ltrim($bot->username, '@') : 'Bot Telegram' }}</div></div>
+            @if($connection?->chat_id)
+              <span class="status-pass">Terhubung</span>
+            @else
+              <form method="POST" action="{{ route('portal.telegram.bot.connect', $bot) }}">@csrf<button class="telegram-action telegram-bot-connect" type="submit">Hubungkan</button></form>
+            @endif
+          </div>
+        @endforeach
+        </div>
+      </section>
+      @endif
       </div>
     </div>
 @endif

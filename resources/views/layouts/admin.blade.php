@@ -91,6 +91,11 @@
           </span>
           <span class="portal-menu-label">Perpustakaan</span>
         </a>
+        <a href="{{ route('admin.telegram.index') }}"
+          @class(['active'=> request()->routeIs('admin.telegram.*')])>
+          <span class="portal-menu-icon">✈</span>
+          <span class="portal-menu-label">Bot Telegram</span>
+        </a>
 
         <div class="portal-menu-group">Akademik</div>
         <a href="{{ route('admin.subjects.index') }}"
@@ -282,6 +287,5 @@
 </body>
 
 </html>
-
 
 

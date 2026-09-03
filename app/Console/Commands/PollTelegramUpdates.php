@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\TelegramService;
+use App\Models\TelegramBot;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
@@ -15,20 +16,9 @@ class PollTelegramUpdates extends Command
 
     public function handle(TelegramService $telegram): int
     {
-        $token = config('services.telegram.bot_token');
-        if (! $token) {
+        $bots = TelegramBot::where('is_active', true)->get();
+        if ($bots->isEmpty() && ! config('services.telegram.bot_token')) {
             $this->error('TELEGRAM_BOT_TOKEN belum dikonfigurasi.');
-
-            return self::FAILURE;
-        }
-
-        $cacheKey = 'telegram.poll.offset.'.substr(hash('sha256', $token), 0, 16);
-        $offset = Cache::get($cacheKey);
-
-        try {
-            $telegram->disableWebhook();
-        } catch (Throwable $exception) {
-            $this->error('Gagal menonaktifkan webhook Telegram: '.$exception->getMessage());
 
             return self::FAILURE;
         }
@@ -37,14 +27,20 @@ class PollTelegramUpdates extends Command
 
         do {
             try {
-                $updates = $telegram->getUpdates($offset, $this->option('once') ? 0 : 25);
+                foreach ($bots->isEmpty() ? [null] : $bots as $bot) {
+                    $token = $bot?->token ?: config('services.telegram.bot_token');
+                    $cacheKey = 'telegram.poll.offset.'.substr(hash('sha256', $token), 0, 16);
+                    $offset = Cache::get($cacheKey);
+                    $telegram->disableWebhook($bot);
+                    $updates = $telegram->getUpdates($offset, $this->option('once') ? 0 : 25, $bot);
 
-                foreach ($updates as $update) {
-                    $telegram->processUpdate($update);
+                    foreach ($updates as $update) {
+                        $telegram->processUpdate($update, $bot);
 
-                    if (isset($update['update_id'])) {
-                        $offset = (int) $update['update_id'] + 1;
-                        Cache::forever($cacheKey, $offset);
+                        if (isset($update['update_id'])) {
+                            $offset = (int) $update['update_id'] + 1;
+                            Cache::forever($cacheKey, $offset);
+                        }
                     }
                 }
             } catch (Throwable $exception) {

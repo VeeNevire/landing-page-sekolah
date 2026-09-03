@@ -295,7 +295,6 @@ class TugasController extends Controller
                 'graded_at' => now(),
             ]
         );
-        SendGradeTelegramNotification::dispatchForScore($assessmentScore->assessment_id, $assessmentScore->student_id);
 
         AuditService::log('submission.grade', 'Submission', $submission->id, null);
 
