@@ -426,8 +426,19 @@ body.dark .telegram-bot-connect:hover{background:#71d0f2}
 /* ── Ortu: Light Sidebar ── */
 .ortu-body .portal-sidebar{
   background:#f8f9fc;color:#132238;border-right:1px solid var(--line);
-  padding:16px 12px 14px
+  padding:16px 12px 14px;
+  overflow-y:hidden
 }
+.ortu-body .portal-menu{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(95,111,130,.2) transparent
+}
+.ortu-body .portal-menu::-webkit-scrollbar{width:5px}
+.ortu-body .portal-menu::-webkit-scrollbar-track{background:transparent}
+.ortu-body .portal-menu::-webkit-scrollbar-thumb{background:rgba(95,111,130,.2);border-radius:3px}
 .ortu-body .portal-sidebar .brand{color:var(--primary);padding:0 6px 10px}
 .ortu-body .portal-sidebar .brand-text small{color:var(--muted)}
 .ortu-body .portal-menu a{color:#5f6f82;padding:8px 10px;border-radius:8px}

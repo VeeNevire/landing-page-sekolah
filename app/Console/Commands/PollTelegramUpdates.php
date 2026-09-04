@@ -6,6 +6,7 @@ use App\Services\TelegramService;
 use App\Models\TelegramBot;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class PollTelegramUpdates extends Command
@@ -45,6 +46,11 @@ class PollTelegramUpdates extends Command
                 }
             } catch (Throwable $exception) {
                 report($exception);
+                Log::error('Polling Telegram gagal.', [
+                    'bot_ids' => $bots->pluck('id')->values()->all(),
+                    'exception' => $exception::class,
+                    'message' => $exception->getMessage(),
+                ]);
 
                 if ($this->option('once')) {
                     $this->error('Polling Telegram gagal: '.$exception->getMessage());

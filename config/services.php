@@ -45,6 +45,10 @@ return [
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+        'mtproto_api_id' => env('TELEGRAM_MTPROTO_API_ID'),
+        'mtproto_api_hash' => env('TELEGRAM_MTPROTO_API_HASH'),
+        'mtproto_manager_bot_token' => env('TELEGRAM_MTPROTO_MANAGER_BOT_TOKEN'),
+        'mtproto_manager_bot_username' => env('TELEGRAM_MTPROTO_MANAGER_BOT_USERNAME'),
     ],
 
 ];

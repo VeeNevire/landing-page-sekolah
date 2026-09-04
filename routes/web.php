@@ -3,16 +3,8 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\PklController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\PPDBController;
-use App\Http\Controllers\LibraryController;
-use App\Http\Controllers\Portal\DashboardController;
-use App\Http\Controllers\Portal\IzinController;
-use App\Http\Controllers\Portal\PklController as PortalPklController;
-use App\Http\Controllers\Portal\ReportController;
-use App\Http\Controllers\Portal\StudentController;
-use App\Http\Controllers\Portal\TelegramController;
 use App\Http\Controllers\Admin\TelegramController as AdminTelegramController;
+use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\Guru\BankSoalController;
 use App\Http\Controllers\Guru\GuruController;
 use App\Http\Controllers\Guru\GuruPklController;
@@ -21,13 +13,21 @@ use App\Http\Controllers\Guru\ModuleController;
 use App\Http\Controllers\Guru\TugasController;
 use App\Http\Controllers\Guru\WaliIzinController;
 use App\Http\Controllers\Guru\WaliRaporController;
-use App\Http\Controllers\Alumni\AlumniController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LibraryController;
+use App\Http\Controllers\Lms\DownloadController;
+use App\Http\Controllers\Portal\DashboardController;
+use App\Http\Controllers\Portal\IzinController;
+use App\Http\Controllers\Portal\PklController as PortalPklController;
+use App\Http\Controllers\Portal\ReportController;
+use App\Http\Controllers\Portal\StudentController;
+use App\Http\Controllers\Portal\TelegramController;
+use App\Http\Controllers\PPDBController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Siswa\SiswaController;
 use App\Http\Controllers\Siswa\SiswaKuisController;
 use App\Http\Controllers\Siswa\SiswaPklController;
 use App\Http\Controllers\Siswa\SiswaTugasController;
-use App\Http\Controllers\Lms\DownloadController;
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'beranda'])->name('beranda');
@@ -183,7 +183,6 @@ Route::middleware(['auth', 'role:homeroom'])->prefix('guru')->name('guru.')->gro
     Route::post('/wali/izin/{leaveRequest}/reject', [WaliIzinController::class, 'reject'])->name('wali.izin.reject');
 });
 
-
 Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->name('alumni.')->group(function () {
     Route::get('/dashboard', [AlumniController::class, 'dashboard'])->name('dashboard');
     Route::get('/profil', [AlumniController::class, 'profil'])->name('profil');
@@ -293,6 +292,11 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     Route::get('/audit', [AdminController::class, 'audit'])->name('audit.index');
 
     Route::get('/telegram', [AdminTelegramController::class, 'index'])->name('telegram.index');
+    Route::post('/telegram/mtproto/qr', [AdminTelegramController::class, 'mtprotoQr'])->name('telegram.mtproto.qr');
+    Route::get('/telegram/mtproto/qr/status', [AdminTelegramController::class, 'mtprotoQrStatus'])->name('telegram.mtproto.qr.status');
+    Route::post('/telegram/mtproto/logout', [AdminTelegramController::class, 'mtprotoLogout'])->name('telegram.mtproto.logout');
+    Route::post('/telegram/mtproto/bots', [AdminTelegramController::class, 'mtprotoBotStore'])->name('telegram.mtproto.bots.store');
+    Route::get('/telegram/mtproto/bots/{creation}/status', [AdminTelegramController::class, 'mtprotoBotCreationStatus'])->name('telegram.mtproto.bots.status');
     Route::post('/telegram/bots', [AdminTelegramController::class, 'botStore'])->name('telegram.bots.store');
     Route::put('/telegram/bots/{bot}', [AdminTelegramController::class, 'botUpdate'])->name('telegram.bots.update');
     Route::delete('/telegram/bots/{bot}', [AdminTelegramController::class, 'botDestroy'])->name('telegram.bots.destroy');
@@ -342,4 +346,4 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

@@ -27,8 +27,8 @@
     .tbs-item:hover { background:var(--bg) }
     .tbs-item.active { background:color-mix(in srgb,var(--primary-2) 6%,var(--card)) }
     .tbs-check { color:var(--primary-2); font-weight:700; font-size:.85rem; margin-left:auto }
-    .ortu-body .portal-menu { flex:0 1 auto; overflow-y:visible }
-    .ortu-body .portal-sidebar { overflow-y:auto }
+    .ortu-body .portal-menu { flex:1; min-height:0; overflow-y:auto }
+    .ortu-body .portal-sidebar { overflow-y:hidden }
   </style>
   @endpush
   @stack('styles')
@@ -278,6 +278,5 @@
 </body>
 
 </html>
-
 
 
