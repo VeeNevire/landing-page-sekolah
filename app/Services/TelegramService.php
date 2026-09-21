@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Contracts\TelegramTransport;
 use App\Models\TelegramBot;
 use App\Models\TelegramConnection;
+use App\Models\User;
+use App\Services\Telegram\BotApiTransport;
+use App\Services\Telegram\MtprotoBotTransport;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class TelegramService
@@ -41,7 +45,15 @@ class TelegramService
         $text = (string) data_get($update, 'message.text', '');
 
         if ($chatId && preg_match('/^\/start(?:@\w+)?\s+(\S+)$/', $text, $matches)) {
-            $this->linkParentFromStart($chatId, $matches[1], $bot, data_get($update, 'message.from.username'));
+            $linked = $this->linkParentFromStart($chatId, $matches[1], $bot, data_get($update, 'message.from.username'));
+
+            if (! $linked) {
+                Log::warning('Telegram /start gagal menautkan akun user.', [
+                    'chat_id' => (string) $chatId,
+                    'bot_id' => $bot?->id,
+                    'reason' => 'Token koneksi tidak valid atau sudah kedaluwarsa.',
+                ]);
+            }
         }
     }
 
@@ -62,6 +74,7 @@ class TelegramService
                 ['user_id' => $parent->id, 'telegram_bot_id' => $bot->id],
                 ['link_token_hash' => hash('sha256', $token), 'link_token_expires_at' => now()->addMinutes(30), 'chat_id' => null, 'connected_at' => null]
             );
+
             return 'https://t.me/'.ltrim($username, '@').'?start=link_'.$token;
         }
 
@@ -84,8 +97,11 @@ class TelegramService
                 $connection = TelegramConnection::where('telegram_bot_id', $bot->id)
                     ->where('link_token_hash', hash('sha256', substr($startToken, 5)))
                     ->where('link_token_expires_at', '>', now())->lockForUpdate()->first();
-                if (! $connection) return null;
+                if (! $connection) {
+                    return null;
+                }
                 $connection->update(['chat_id' => (string) $chatId, 'telegram_username' => $telegramUsername, 'link_token_hash' => null, 'link_token_expires_at' => null, 'connected_at' => now()]);
+
                 return $connection->user;
             }
             $parent = User::where('role', 'parent')
@@ -122,6 +138,12 @@ class TelegramService
 
     public function sendMessage(string|int $chatId, string $text, ?TelegramBot $bot = null): void
     {
+        if ($bot) {
+            $this->transport($bot)->sendMessage($bot, $chatId, $text);
+
+            return;
+        }
+
         $token = $bot?->token ?: config('services.telegram.bot_token');
         if (! $token) {
             throw new \RuntimeException('TELEGRAM_BOT_TOKEN belum dikonfigurasi.');
@@ -137,10 +159,14 @@ class TelegramService
 
     public function verifyBot(TelegramBot $bot): array
     {
-        $response = $this->client()->get($this->apiUrl('getMe', $bot->token));
-        $payload = $response->json();
-        $this->assertSuccessful($payload);
-        return $payload['result'];
+        return $this->transport($bot)->verify($bot);
+    }
+
+    private function transport(TelegramBot $bot): TelegramTransport
+    {
+        return $bot->mode === 'mtproto_bot'
+            ? app(MtprotoBotTransport::class)
+            : app(BotApiTransport::class);
     }
 
     private function botUsername(?TelegramBot $bot = null): ?string

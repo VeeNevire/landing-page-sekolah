@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class TelegramBot extends Model
 {
-    protected $fillable = ['name', 'username', 'token', 'is_active'];
+    protected $fillable = ['name', 'mode', 'username', 'token', 'api_id', 'api_hash', 'is_active'];
 
-    protected $casts = ['token' => 'encrypted', 'is_active' => 'boolean'];
+    protected $casts = ['token' => 'encrypted', 'api_hash' => 'encrypted', 'is_active' => 'boolean', 'last_verified_at' => 'datetime'];
 
     public function templates()
     {

@@ -28,9 +28,6 @@ class RfidAttendanceController extends Controller
             : $records->with('student')->orderByDesc('check_in_at')->orderByDesc('id')->paginate(30)->withQueryString();
         $classes = Student::where('status', 'active')->distinct()->orderBy('class_name')->pluck('class_name');
         $lastScan = $this->lastScan();
-        if ($request->query('debugrfid')) {
-            \Illuminate\Support\Facades\Log::info('RFID_DEBUG', ['tab' => $tab, 'summary' => $summary, 'rowsCount' => $rows->count(), 'totalActive' => Student::where('status','active')->count(), 'db' => DB::connection()->getDatabaseName()]);
-        }
         return view('admin.rfid-attendance', compact('tab', 'rows', 'classes', 'summary', 'lastScan'));
     }
 

@@ -1,7 +1,6 @@
 @php
 $statusLabels = ['present' => 'Hadir', 'sick' => 'Sakit', 'excused' => 'Izin', 'unexcused' => 'Alpa', 'late' => 'Terlambat'];
 $statusColors = ['present' => 'var(--success)', 'sick' => '#3d8baf', 'excused' => '#6366f1', 'unexcused' => 'var(--danger)', 'late' => '#d97706'];
-\Illuminate\Support\Facades\Log::info('RFID_PARTIAL_DEBUG', ['summary' => $summary, 'rowsCount' => $rows->count()]);
 @endphp
 <div class="rfid-summary-grid">
   @foreach(['active' => ['Siswa Aktif', 'var(--primary-2)'], 'recorded' => ['Sudah Tercatat', 'var(--success)'], 'unrecorded' => ['Belum Tercatat', '#d97706'], 'present' => ['Hadir', 'var(--success)']] as $key => $meta)

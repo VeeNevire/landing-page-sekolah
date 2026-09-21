@@ -122,9 +122,10 @@ class RfidAttendanceTest extends TestCase
     {
         $this->student->update(['rfid_uid' => '12:AB:34:CD']);
         $this->scan()->assertOk();
-        $this->actingAs($this->admin)->get('/admin/absensi-rfid?debugrfid=1')->assertOk()->assertSee('Siswa RFID')
+        $this->actingAs($this->admin)->get('/admin/absensi-rfid')->assertOk()->assertSee('Siswa RFID')
             ->assertViewHas('summary', fn ($s) => $s === ['active' => 1, 'recorded' => 1, 'present' => 1, 'unrecorded' => 0]);
-        $this->get('/admin/absensi-rfid?class=OTHER')->assertOk()->assertDontSee('Siswa RFID');
+        $this->get('/admin/absensi-rfid?class=OTHER')->assertOk()->assertSee('Belum Ada Absensi')
+            ->assertViewHas('summary', fn ($s) => $s === ['active' => 0, 'recorded' => 0, 'present' => 0, 'unrecorded' => 0]);
         $this->get('/admin/absensi-rfid?tab=registration&search=20260001')->assertOk()->assertSee('Siswa RFID');
         $this->actingAs(User::factory()->create(['role' => 'principal']))->get('/admin/absensi-rfid')->assertOk();
         $this->actingAs(User::factory()->create(['role' => 'teacher']))->getJson('/admin/absensi-rfid/state')->assertForbidden();
