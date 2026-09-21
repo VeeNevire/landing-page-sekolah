@@ -11,6 +11,8 @@ class Attendance extends Model
     protected $fillable = [
         'student_id',
         'attendance_date',
+        'check_in_at',
+        'source',
         'status',
         'note',
         'recorded_by',
@@ -20,6 +22,7 @@ class Attendance extends Model
     {
         return [
             'attendance_date' => 'date',
+            'check_in_at' => 'datetime',
         ];
     }
 

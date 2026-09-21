@@ -10,6 +10,7 @@ class Student extends Model
         'user_id',
         'nisn',
         'nis',
+        'rfid_uid',
         'full_name',
         'birth_date',
         'class_name',

@@ -98,6 +98,9 @@
         </a>
 
         <div class="portal-menu-group">Akademik</div>
+        <a href="{{ route('admin.rfid.index') }}" @class(['active' => request()->routeIs('admin.rfid.*')])>
+          <span class="portal-menu-icon">▣</span><span class="portal-menu-label">Absensi RFID</span>
+        </a>
         <a href="{{ route('admin.subjects.index') }}"
           @class(['active'=> request()->routeIs('admin.subjects.*')])>
           <span class="portal-menu-icon">
@@ -287,5 +290,4 @@
 </body>
 
 </html>
-
 
