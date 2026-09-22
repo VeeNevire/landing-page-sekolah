@@ -45,7 +45,7 @@
 </section>
 
 {{-- Class Cards --}}
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-top:28px">
   @foreach ($classList as $class)
   @php
     $classArr = is_array($class) ? $class : [];
