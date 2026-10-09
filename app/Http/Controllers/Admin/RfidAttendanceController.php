@@ -28,10 +28,64 @@ class RfidAttendanceController extends Controller
             : $records->with('student')->orderByDesc('check_in_at')->orderByDesc('id')->paginate(30)->withQueryString();
         $classes = Student::where('status', 'active')->distinct()->orderBy('class_name')->pluck('class_name');
         $lastScan = $this->lastScan();
+
         return view('admin.rfid-attendance', compact('tab', 'rows', 'classes', 'summary', 'lastScan'));
     }
 
     public function data(Request $request)
+    {
+        return response()->json($this->todayPayload($request))->header('Cache-Control', 'no-store');
+    }
+
+    public function stream(Request $request)
+    {
+        return response()->stream(function () use ($request) {
+            set_time_limit(0);
+            @ini_set('zlib.output_compression', '0');
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_write_close();
+            }
+            if (! app()->runningUnitTests()) {
+                while (ob_get_level() > 0) {
+                    ob_end_flush();
+                }
+                ob_implicit_flush(true);
+            }
+
+            $lastPayload = null;
+            $lastPing = time();
+
+            while (! connection_aborted()) {
+                if (app()->runningUnitTests()) {
+                    $payload = $this->todayPayload($request);
+                    echo "event: attendance\ndata: ".json_encode($payload)."\n\n";
+                    break;
+                }
+
+                $json = json_encode($this->todayPayload($request));
+                if ($json !== $lastPayload) {
+                    echo "event: attendance\ndata: {$json}\n\n";
+                    $lastPayload = $json;
+                    $lastPing = time();
+                } elseif (time() - $lastPing >= 15) {
+                    echo ": keep-alive\n\n";
+                    $lastPing = time();
+                }
+
+                @ob_flush();
+                flush();
+
+                sleep(1);
+            }
+        }, 200, [
+            'Content-Type' => 'text/event-stream; charset=utf-8',
+            'Cache-Control' => 'no-cache, no-transform',
+            'X-Accel-Buffering' => 'no',
+            'Connection' => 'keep-alive',
+        ]);
+    }
+
+    private function todayPayload(Request $request): array
     {
         $students = Student::where('status', 'active')
             ->when($request->query('class'), fn ($q, $v) => $q->where('class_name', $v))
@@ -44,17 +98,19 @@ class RfidAttendanceController extends Controller
         $rows = $records->with('student')->orderByDesc('check_in_at')->orderByDesc('id')->paginate(30)->withQueryString();
         $lastScan = $this->lastScan();
         $html = view('admin.partials.rfid-today-table', compact('rows', 'summary', 'lastScan'))->render();
-        return response()->json([
+
+        return [
             'summary' => $summary,
             'html' => $html,
             'lastScan' => $lastScan,
             'server_time' => now()->format('H:i:s'),
-        ])->header('Cache-Control', 'no-store');
+        ];
     }
 
     private function lastScan(): array
     {
         $state = DB::table('rfid_reader_state')->where('id', 1)->first();
+
         return [
             'message' => $state?->last_message,
             'seen_at' => $state?->last_seen_at ? Carbon::parse($state->last_seen_at)->format('H:i:s') : null,
@@ -66,6 +122,7 @@ class RfidAttendanceController extends Controller
         $state = DB::table('rfid_reader_state')->where('id', 1)->first();
         $active = $state && $rfid->active($state);
         $mine = $active && (int) $state->owner_id === $request->user()->id;
+
         return response()->json([
             'configured' => (string) config('rfid.token') !== '',
             'active' => (bool) $active, 'mine' => (bool) $mine,
@@ -80,6 +137,7 @@ class RfidAttendanceController extends Controller
     public function start(Request $request, RfidService $rfid)
     {
         $data = $request->validate(['student_id' => 'required|integer|exists:students,id']);
+
         return response()->json(['session' => $rfid->start($data['student_id'], $request->user()->id)]);
     }
 
@@ -88,6 +146,7 @@ class RfidAttendanceController extends Controller
         $data = $request->validate(['session' => 'required|uuid', 'confirm' => 'required|boolean',
             'uid' => 'nullable|string|max:29', 'approved' => 'exclude_unless:confirm,true|required|accepted']);
         $student = $rfid->finish($data['session'], $request->user()->id, $data['confirm'], $data['uid'] ?? null);
+
         return response()->json([
             'message' => $data['confirm'] ? 'Kartu berhasil disimpan.' : 'Registrasi dibatalkan.',
             'student' => $student ? ['id' => $student->id, 'full_name' => $student->full_name, 'rfid_uid' => $student->rfid_uid] : null,
@@ -103,6 +162,7 @@ class RfidAttendanceController extends Controller
             $student->update(['rfid_uid' => null]);
             AuditService::log('rfid.card_unlink', 'Student', $student->id, $student->full_name, $request->user()->id);
         });
+
         return response()->json(['message' => 'Kartu berhasil dilepaskan.']);
     }
 }

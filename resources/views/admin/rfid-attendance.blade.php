@@ -174,13 +174,26 @@
 <script>
 (() => {
   const dataUrl = @json(route('admin.rfid.data'));
+  const streamUrl = @json(route('admin.rfid.stream'));
   const region = document.getElementById('rfid-live-region');
   const statusEl = document.getElementById('rfid-refresh-status');
-  let inflight = false, seq = 0;
+  let inflight = false, seq = 0, lastHtml = null;
 
   function currentQuery() {
     const params = new URLSearchParams(window.location.search);
     return params.toString();
+  }
+
+  function withQuery(url) {
+    return url + (currentQuery() ? '?' + currentQuery() : '');
+  }
+
+  function applyHtml(json) {
+    if (json.html === lastHtml) return;
+    lastHtml = json.html;
+    region.innerHTML = json.html;
+    statusEl.textContent = 'Live · diperbarui ' + json.server_time + ' WIB';
+    statusEl.classList.remove('rfid-refresh-error');
   }
 
   async function refresh() {
@@ -188,13 +201,11 @@
     inflight = true;
     const mySeq = ++seq;
     try {
-      const response = await fetch(dataUrl + (currentQuery() ? '?' + currentQuery() : ''), { headers: { 'Accept': 'application/json' } });
+      const response = await fetch(withQuery(dataUrl), { headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const json = await response.json();
       if (mySeq !== seq) return;
-      region.innerHTML = json.html;
-      statusEl.textContent = 'Diperbarui pukul ' + json.server_time + ' WIB';
-      statusEl.classList.remove('rfid-refresh-error');
+      applyHtml(json);
     } catch (error) {
       if (mySeq !== seq) return;
       statusEl.textContent = 'Gagal memperbarui. Data terakhir tetap ditampilkan.';
@@ -204,7 +215,24 @@
     }
   }
 
-  setInterval(refresh, 5000);
+  if ('EventSource' in window) {
+    const source = new EventSource(withQuery(streamUrl));
+    source.addEventListener('attendance', (event) => {
+      try {
+        applyHtml(JSON.parse(event.data));
+      } catch (e) {
+        statusEl.textContent = 'Gagal memperbarui. Data terakhir tetap ditampilkan.';
+        statusEl.classList.add('rfid-refresh-error');
+      }
+    });
+    source.onerror = () => {
+      statusEl.textContent = 'Koneksi terputus. Menyambung ulang...';
+      statusEl.classList.add('rfid-refresh-error');
+    };
+  } else {
+    refresh();
+    setInterval(refresh, 5000);
+  }
 })();
 </script>
 @else

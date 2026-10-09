@@ -13,6 +13,7 @@ class RfidAttendanceTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Student $student;
 
     protected function setUp(): void
@@ -130,6 +131,20 @@ class RfidAttendanceTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'principal']))->get('/admin/absensi-rfid')->assertOk();
         $this->actingAs(User::factory()->create(['role' => 'teacher']))->getJson('/admin/absensi-rfid/state')->assertForbidden();
         $this->postJson('/admin/absensi-rfid/start', ['student_id' => $this->student->id])->assertForbidden();
+    }
+
+    public function test_today_attendance_streams_live_updates_and_enforces_role(): void
+    {
+        $this->student->update(['rfid_uid' => '12:AB:34:CD']);
+        $this->scan()->assertOk();
+
+        $response = $this->actingAs($this->admin)->get('/admin/absensi-rfid/stream');
+        $response->assertOk()->assertHeader('content-type', 'text/event-stream; charset=utf-8');
+        $this->assertStringContainsString('event: attendance', $response->streamedContent());
+        $this->assertStringContainsString('Siswa RFID', $response->streamedContent());
+
+        $this->actingAs(User::factory()->create(['role' => 'teacher']))
+            ->getJson('/admin/absensi-rfid/stream')->assertForbidden();
     }
 
     public function test_configuration_failures_do_not_create_attendance(): void

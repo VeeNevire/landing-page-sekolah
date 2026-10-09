@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\RfidAttendanceController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\PklController;
+use App\Http\Controllers\Admin\RfidAttendanceController;
 use App\Http\Controllers\Admin\TelegramController as AdminTelegramController;
 use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\Guru\BankSoalController;
@@ -202,6 +202,7 @@ Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->name('alumni.')->g
 Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/absensi-rfid', [RfidAttendanceController::class, 'index'])->name('rfid.index');
     Route::get('/absensi-rfid/data', [RfidAttendanceController::class, 'data'])->name('rfid.data');
+    Route::get('/absensi-rfid/stream', [RfidAttendanceController::class, 'stream'])->name('rfid.stream');
     Route::get('/absensi-rfid/state', [RfidAttendanceController::class, 'state'])->name('rfid.state');
     Route::post('/absensi-rfid/start', [RfidAttendanceController::class, 'start'])->name('rfid.start');
     Route::post('/absensi-rfid/finish', [RfidAttendanceController::class, 'finish'])->name('rfid.finish');
