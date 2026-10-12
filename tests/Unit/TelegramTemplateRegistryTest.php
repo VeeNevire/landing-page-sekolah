@@ -15,6 +15,8 @@ class TelegramTemplateRegistryTest extends TestCase
         $this->assertContains('kkm', $registry->allKeys('grade'));
         $this->assertNotContains('status_kehadiran', $registry->allKeys('grade'));
         $this->assertContains('status', $registry->allKeys('attendance'));
+        $this->assertContains('kelas', $registry->allKeys('attendance'));
+        $this->assertContains('jam_masuk', $registry->allKeys('attendance'));
         $this->assertNotContains('nilai', $registry->allKeys('attendance'));
     }
 }

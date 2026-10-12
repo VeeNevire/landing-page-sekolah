@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\PklController;
 use App\Http\Controllers\Admin\RfidAttendanceController;
+use App\Http\Controllers\Admin\RfidNotificationController;
 use App\Http\Controllers\Admin\TelegramController as AdminTelegramController;
 use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\Guru\BankSoalController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Guru\WaliRaporController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\Lms\DownloadController;
+use App\Http\Controllers\NotificationFeedController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\IzinController;
 use App\Http\Controllers\Portal\PklController as PortalPklController;
@@ -200,6 +202,9 @@ Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->name('alumni.')->g
 });
 
 Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/absensi-rfid/notifikasi', [RfidNotificationController::class, 'index'])->name('rfid.notifications');
+    Route::post('/absensi-rfid/notifikasi', [RfidNotificationController::class, 'save'])->name('rfid.notifications.save');
+    Route::post('/absensi-rfid/notifikasi/{delivery}/retry', [RfidNotificationController::class, 'retry'])->name('rfid.notifications.retry');
     Route::get('/absensi-rfid', [RfidAttendanceController::class, 'index'])->name('rfid.index');
     Route::get('/absensi-rfid/data', [RfidAttendanceController::class, 'data'])->name('rfid.data');
     Route::get('/absensi-rfid/stream', [RfidAttendanceController::class, 'stream'])->name('rfid.stream');
@@ -355,3 +360,6 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::get('/notifications/feed', [NotificationFeedController::class, 'index'])
+    ->middleware(['auth', 'role:parent,student', 'throttle:30,1'])->name('notifications.feed');

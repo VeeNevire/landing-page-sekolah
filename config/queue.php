@@ -30,6 +30,14 @@ return [
     */
 
     'connections' => [
+        'rfid_notifications' => [
+            'driver' => 'database',
+            'connection' => env('DB_CONNECTION', 'mysql'),
+            'table' => 'jobs',
+            'queue' => 'rfid-notifications',
+            'retry_after' => 90,
+            'after_commit' => false,
+        ],
 
         'sync' => [
             'driver' => 'sync',

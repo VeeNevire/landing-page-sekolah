@@ -214,6 +214,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="{{ asset('js/script.js') }}"></script>
+  @include('partials.live-notifications')
   @stack('scripts')
 </body>
 </html>

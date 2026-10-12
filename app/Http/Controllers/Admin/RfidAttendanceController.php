@@ -29,7 +29,9 @@ class RfidAttendanceController extends Controller
         $classes = Student::where('status', 'active')->distinct()->orderBy('class_name')->pluck('class_name');
         $lastScan = $this->lastScan();
 
-        return view('admin.rfid-attendance', compact('tab', 'rows', 'classes', 'summary', 'lastScan'));
+        $useStream = PHP_SAPI !== 'cli-server' && config('rfid.live_stream_enabled', true);
+
+        return view('admin.rfid-attendance', compact('tab', 'rows', 'classes', 'summary', 'lastScan', 'useStream'));
     }
 
     public function data(Request $request)
@@ -39,6 +41,8 @@ class RfidAttendanceController extends Controller
 
     public function stream(Request $request)
     {
+        abort_if(PHP_SAPI === 'cli-server' || ! config('rfid.live_stream_enabled', true), 503, 'Gunakan pembaruan berkala pada server lokal.');
+
         return response()->stream(function () use ($request) {
             set_time_limit(0);
             @ini_set('zlib.output_compression', '0');

@@ -274,6 +274,7 @@
     window.location.href = url.toString();
   }
   </script>
+  @include('partials.live-notifications')
   @stack('scripts')
 </body>
 

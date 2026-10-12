@@ -15,6 +15,7 @@ class RfidService
         return DB::transaction(function () use ($operation) {
             $state = DB::table('rfid_reader_state')->where('id', 1)->lockForUpdate()->first();
             abort_unless($state, 503, 'Migrasi RFID belum dijalankan.');
+
             return $operation($state);
         }, 3);
     }
@@ -43,6 +44,7 @@ class RfidService
                 'session_id' => $id, 'student_id' => $studentId, 'owner_id' => $ownerId,
                 'uid' => null, 'expires_at' => now()->addMinutes(2),
             ]);
+
             return $id;
         });
     }
@@ -60,6 +62,7 @@ class RfidService
                 AuditService::log('rfid.card_register', 'Student', $student->id, $student->full_name, $owner);
             }
             $this->clear();
+
             return $student;
         });
     }
@@ -71,6 +74,7 @@ class RfidService
                 if (! $state->uid) {
                     DB::table('rfid_reader_state')->where('id', 1)->update(['uid' => $uid]);
                 }
+
                 return $this->result(true, 'registration', 'Kartu ditangkap. Konfirmasi registrasi di Admin.');
             }
             $this->clear();
@@ -91,8 +95,10 @@ class RfidService
                 'status' => 'present', 'source' => 'rfid', 'check_in_at' => now(), 'recorded_by' => $recorder->id,
             ]);
             if ($attendance->wasRecentlyCreated) {
+                app(RfidNotificationService::class)->record($attendance);
                 AuditService::log('attendance.rfid_scan', 'Attendance', $attendance->id, $student->full_name, $recorder->id);
             }
+
             return $this->result(true, $attendance->wasRecentlyCreated ? 'attendance' : 'already_recorded',
                 $attendance->wasRecentlyCreated ? 'Kehadiran berhasil dicatat: '.$student->full_name : 'Kehadiran hari ini sudah tercatat.');
         });
@@ -101,6 +107,7 @@ class RfidService
     private function result(bool $success, string $mode, string $message, int $status = 200): array
     {
         DB::table('rfid_reader_state')->where('id', 1)->update(['last_message' => $message, 'last_seen_at' => now()]);
+
         return compact('success', 'mode', 'message', 'status');
     }
 }

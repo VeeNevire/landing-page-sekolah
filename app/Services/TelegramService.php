@@ -131,7 +131,7 @@ class TelegramService
             return false;
         }
 
-        $this->sendMessage($chatId, 'Telegram berhasil terhubung. Anda akan menerima notifikasi nilai siswa di sini.', $bot);
+        $this->sendMessage($chatId, 'Telegram berhasil terhubung. Anda akan menerima notifikasi sekolah di sini sesuai pengaturan bot.', $bot);
 
         return true;
     }

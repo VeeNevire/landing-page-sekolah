@@ -55,6 +55,8 @@ class TelegramTemplateRegistry
     {
         return [
             ['key' => 'nama_siswa', 'label' => 'Nama Siswa', 'example' => 'Budi Santoso'],
+            ['key' => 'kelas', 'label' => 'Kelas', 'example' => 'X RPL'],
+            ['key' => 'jam_masuk', 'label' => 'Jam Masuk', 'example' => '06:48:00 WIB'],
             ['key' => 'tanggal', 'label' => 'Tanggal', 'example' => '04-09-2026'],
             ['key' => 'status', 'label' => 'Status Kehadiran', 'example' => 'Hadir'],
             ['key' => 'catatan', 'label' => 'Catatan', 'example' => '-'],

@@ -10,6 +10,7 @@
 </div>
 
 <div class="tabs">
+  <a class="tab-btn" href="{{ route('admin.rfid.notifications') }}">Notifikasi</a>
   <a class="tab-btn {{ $tab === 'today' ? 'active' : '' }}" href="{{ route('admin.rfid.index') }}">Absensi Hari Ini</a>
   <a class="tab-btn {{ $tab === 'registration' ? 'active' : '' }}" href="{{ route('admin.rfid.index', ['tab'=>'registration']) }}">Registrasi Kartu</a>
 </div>
@@ -215,7 +216,14 @@
     }
   }
 
-  if ('EventSource' in window) {
+  let pollTimer = null;
+  function startPolling() {
+    if (pollTimer !== null) return;
+    refresh();
+    pollTimer = setInterval(refresh, 5000);
+  }
+
+  if (@json($useStream) && 'EventSource' in window) {
     const source = new EventSource(withQuery(streamUrl));
     source.addEventListener('attendance', (event) => {
       try {
@@ -226,13 +234,13 @@
       }
     });
     source.onerror = () => {
-      statusEl.textContent = 'Koneksi terputus. Menyambung ulang...';
-      statusEl.classList.add('rfid-refresh-error');
+      source.close();
+      startPolling();
     };
   } else {
-    refresh();
-    setInterval(refresh, 5000);
+    startPolling();
   }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && pollTimer !== null) refresh(); });
 })();
 </script>
 @else

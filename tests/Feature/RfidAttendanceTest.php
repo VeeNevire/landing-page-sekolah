@@ -167,4 +167,13 @@ class RfidAttendanceTest extends TestCase
         $this->student->update(['rfid_uid' => '01:02:03:04:05:06:07:08:09:0A']);
         $this->scan('01:02:03:04:05:06:07:08:09:0a')->assertOk()->assertJsonPath('mode', 'already_recorded');
     }
+
+    public function test_polling_mode_keeps_today_page_available_when_streaming_is_disabled(): void
+    {
+        config(['rfid.live_stream_enabled' => false]);
+        $this->actingAs($this->admin)->get('/admin/absensi-rfid')->assertOk()->assertViewHas('useStream', false);
+        $this->getJson('/admin/absensi-rfid/stream')->assertStatus(503);
+        $this->getJson('/admin/absensi-rfid/data')->assertOk()->assertJsonStructure(['summary', 'html', 'lastScan']);
+        $this->get('/admin/absensi-rfid?tab=registration')->assertOk();
+    }
 }
