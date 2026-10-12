@@ -50,6 +50,25 @@ class RfidAttendanceTest extends TestCase
         $this->scan()->assertOk()->assertJsonPath('mode', 'attendance');
     }
 
+    public function test_device_status_reports_registration_mode(): void
+    {
+        $this->getJson('/api/rfid/status')->assertUnauthorized();
+        $this->getJson('/api/rfid/status', ['X-RFID-Token' => 'wrong'])->assertUnauthorized();
+        $status = fn () => $this->getJson('/api/rfid/status', ['X-RFID-Token' => 'test-reader-secret'])->assertOk();
+
+        $status()->assertJson(['mode' => 'attendance', 'uid_captured' => false]);
+        $session = $this->start();
+        $status()->assertJson(['mode' => 'registration', 'uid_captured' => false]);
+        $this->scan()->assertOk();
+        $status()->assertJson(['mode' => 'registration', 'uid_captured' => true])->assertJsonMissingPath('uid');
+        $this->postJson('/admin/absensi-rfid/finish', ['session' => $session, 'confirm' => false])->assertOk();
+        $status()->assertJson(['mode' => 'attendance', 'uid_captured' => false]);
+
+        $this->start();
+        $this->travel(3)->minutes();
+        $status()->assertJson(['mode' => 'attendance']);
+    }
+
     public function test_registered_card_records_once_and_keeps_first_timestamp(): void
     {
         $this->student->update(['rfid_uid' => '12:AB:34:CD']);
