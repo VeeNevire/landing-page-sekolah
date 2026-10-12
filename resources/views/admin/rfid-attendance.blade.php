@@ -32,6 +32,11 @@
 </div>
 @else
 <p class="rfid-hint">Klik <strong>Mulai Scan</strong>, lalu tempelkan kartu pada reader. Konfirmasi UID untuk menyimpan. Sesi berakhir setelah dua menit; selama registrasi, pembaca tidak mencatat absensi.</p>
+<div id="registrationSessionNotice" hidden style="padding:14px;margin-bottom:16px;border:1px solid var(--line);border-radius:12px" role="status">
+  <span id="registrationSessionMessage"></span>
+  <button type="button" class="btn btn-outline" id="registrationResume" hidden>Lanjutkan Registrasi</button>
+  <button type="button" class="btn btn-outline" id="registrationCancel" hidden>Batalkan Sesi Saya</button>
+</div>
 <section class="portal-panel">
   <div class="table-wrap">
     <table class="grade-table">
@@ -174,11 +179,10 @@
 @if($tab === 'today')
 <script>
 (() => {
-  const dataUrl = @json(route('admin.rfid.data'));
   const streamUrl = @json(route('admin.rfid.stream'));
   const region = document.getElementById('rfid-live-region');
   const statusEl = document.getElementById('rfid-refresh-status');
-  let inflight = false, seq = 0, lastHtml = null;
+  let lastHtml = null;
 
   function currentQuery() {
     const params = new URLSearchParams(window.location.search);
@@ -190,79 +194,71 @@
   }
 
   function applyHtml(json) {
+    statusEl.textContent = 'Live · diperbarui ' + json.server_time + ' WIB';
+    statusEl.classList.remove('rfid-refresh-error');
     if (json.html === lastHtml) return;
     lastHtml = json.html;
     region.innerHTML = json.html;
-    statusEl.textContent = 'Live · diperbarui ' + json.server_time + ' WIB';
-    statusEl.classList.remove('rfid-refresh-error');
   }
 
-  async function refresh() {
-    if (inflight || document.hidden) return;
-    inflight = true;
-    const mySeq = ++seq;
-    try {
-      const response = await fetch(withQuery(dataUrl), { headers: { 'Accept': 'application/json' } });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const json = await response.json();
-      if (mySeq !== seq) return;
-      applyHtml(json);
-    } catch (error) {
-      if (mySeq !== seq) return;
-      statusEl.textContent = 'Gagal memperbarui. Data terakhir tetap ditampilkan.';
+  let source = null;
+  function stopAttendanceStream() { if (source) source.close(); source = null; }
+  function connectAttendanceStream() {
+    if (source || document.hidden) return;
+    if (!@json($useStream) || !('EventSource' in window)) {
+      statusEl.textContent = 'SSE tidak tersedia. Aktifkan koneksi live dan gunakan browser terbaru.';
       statusEl.classList.add('rfid-refresh-error');
-    } finally {
-      inflight = false;
+      return;
     }
-  }
-
-  let pollTimer = null;
-  function startPolling() {
-    if (pollTimer !== null) return;
-    refresh();
-    pollTimer = setInterval(refresh, 5000);
-  }
-
-  if (@json($useStream) && 'EventSource' in window) {
-    const source = new EventSource(withQuery(streamUrl));
-    source.addEventListener('attendance', (event) => {
-      try {
-        applyHtml(JSON.parse(event.data));
-      } catch (e) {
-        statusEl.textContent = 'Gagal memperbarui. Data terakhir tetap ditampilkan.';
-        statusEl.classList.add('rfid-refresh-error');
-      }
+    const current = new EventSource(withQuery(streamUrl));
+    source = current;
+    current.addEventListener('attendance', (event) => {
+      if (source !== current) return;
+      try { applyHtml(JSON.parse(event.data)); }
+      catch (error) { statusEl.textContent = 'Respons live tidak valid. Menunggu pembaruan berikutnya.'; }
     });
-    source.onerror = () => {
-      source.close();
-      startPolling();
+    current.onerror = () => {
+      if (source !== current) return;
+      statusEl.textContent = 'Koneksi live terputus. Menyambung ulang…';
+      statusEl.classList.add('rfid-refresh-error');
     };
-  } else {
-    startPolling();
   }
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && pollTimer !== null) refresh(); });
+  connectAttendanceStream();
+  window.addEventListener('pagehide', stopAttendanceStream);
+  window.addEventListener('pageshow', connectAttendanceStream);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopAttendanceStream(); else connectAttendanceStream(); });
+
 })();
 </script>
 @else
 <script>
 (() => {
-  const urls = @json(['state'=>route('admin.rfid.state'),'start'=>route('admin.rfid.start'),'finish'=>route('admin.rfid.finish')]);
+  const urls = {stream: @json(route('admin.rfid.registration-stream')), state: @json(route('admin.rfid.state')), start: @json(route('admin.rfid.start')), finish: @json(route('admin.rfid.finish'))};
   const csrf = @json(csrf_token());
 
   async function api(url, data, method = 'POST') {
-    const response = await fetch(url, {
-      method,
-      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-      ...(method === 'GET' ? {} : { body: JSON.stringify(data) }),
-    });
-    let result = {};
-    try { result = await response.json(); } catch (e) {}
-    if (!response.ok) {
-      const err = new Error(result.message || 'Permintaan gagal. Coba lagi.');
-      err.status = response.status;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+      const response = await fetch(url, {
+        method, signal: controller.signal, cache: 'no-store',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+        ...(method === 'GET' ? {} : { body: JSON.stringify(data) }),
+      });
+      let result = {};
+      try { result = await response.json(); } catch (e) {}
+      if (!response.ok) {
+        const err = new Error(response.status === 419 || response.status === 401
+          ? 'Sesi login berakhir. Muat ulang halaman dan masuk kembali.'
+          : result.message || 'Permintaan gagal. Coba lagi.');
+        err.status = response.status;
+        throw err;
+      }
+      return result;
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('Koneksi terlalu lama. Periksa jaringan lalu coba lagi.');
       throw err;
-    }
-    return result;
+    } finally { clearTimeout(timeout); }
   }
 
   const modal = document.getElementById('cardModal');
@@ -281,7 +277,8 @@
 
   let student = null, sessionId = null, uid = null, expiresAt = null, stage = null;
   let errorMessage = '', triggerEl = null, busyNetwork = false, modalOpen = false;
-  let pollTimer = null, countdownTimer = null, pollSeq = 0;
+  let countdownTimer = null, modalVersion = 0, liveSource = null, lastStateTime = 0;
+  let backgroundState = null;
 
   function fmtCountdown(ms) {
     const s = Math.max(0, Math.floor(ms / 1000));
@@ -296,17 +293,19 @@
     saveBtn.hidden = true; saveBtn.disabled = true;
     cancelBtn.hidden = false; cancelBtn.disabled = false;
     retryBtn.hidden = true;
+    closeBtn.disabled = busyNetwork;
 
     if (stage === 'starting') {
       stageIcon.classList.add('rfid-spinner');
       stageText.textContent = 'Memulai sesi untuk ' + student.name + '...';
       stageSub.textContent = '';
+      cancelBtn.disabled = true;
     } else if (stage === 'waiting') {
       stageIcon.classList.add('rfid-wave');
       stageIcon.innerHTML = '<span class="rfid-wave-ring"></span><span class="rfid-wave-ring"></span><span class="rfid-wave-ring"></span>'
         + '<span class="rfid-wave-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>';
       stageText.textContent = 'Menunggu kartu — tempelkan pada reader';
-      stageSub.innerHTML = 'Berlaku hingga <span class="rfid-countdown" id="cardCountdown">' + fmtCountdown(expiresAt - Date.now()) + '</span>';
+      stageSub.innerHTML = 'Berlaku hingga <span class="rfid-countdown" id="cardCountdown">' + fmtCountdown(expiresAt - performance.now()) + '</span>';
     } else if (stage === 'detected') {
       stageIcon.classList.add('rfid-check');
       stageIcon.innerHTML = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
@@ -326,14 +325,14 @@
     } else if (stage === 'busy') {
       stageIcon.classList.add('rfid-warn');
       stageIcon.innerHTML = warnIcon();
-      stageText.textContent = 'Pembaca sedang digunakan Admin lain';
-      stageSub.textContent = 'Tunggu hingga sesi tersebut selesai, lalu coba lagi.';
+      stageText.textContent = 'Pembaca sedang digunakan';
+      stageSub.textContent = 'Jika sesi ini milik Anda, tutup dialog dan gunakan Batalkan Sesi Saya. Sesi admin lain perlu ditunggu hingga selesai.';
       cancelBtn.hidden = true; retryBtn.hidden = false;
     } else if (stage === 'expired') {
       stageIcon.classList.add('rfid-warn');
       stageIcon.innerHTML = warnIcon();
       stageText.textContent = 'Sesi kedaluwarsa';
-      stageSub.textContent = 'Sesi registrasi berakhir setelah dua menit tanpa kartu terdeteksi.';
+      stageSub.textContent = 'Batas dua menit berakhir. Mulai sesi baru dan tap ulang kartu.';
       cancelBtn.hidden = true; retryBtn.hidden = false;
     } else if (stage === 'error') {
       stageIcon.classList.add('rfid-warn');
@@ -354,6 +353,8 @@
   }
 
   function openModal(btn) {
+    if (modalOpen || busyNetwork) return;
+    modalVersion++;
     triggerEl = btn;
     student = { id: Number(btn.dataset.id), name: btn.dataset.name, nis: btn.dataset.nis, className: btn.dataset.class, uid: btn.dataset.uid || null };
     modalName.textContent = student.name;
@@ -368,73 +369,140 @@
     startSession();
   }
 
+  function adoptSession(res) {
+    sessionId = res.session;
+    uid = res.uid || null;
+    // A duration from the server avoids dependence on the browser clock/timezone.
+    expiresAt = performance.now() + res.remaining_seconds * 1000;
+    setStage(uid ? 'detected' : 'waiting');
+    lastStateTime = Math.max(lastStateTime, Date.parse(res.server_time) || 0);
+    updateReaderNotice(res);
+    startCountdown();
+  }
+
   async function startSession() {
+    if (busyNetwork) return;
+    const version = modalVersion;
+    busyNetwork = true;
+    setStage('starting');
     try {
       const res = await api(urls.start, { student_id: student.id });
-      if (!modalOpen) return;
-      sessionId = res.session;
-      expiresAt = Date.now() + 120000;
-      setStage('waiting');
-      startPolling();
-      startCountdown();
+      if (!modalOpen || version !== modalVersion) return;
+      if (!res.active || !res.mine || Number(res.student?.id) !== student.id) {
+        throw new Error('Sesi registrasi berubah. Coba lagi.');
+      }
+      adoptSession(res);
     } catch (err) {
-      if (!modalOpen) return;
+      if (!modalOpen || version !== modalVersion) return;
       sessionId = null;
       if (err.status === 409) setStage('busy');
       else { errorMessage = err.message; setStage('error'); }
+    } finally {
+      busyNetwork = false;
+      closeBtn.disabled = false;
+      if (backgroundState?.session === sessionId && backgroundState?.uid && (Date.parse(backgroundState.server_time) || 0) >= lastStateTime) applyModalState(backgroundState);
     }
   }
 
-  function startPolling() { stopPolling(); pollTimer = setInterval(pollState, 1500); }
-  function stopPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
   function startCountdown() { stopCountdown(); countdownTimer = setInterval(tickCountdown, 1000); }
   function stopCountdown() { if (countdownTimer) clearInterval(countdownTimer); countdownTimer = null; }
 
   function tickCountdown() {
+    if (busyNetwork || !sessionId) return;
     const el = document.getElementById('cardCountdown');
-    const remain = expiresAt - Date.now();
+    const remain = expiresAt - performance.now();
     if (remain <= 0) {
-      stopCountdown(); stopPolling(); sessionId = null;
+      stopCountdown(); sessionId = null; uid = null;
       setStage('expired');
       return;
     }
     if (el) el.textContent = fmtCountdown(remain);
   }
 
-  async function pollState() {
-    const seq = ++pollSeq;
-    try {
-      const res = await api(urls.state, null, 'GET');
-      if (!modalOpen || seq !== pollSeq || (stage !== 'waiting' && stage !== 'detected')) return;
-      if (!res.active) {
-        stopPolling(); stopCountdown(); sessionId = null;
-        setStage('expired');
-        return;
-      }
-      if (!res.mine) {
-        stopPolling(); stopCountdown(); sessionId = null;
-        setStage('busy');
-        return;
-      }
-      if (res.expires_at) expiresAt = new Date(res.expires_at.replace(' ', 'T')).getTime();
-      if (res.uid && stage === 'waiting') { uid = res.uid; setStage('detected'); }
-    } catch (e) { /* transient network issue, keep last known state and retry next tick */ }
+  function applyModalState(res) {
+    if (!modalOpen || !sessionId || busyNetwork || !['waiting', 'detected', 'error'].includes(stage)) return;
+    if (!res.active) {
+      stopCountdown(); sessionId = null; uid = null;
+      setStage('expired');
+      return;
+    }
+    if (!res.mine || res.session !== sessionId) {
+      stopCountdown(); sessionId = null; uid = null;
+      setStage('busy');
+      return;
+    }
+    expiresAt = performance.now() + res.remaining_seconds * 1000;
+    if (res.uid && (stage === 'waiting' || !uid)) { uid = res.uid; setStage('detected'); }
+    else if (!res.uid && stage === 'error') setStage('waiting');
+  }
+
+  function receiveState(res) {
+    const receivedTime = Date.parse(res.server_time) || 0;
+    if (receivedTime < lastStateTime) return;
+    lastStateTime = receivedTime;
+    backgroundState = res;
+    updateReaderNotice(res);
+    applyModalState(res);
+  }
+
+  function connectStream() {
+    if (liveSource || document.hidden) return;
+    if (!('EventSource' in window)) {
+      notice.hidden = false;
+      noticeMessage.textContent = 'Browser tidak mendukung SSE. Gunakan browser terbaru.';
+      return;
+    }
+    const source = new EventSource(urls.stream);
+    liveSource = source;
+    source.addEventListener('registration', event => {
+      if (liveSource !== source) return;
+      try { receiveState(JSON.parse(event.data)); }
+      catch (error) { notice.hidden = false; noticeMessage.textContent = 'Respons live tidak valid. Menunggu pembaruan berikutnya.'; }
+    });
+    source.onerror = () => {
+      if (liveSource !== source) return;
+      notice.hidden = false;
+      noticeMessage.textContent = 'Koneksi live terputus. Menyambung ulang otomatis…';
+    };
+  }
+
+  function stopStream() {
+    if (liveSource) liveSource.close();
+    liveSource = null;
   }
 
   async function saveCard() {
     if (!sessionId || !uid || busyNetwork) return;
     busyNetwork = true;
+    stopCountdown();
     setStage('saving');
     try {
       const res = await api(urls.finish, { session: sessionId, uid, confirm: true, approved: true });
-      stopPolling(); stopCountdown();
+      stopCountdown();
       const savedStudent = res.student;
       closeModalNow();
       updateRegistrationRow(savedStudent);
       toast(res.message || 'Kartu berhasil disimpan.');
     } catch (err) {
-      errorMessage = err.message; setStage('error');
-    } finally { busyNetwork = false; }
+      // A response can be lost after the server saved the card. Verify before reporting failure.
+      if (!err.status || err.status === 409) {
+        try {
+          const verified = await api(urls.state + '?student_id=' + student.id, null, 'GET');
+          if (verified.requested_student?.rfid_uid === uid && (!verified.active || verified.session !== sessionId)) {
+            const savedStudent = verified.requested_student;
+            closeModalNow();
+            updateRegistrationRow(savedStudent);
+            toast('Kartu berhasil disimpan.');
+            return;
+          }
+        } catch (verificationError) { /* retain the original error and allow another attempt */ }
+      }
+      if (err.status === 409) {
+        sessionId = null; uid = null; setStage('expired');
+      } else {
+        errorMessage = err.message; setStage('error'); startCountdown();
+      }
+    } finally { busyNetwork = false; closeBtn.disabled = false; }
   }
 
   async function cancelSession() {
@@ -444,15 +512,16 @@
     setStage('cancelling');
     try {
       await api(urls.finish, { session: sessionId, confirm: false });
-      stopPolling(); stopCountdown();
+      stopCountdown();
       sessionId = null;
       closeModalNow();
     } catch (err) {
-      errorMessage = err.message; setStage('error');
-    } finally { busyNetwork = false; }
+      if (err.status === 409) closeModalNow();
+      else { errorMessage = err.message; setStage('error'); }
+    } finally { busyNetwork = false; closeBtn.disabled = false; }
   }
 
-  function retry() { setStage('starting'); startSession(); }
+  function retry() { if (!busyNetwork) startSession(); }
 
   function requestClose() {
     if (busyNetwork) return;
@@ -461,7 +530,9 @@
 
   function closeModalNow() {
     modalOpen = false;
-    stopPolling(); stopCountdown();
+    modalVersion++;
+    sessionId = null; uid = null;
+    stopCountdown();
     modal.classList.remove('open');
     document.removeEventListener('keydown', onModalKeydown);
     if (triggerEl) { triggerEl.focus(); triggerEl = null; }
@@ -521,18 +592,40 @@
     });
   }));
 
-  let bgBusy = false;
-  async function backgroundPoll() {
-    if (bgBusy || modal.classList.contains('open')) return;
-    bgBusy = true;
-    try {
-      const res = await api(urls.state, null, 'GET');
-      document.querySelectorAll('.start-card').forEach(b => { b.disabled = res.active; });
-    } catch (e) { /* ignore transient errors */ }
-    bgBusy = false;
+  const notice = document.getElementById('registrationSessionNotice');
+  const noticeMessage = document.getElementById('registrationSessionMessage');
+  const resumeSessionBtn = document.getElementById('registrationResume');
+  const cancelSessionBtn = document.getElementById('registrationCancel');
+
+  function updateReaderNotice(res) {
+    document.querySelectorAll('.start-card').forEach(b => {
+      b.disabled = !res.configured || (res.active && (!res.mine || Number(b.dataset.id) !== Number(res.student?.id)));
+    });
+    notice.hidden = res.configured && !res.active;
+    noticeMessage.textContent = !res.configured ? 'Token perangkat RFID belum dikonfigurasi.'
+      : res.mine ? 'Sesi Anda masih aktif untuk ' + res.student.full_name + '. Lanjutkan atau batalkan sebelum memilih siswa lain.'
+      : 'Pembaca sedang digunakan oleh admin lain. Tunggu hingga sesi selesai.';
+    const trigger = res.mine ? document.querySelector('.start-card[data-id="' + res.student.id + '"]') : null;
+    resumeSessionBtn.hidden = !trigger;
+    cancelSessionBtn.hidden = !res.mine;
   }
-  backgroundPoll();
-  setInterval(backgroundPoll, 3000);
+  resumeSessionBtn.addEventListener('click', () => {
+    const btn = document.querySelector('.start-card[data-id="' + backgroundState?.student?.id + '"]');
+    if (btn) openModal(btn);
+  });
+  cancelSessionBtn.addEventListener('click', async () => {
+    if (busyNetwork || !backgroundState?.mine || modalOpen) return;
+    busyNetwork = true;
+    cancelSessionBtn.disabled = true;
+    try {
+      await api(urls.finish, {session: backgroundState.session, confirm: false});
+    } catch (err) { noticeMessage.textContent = err.message; }
+    finally { busyNetwork = false; cancelSessionBtn.disabled = false; }
+  });
+  connectStream();
+  window.addEventListener('pagehide', stopStream);
+  window.addEventListener('pageshow', connectStream);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopStream(); else connectStream(); });
 })();
 </script>
 @endif

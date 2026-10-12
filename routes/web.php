@@ -208,6 +208,7 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     Route::get('/absensi-rfid', [RfidAttendanceController::class, 'index'])->name('rfid.index');
     Route::get('/absensi-rfid/data', [RfidAttendanceController::class, 'data'])->name('rfid.data');
     Route::get('/absensi-rfid/stream', [RfidAttendanceController::class, 'stream'])->name('rfid.stream');
+    Route::get('/absensi-rfid/registration-stream', [RfidAttendanceController::class, 'registrationStream'])->name('rfid.registration-stream');
     Route::get('/absensi-rfid/state', [RfidAttendanceController::class, 'state'])->name('rfid.state');
     Route::post('/absensi-rfid/start', [RfidAttendanceController::class, 'start'])->name('rfid.start');
     Route::post('/absensi-rfid/finish', [RfidAttendanceController::class, 'finish'])->name('rfid.finish');

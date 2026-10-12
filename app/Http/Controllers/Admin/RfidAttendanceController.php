@@ -29,7 +29,7 @@ class RfidAttendanceController extends Controller
         $classes = Student::where('status', 'active')->distinct()->orderBy('class_name')->pluck('class_name');
         $lastScan = $this->lastScan();
 
-        $useStream = PHP_SAPI !== 'cli-server' && config('rfid.live_stream_enabled', true);
+        $useStream = config('rfid.live_stream_enabled', true);
 
         return view('admin.rfid-attendance', compact('tab', 'rows', 'classes', 'summary', 'lastScan', 'useStream'));
     }
@@ -41,9 +41,19 @@ class RfidAttendanceController extends Controller
 
     public function stream(Request $request)
     {
-        abort_if(PHP_SAPI === 'cli-server' || ! config('rfid.live_stream_enabled', true), 503, 'Gunakan pembaruan berkala pada server lokal.');
+        return $this->liveResponse('attendance', fn () => $this->todayPayload($request), ['server_time']);
+    }
 
-        return response()->stream(function () use ($request) {
+    public function registrationStream(Request $request, RfidService $rfid)
+    {
+        return $this->liveResponse('registration', fn () => $this->state($request, $rfid)->getData(true), ['remaining_seconds', 'server_time']);
+    }
+
+    private function liveResponse(string $event, callable $payload, array $volatileFields)
+    {
+        abort_unless(config('rfid.live_stream_enabled', true), 503, 'Koneksi live RFID dinonaktifkan.');
+
+        return response()->stream(function () use ($event, $payload, $volatileFields) {
             set_time_limit(0);
             @ini_set('zlib.output_compression', '0');
             if (session_status() === PHP_SESSION_ACTIVE) {
@@ -56,36 +66,34 @@ class RfidAttendanceController extends Controller
                 ob_implicit_flush(true);
             }
 
-            $lastPayload = null;
+            $lastSignature = null;
             $lastPing = time();
-
-            while (! connection_aborted()) {
-                if (app()->runningUnitTests()) {
-                    $payload = $this->todayPayload($request);
-                    echo "event: attendance\ndata: ".json_encode($payload)."\n\n";
-                    break;
-                }
-
-                $json = json_encode($this->todayPayload($request));
-                if ($json !== $lastPayload) {
-                    echo "event: attendance\ndata: {$json}\n\n";
-                    $lastPayload = $json;
+            // Bound each connection; EventSource reconnects and rechecks authentication.
+            $deadline = microtime(true) + 45;
+            echo "retry: 2000\n\n";
+            while (! connection_aborted() && microtime(true) < $deadline) {
+                $data = $payload();
+                $stable = array_diff_key($data, array_flip($volatileFields));
+                $signature = hash('sha256', json_encode($stable));
+                if ($signature !== $lastSignature) {
+                    echo "event: {$event}\ndata: ".json_encode($data)."\n\n";
+                    $lastSignature = $signature;
                     $lastPing = time();
                 } elseif (time() - $lastPing >= 15) {
                     echo ": keep-alive\n\n";
                     $lastPing = time();
                 }
-
+                if (app()->runningUnitTests()) {
+                    break;
+                }
                 @ob_flush();
                 flush();
-
                 sleep(1);
             }
         }, 200, [
             'Content-Type' => 'text/event-stream; charset=utf-8',
             'Cache-Control' => 'no-cache, no-transform',
             'X-Accel-Buffering' => 'no',
-            'Connection' => 'keep-alive',
         ]);
     }
 
@@ -123,17 +131,24 @@ class RfidAttendanceController extends Controller
 
     public function state(Request $request, RfidService $rfid)
     {
+        $request->validate(['student_id' => 'nullable|integer|min:1']);
+        $requestedStudent = $request->filled('student_id')
+            ? Student::where('status', 'active')->find($request->integer('student_id')) : null;
+
         $state = DB::table('rfid_reader_state')->where('id', 1)->first();
         $active = $state && $rfid->active($state);
         $mine = $active && (int) $state->owner_id === $request->user()->id;
 
         return response()->json([
+            'server_time' => now()->toISOString(),
             'configured' => (string) config('rfid.token') !== '',
+            'requested_student' => $requestedStudent?->only(['id', 'full_name', 'rfid_uid']),
             'active' => (bool) $active, 'mine' => (bool) $mine,
             'session' => $mine ? $state->session_id : null,
             'uid' => $mine ? $state->uid : null,
-            'student' => $mine ? Student::find($state->student_id)?->only(['full_name', 'rfid_uid']) : null,
-            'expires_at' => $mine ? $state->expires_at : null,
+            'student' => $mine ? Student::find($state->student_id)?->only(['id', 'full_name', 'rfid_uid']) : null,
+            'expires_at' => $mine ? Carbon::parse($state->expires_at)->toISOString() : null,
+            'remaining_seconds' => $mine ? max(0, (int) ceil(now()->diffInSeconds(Carbon::parse($state->expires_at), false))) : 0,
             'last_message' => $state?->last_message, 'last_seen_at' => $state?->last_seen_at,
         ])->header('Cache-Control', 'no-store');
     }
@@ -142,7 +157,10 @@ class RfidAttendanceController extends Controller
     {
         $data = $request->validate(['student_id' => 'required|integer|exists:students,id']);
 
-        return response()->json(['session' => $rfid->start($data['student_id'], $request->user()->id)]);
+        abort_if((string) config('rfid.token') === '', 503, 'Token perangkat RFID belum dikonfigurasi.');
+        $rfid->start($data['student_id'], $request->user()->id);
+
+        return $this->state($request, $rfid);
     }
 
     public function finish(Request $request, RfidService $rfid)

@@ -168,12 +168,83 @@ class RfidAttendanceTest extends TestCase
         $this->scan('01:02:03:04:05:06:07:08:09:0a')->assertOk()->assertJsonPath('mode', 'already_recorded');
     }
 
-    public function test_polling_mode_keeps_today_page_available_when_streaming_is_disabled(): void
+    public function test_pages_remain_available_when_streaming_is_disabled(): void
     {
         config(['rfid.live_stream_enabled' => false]);
         $this->actingAs($this->admin)->get('/admin/absensi-rfid')->assertOk()->assertViewHas('useStream', false);
         $this->getJson('/admin/absensi-rfid/stream')->assertStatus(503);
         $this->getJson('/admin/absensi-rfid/data')->assertOk()->assertJsonStructure(['summary', 'html', 'lastScan']);
         $this->get('/admin/absensi-rfid?tab=registration')->assertOk();
+    }
+
+    public function test_start_can_resume_own_session_without_losing_uid_or_extending_expiry(): void
+    {
+        $session = $this->start();
+        $this->scan()->assertOk();
+        $this->travel(30)->seconds();
+        $resumed = $this->postJson('/admin/absensi-rfid/start', ['student_id' => $this->student->id])
+            ->assertOk()->assertJsonPath('session', $session)->assertJsonPath('uid', '12:AB:34:CD')
+            ->assertJsonPath('student.id', $this->student->id)->assertJsonPath('remaining_seconds', 90);
+        $this->assertStringEndsWith('Z', $resumed->json('expires_at'));
+        $this->assertDatabaseCount('attendance', 0);
+        $this->postJson('/admin/absensi-rfid/finish', ['session' => $session, 'confirm' => true,
+            'approved' => true, 'uid' => '12:AB:34:CD'])->assertOk();
+    }
+
+    public function test_owner_can_recover_and_cancel_session_after_reloading_page(): void
+    {
+        $session = $this->start();
+        $this->get('/admin/absensi-rfid?tab=registration')->assertOk()->assertSee('registrationResume')->assertSee('registrationCancel');
+        $this->getJson('/admin/absensi-rfid/state')->assertOk()->assertJsonPath('mine', true)
+            ->assertJsonPath('session', $session)->assertJsonPath('student.id', $this->student->id);
+        $this->postJson('/admin/absensi-rfid/finish', ['session' => $session, 'confirm' => false])->assertOk();
+        $this->getJson('/admin/absensi-rfid/state')->assertJsonPath('active', false)->assertJsonPath('remaining_seconds', 0);
+    }
+
+    public function test_resuming_does_not_allow_owner_to_replace_another_students_active_session(): void
+    {
+        $session = $this->start();
+        $other = Student::create(['nisn' => '9876543210', 'full_name' => 'Siswa Lain', 'class_name' => 'X RPL', 'program_name' => 'RPL', 'status' => 'active']);
+        $this->postJson('/admin/absensi-rfid/start', ['student_id' => $other->id])->assertConflict();
+        $this->getJson('/admin/absensi-rfid/state')->assertJsonPath('session', $session)->assertJsonPath('student.id', $this->student->id);
+    }
+
+    public function test_registration_cannot_start_without_device_token(): void
+    {
+        config(['rfid.token' => '']);
+        $this->actingAs($this->admin)->postJson('/admin/absensi-rfid/start', ['student_id' => $this->student->id])->assertStatus(503);
+        $this->getJson('/admin/absensi-rfid/state')->assertJsonPath('active', false)->assertJsonPath('configured', false);
+    }
+
+    public function test_saved_card_can_be_verified_after_finish_response_is_lost(): void
+    {
+        $session = $this->start();
+        $this->scan()->assertOk();
+        $this->postJson('/admin/absensi-rfid/finish', ['session' => $session, 'confirm' => true,
+            'approved' => true, 'uid' => '12:AB:34:CD'])->assertOk();
+        $this->getJson('/admin/absensi-rfid/state?student_id='.$this->student->id)->assertOk()
+            ->assertJsonPath('active', false)->assertJsonPath('requested_student.id', $this->student->id)
+            ->assertJsonPath('requested_student.rfid_uid', '12:AB:34:CD');
+        $this->actingAs(User::factory()->create(['role' => 'teacher']))
+            ->getJson('/admin/absensi-rfid/state?student_id='.$this->student->id)->assertForbidden();
+    }
+
+    public function test_registration_stream_reports_captured_card_only_to_session_owner(): void
+    {
+        $session = $this->start();
+        $this->scan()->assertOk();
+        $response = $this->get('/admin/absensi-rfid/registration-stream');
+        $response->assertOk()->assertHeader('content-type', 'text/event-stream; charset=utf-8')
+            ->assertHeader('x-accel-buffering', 'no');
+        $body = $response->streamedContent();
+        $this->assertStringContainsString('event: registration', $body);
+        $this->assertStringContainsString($session, $body);
+        $this->assertStringContainsString('12:AB:34:CD', $body);
+        $other = User::factory()->create(['role' => 'principal']);
+        $otherBody = $this->actingAs($other)->get('/admin/absensi-rfid/registration-stream')->assertOk()->streamedContent();
+        $this->assertStringContainsString('"mine":false', $otherBody);
+        $this->assertStringNotContainsString($session, $otherBody);
+        $this->assertStringNotContainsString('12:AB:34:CD', $otherBody);
+        $this->actingAs(User::factory()->create(['role' => 'teacher']))->getJson('/admin/absensi-rfid/registration-stream')->assertForbidden();
     }
 }

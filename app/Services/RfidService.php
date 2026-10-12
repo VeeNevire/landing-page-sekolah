@@ -37,8 +37,13 @@ class RfidService
     public function start(int $studentId, int $ownerId): string
     {
         return $this->locked(function ($state) use ($studentId, $ownerId) {
-            abort_if($this->active($state), 409, 'Pembaca sedang digunakan untuk registrasi. Batalkan sesi atau tunggu hingga berakhir.');
             Student::where('status', 'active')->findOrFail($studentId);
+            if ($this->active($state)) {
+                if ((int) $state->owner_id === $ownerId && (int) $state->student_id === $studentId) {
+                    return $state->session_id;
+                }
+                abort(409, 'Pembaca sedang digunakan untuk registrasi. Batalkan sesi atau tunggu hingga berakhir.');
+            }
             $id = (string) Str::uuid();
             DB::table('rfid_reader_state')->where('id', 1)->update([
                 'session_id' => $id, 'student_id' => $studentId, 'owner_id' => $ownerId,
