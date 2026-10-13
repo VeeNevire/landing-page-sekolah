@@ -80,38 +80,56 @@ class RfidService
                     DB::table('rfid_reader_state')->where('id', 1)->update(['uid' => $uid]);
                 }
 
-                return $this->result(true, 'registration', 'Kartu ditangkap. Konfirmasi registrasi di Admin.');
+                return $this->result(true, 'registration', 'Kartu ditangkap. Konfirmasi registrasi di Admin.', null);
             }
             $this->clear();
             $student = Student::where('rfid_uid', $uid)->where('status', 'active')->lockForUpdate()->first();
             if (! $student) {
-                return $this->result(false, 'unknown_card', 'Kartu belum terdaftar atau siswa tidak aktif.', 404);
+                return $this->result(false, 'unknown_card', 'Kartu belum terdaftar atau siswa tidak aktif.', $uid, 404);
             }
             $date = today()->toDateString();
             if (Attendance::where('student_id', $student->id)->where('attendance_date', $date)->exists()) {
-                return $this->result(true, 'already_recorded', 'Kehadiran hari ini sudah tercatat.');
+                return $this->result(true, 'already_recorded', 'Kehadiran hari ini sudah tercatat.', $uid);
             }
             $recorder = User::where('is_active', true)->whereIn('role', ['admin', 'principal'])
                 ->when(config('rfid.recorded_by_user_id'), fn ($q, $id) => $q->whereKey($id))->orderBy('id')->first();
             if (! $recorder) {
-                return $this->result(false, 'configuration_error', 'Petugas RFID belum dikonfigurasi.', 503);
+                return $this->result(false, 'configuration_error', 'Petugas RFID belum dikonfigurasi.', $uid, 503);
             }
+            $now = now();
+            $status = $this->isLate($now) ? 'late' : 'present';
             $attendance = Attendance::firstOrCreate(['student_id' => $student->id, 'attendance_date' => $date], [
-                'status' => 'present', 'source' => 'rfid', 'check_in_at' => now(), 'recorded_by' => $recorder->id,
+                'status' => $status, 'source' => 'rfid', 'check_in_at' => $now, 'recorded_by' => $recorder->id,
             ]);
             if ($attendance->wasRecentlyCreated) {
                 app(RfidNotificationService::class)->record($attendance);
                 AuditService::log('attendance.rfid_scan', 'Attendance', $attendance->id, $student->full_name, $recorder->id);
             }
 
+            $recorded = $attendance->status === 'late' ? 'Terlambat dicatat: ' : 'Kehadiran berhasil dicatat: ';
+
             return $this->result(true, $attendance->wasRecentlyCreated ? 'attendance' : 'already_recorded',
-                $attendance->wasRecentlyCreated ? 'Kehadiran berhasil dicatat: '.$student->full_name : 'Kehadiran hari ini sudah tercatat.');
+                $attendance->wasRecentlyCreated ? $recorded.$student->full_name : 'Kehadiran hari ini sudah tercatat.', $uid);
         });
     }
 
-    private function result(bool $success, string $mode, string $message, int $status = 200): array
+    public function settings(): object
     {
-        DB::table('rfid_reader_state')->where('id', 1)->update(['last_message' => $message, 'last_seen_at' => now()]);
+        return DB::table('rfid_settings')->where('id', 1)->first()
+            ?? (object) ['late_enabled' => false, 'late_after' => null];
+    }
+
+    private function isLate(\DateTimeInterface $time): bool
+    {
+        $settings = $this->settings();
+
+        return $settings->late_enabled && $settings->late_after
+            && $time->format('H:i:s') > substr($settings->late_after.':00', 0, 8);
+    }
+
+    private function result(bool $success, string $mode, string $message, ?string $uid, int $status = 200): array
+    {
+        DB::table('rfid_reader_state')->where('id', 1)->update(['last_message' => $message, 'last_uid' => $uid, 'last_seen_at' => now()]);
 
         return compact('success', 'mode', 'message', 'status');
     }

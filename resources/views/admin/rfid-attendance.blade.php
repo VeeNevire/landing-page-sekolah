@@ -9,16 +9,16 @@
   </div>
 </div>
 
-<div class="tabs">
-  <a class="tab-btn" href="{{ route('admin.rfid.notifications') }}">Notifikasi</a>
-  <a class="tab-btn {{ $tab === 'today' ? 'active' : '' }}" href="{{ route('admin.rfid.index') }}">Absensi Hari Ini</a>
-  <a class="tab-btn {{ $tab === 'registration' ? 'active' : '' }}" href="{{ route('admin.rfid.index', ['tab'=>'registration']) }}">Registrasi Kartu</a>
-</div>
+@include('admin.partials.rfid-tabs', ['active' => $tab])
 
 <form method="GET" class="admin-toolbar">
   <input type="hidden" name="tab" value="{{ $tab }}">
+  @if($tab === 'today' && $view !== 'recorded')<input type="hidden" name="view" value="{{ $view }}">@endif
   <div class="field"><label for="rfid-search">Cari siswa</label><input id="rfid-search" name="search" value="{{ request('search') }}" placeholder="Nama, NIS atau NISN"></div>
   <div class="field"><label for="rfid-class">Kelas</label><select id="rfid-class" name="class"><option value="">Semua kelas</option>@foreach($classes as $class)<option @selected(request('class') === $class)>{{ $class }}</option>@endforeach</select></div>
+  @if($tab === 'registration')
+  <div class="field"><label for="rfid-card">Kartu</label><select id="rfid-card" name="card"><option value="">Semua</option><option value="registered" @selected(request('card') === 'registered')>Sudah terdaftar</option><option value="unregistered" @selected(request('card') === 'unregistered')>Belum terdaftar</option></select></div>
+  @endif
   <button class="btn btn-primary">Terapkan</button>
   <a class="btn btn-outline" href="{{ route('admin.rfid.index', ['tab'=>$tab]) }}">Reset</a>
 </form>
@@ -31,6 +31,7 @@
   @include('admin.partials.rfid-today-table', ['rows' => $rows, 'summary' => $summary, 'lastScan' => $lastScan])
 </div>
 @else
+<p class="rfid-card-stats"><strong>{{ $cardStats['registered'] }}</strong> dari <strong>{{ $cardStats['total'] }}</strong> siswa aktif sudah memiliki kartu RFID @if($cardStats['total'] > $cardStats['registered']) · <a href="{{ route('admin.rfid.index', array_merge(request()->only(['search', 'class']), ['tab' => 'registration', 'card' => 'unregistered'])) }}">lihat {{ $cardStats['total'] - $cardStats['registered'] }} yang belum</a>@endif</p>
 <p class="rfid-hint">Klik <strong>Mulai Scan</strong>, lalu tempelkan kartu pada reader. Konfirmasi UID untuk menyimpan. Sesi berakhir setelah dua menit; selama registrasi, pembaca tidak mencatat absensi.</p>
 <div id="registrationSessionNotice" hidden style="padding:14px;margin-bottom:16px;border:1px solid var(--line);border-radius:12px" role="status">
   <span id="registrationSessionMessage"></span>
@@ -123,6 +124,21 @@
   .rfid-stat-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
   .rfid-stat-label{display:block;color:var(--muted);font-size:.82rem;font-weight:700}
   .rfid-stat-value{display:block;font-size:1.9rem;font-weight:900;margin-top:6px}
+  .rfid-stat-link{color:inherit;text-decoration:none;transition:border-color .15s,box-shadow .15s}
+  .rfid-stat-link:hover,.rfid-stat-link:focus-visible{border-color:var(--primary-2)}
+  .rfid-stat-link.active{border-color:var(--primary-2);box-shadow:0 0 0 2px color-mix(in srgb,var(--primary-2) 25%,transparent)}
+  .rfid-card-stats{margin:-4px 0 8px;font-size:.92rem}
+
+  .rfid-lastscan-body{flex:1;min-width:0}
+  .rfid-reader-badge{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 10px;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap}
+  .rfid-reader-badge small{font-weight:600;opacity:.85}
+  .rfid-reader-badge.online{background:color-mix(in srgb,var(--success) 14%,var(--card));color:var(--success)}
+  .rfid-reader-badge.offline{background:color-mix(in srgb,var(--danger) 12%,var(--card));color:var(--danger)}
+  .rfid-reader-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+  .rfid-reader-badge.online .rfid-reader-dot{animation:rfidPulse 1.6s ease-in-out infinite}
+  @keyframes rfidPulse{50%{opacity:.35}}
+  tr.rfid-row-new td{animation:rfidRowFlash 2.4s ease-out}
+  @keyframes rfidRowFlash{0%,40%{background:color-mix(in srgb,var(--success) 18%,var(--card))}100%{background:transparent}}
 
   .rfid-lastscan{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:0 0 18px}
   .rfid-lastscan-icon{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-2) 12%,var(--card));color:var(--primary-2)}
@@ -164,12 +180,13 @@
   .rfid-warn svg{width:28px;height:28px}
 
   @media (prefers-reduced-motion: reduce){
-    .rfid-spinner,.rfid-wave-ring,.rfid-check{animation:none!important}
+    .rfid-spinner,.rfid-wave-ring,.rfid-check,.rfid-reader-dot,tr.rfid-row-new td{animation:none!important}
     .rfid-wave-ring{opacity:.35}
   }
 
   @media (max-width:640px){
     .action-cell{flex-direction:column;align-items:stretch}
+    .rfid-lastscan{flex-wrap:wrap}
     .rfid-btn-sm{width:100%}
   }
 </style>
@@ -183,6 +200,11 @@
   const region = document.getElementById('rfid-live-region');
   const statusEl = document.getElementById('rfid-refresh-status');
   let lastHtml = null;
+  let lastScanAt = @json($lastScan['seen_at'] ?? null);
+
+  function rowIds() {
+    return new Set(Array.from(region.querySelectorAll('tr[data-attendance-id]'), tr => tr.dataset.attendanceId));
+  }
 
   function currentQuery() {
     const params = new URLSearchParams(window.location.search);
@@ -197,8 +219,18 @@
     statusEl.textContent = 'Live · diperbarui ' + json.server_time + ' WIB';
     statusEl.classList.remove('rfid-refresh-error');
     if (json.html === lastHtml) return;
+    const before = lastHtml === null ? null : rowIds();
     lastHtml = json.html;
     region.innerHTML = json.html;
+    if (before) region.querySelectorAll('tr[data-attendance-id]').forEach(tr => {
+      if (!before.has(tr.dataset.attendanceId)) tr.classList.add('rfid-row-new');
+    });
+    const scan = json.lastScan || {};
+    if (scan.seen_at && scan.seen_at !== lastScanAt && scan.message && window.Swal) {
+      Swal.fire({ toast: true, position: 'top-end', icon: scan.unregistered ? 'warning' : 'success',
+        title: scan.message, showConfirmButton: false, timer: 3000 });
+    }
+    lastScanAt = scan.seen_at || lastScanAt;
   }
 
   let source = null;
@@ -310,7 +342,8 @@
       stageIcon.classList.add('rfid-check');
       stageIcon.innerHTML = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
       stageText.textContent = 'Kartu terdeteksi';
-      stageSub.innerHTML = 'UID: <code>' + uid + '</code>' + (student.uid ? '<br>Kartu lama <code>' + student.uid + '</code> akan diganti.' : '');
+      stageSub.replaceChildren('UID: ', codeEl(uid));
+      if (student.uid) stageSub.append(document.createElement('br'), 'Kartu lama ', codeEl(student.uid), ' akan diganti.');
       saveBtn.hidden = false; saveBtn.disabled = false;
     } else if (stage === 'saving') {
       stageIcon.classList.add('rfid-spinner');
@@ -346,6 +379,12 @@
         cancelBtn.hidden = true; retryBtn.hidden = false;
       }
     }
+  }
+
+  function codeEl(text) {
+    const el = document.createElement('code');
+    el.textContent = text;
+    return el;
   }
 
   function warnIcon() {
@@ -555,7 +594,7 @@
     if (!s) return;
     const row = document.getElementById('reg-row-' + s.id);
     if (!row) return;
-    row.querySelector('.uid-cell').innerHTML = '<code>' + (s.rfid_uid || 'Belum terdaftar') + '</code>';
+    row.querySelector('.uid-cell').replaceChildren(codeEl(s.rfid_uid || 'Belum terdaftar'));
     const startBtn = row.querySelector('.start-card');
     startBtn.dataset.uid = s.rfid_uid || '';
     startBtn.textContent = s.rfid_uid ? 'Ganti Kartu' : 'Mulai Scan';

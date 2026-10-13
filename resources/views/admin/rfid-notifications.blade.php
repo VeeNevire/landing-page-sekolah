@@ -2,11 +2,7 @@
 @section('title', 'Notifikasi RFID')
 @section('content')
 <div class="portal-heading"><div><span class="kicker">Kehadiran siswa</span><h1>Notifikasi RFID</h1><p>Notifikasi aplikasi tetap tersedia untuk siswa dan wali, termasuk wali yang belum menghubungkan Telegram.</p></div></div>
-<div class="tabs">
-  <a class="tab-btn" href="{{ route('admin.rfid.index') }}">Absensi Hari Ini</a>
-  <a class="tab-btn" href="{{ route('admin.rfid.index', ['tab'=>'registration']) }}">Registrasi Kartu</a>
-  <a class="tab-btn active" href="{{ route('admin.rfid.notifications') }}">Notifikasi</a>
-</div>
+@include('admin.partials.rfid-tabs', ['active' => 'notifications'])
 @if(session('success'))<p role="status">{{ session('success') }}</p>@endif
 @if($errors->any())<p role="alert">{{ $errors->first() }}</p>@endif
 <section class="portal-panel" style="margin-bottom:20px">

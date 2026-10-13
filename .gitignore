@@ -27,3 +27,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Sketch ESP32 berisi token & password Wi-Fi asli
+*.local.ino

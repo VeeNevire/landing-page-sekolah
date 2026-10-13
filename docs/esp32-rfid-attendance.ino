@@ -11,10 +11,25 @@ const char* ssid = "investa";
 const char* password = "investa1";
 // Jalankan Laravel: php artisan serve --host=0.0.0.0 --port=8000
 const char* serverUrl = "http://192.168.1.12:8000/api/rfid/scan";
+// Heartbeat agar Admin melihat status reader online/offline.
+const char* statusUrl = "http://192.168.1.12:8000/api/rfid/status";
 const char* deviceToken = "ISI_TOKEN_DARI_ENV_SERVER";
 String lastUid;
 unsigned long lastScan = 0;
 unsigned long lastReconnect = 0;
+unsigned long lastHeartbeat = 0;
+
+void sendHeartbeat() {
+  HTTPClient http;
+  http.setConnectTimeout(2000);
+  http.setTimeout(3000);
+  http.begin(statusUrl);
+  http.addHeader("Accept", "application/json");
+  http.addHeader("X-RFID-Token", deviceToken);
+  int code = http.GET();
+  if (code != 200) Serial.printf("Heartbeat gagal | HTTP: %d\n", code);
+  http.end();
+}
 
 void setup() {
   Serial.begin(115200);
@@ -45,6 +60,10 @@ void loop() {
     Serial.println(WiFi.localIP());
     Serial.println("Tempelkan kartu...");
     connectionReported = true;
+  }
+  if (millis() - lastHeartbeat >= 10000 || lastHeartbeat == 0) {
+    lastHeartbeat = millis();
+    sendHeartbeat();
   }
   if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) return;
   String uid;

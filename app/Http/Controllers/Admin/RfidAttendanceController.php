@@ -13,25 +13,26 @@ use Illuminate\Support\Facades\DB;
 
 class RfidAttendanceController extends Controller
 {
-    public function index(Request $request, RfidService $rfid)
+    private const VIEWS = ['recorded', 'unrecorded', 'present', 'late'];
+
+    public function index(Request $request)
     {
         $tab = $request->query('tab') === 'registration' ? 'registration' : 'today';
-        $students = Student::where('status', 'active')
-            ->when($request->query('class'), fn ($q, $v) => $q->where('class_name', $v))
-            ->when($request->query('search'), fn ($q, $v) => $q->where(fn ($q) => $q
-                ->where('full_name', 'like', '%'.$v.'%')->orWhere('nis', 'like', '%'.$v.'%')->orWhere('nisn', 'like', '%'.$v.'%')));
-        $records = Attendance::where('attendance_date', today()->toDateString())->whereIn('student_id', (clone $students)->select('id'));
-        $summary = ['active' => (clone $students)->count(), 'recorded' => (clone $records)->count(),
-            'present' => (clone $records)->where('status', 'present')->count()];
-        $summary['unrecorded'] = $summary['active'] - $summary['recorded'];
-        $rows = $tab === 'registration' ? $students->orderBy('full_name')->paginate(20)->withQueryString()
-            : $records->with('student')->orderByDesc('check_in_at')->orderByDesc('id')->paginate(30)->withQueryString();
         $classes = Student::where('status', 'active')->distinct()->orderBy('class_name')->pluck('class_name');
-        $lastScan = $this->lastScan();
-
         $useStream = config('rfid.live_stream_enabled', true);
 
-        return view('admin.rfid-attendance', compact('tab', 'rows', 'classes', 'summary', 'lastScan', 'useStream'));
+        if ($tab === 'registration') {
+            $students = $this->filteredStudents($request);
+            $cardStats = ['total' => (clone $students)->count(), 'registered' => (clone $students)->whereNotNull('rfid_uid')->count()];
+            $rows = $students
+                ->when($request->query('card') === 'registered', fn ($q) => $q->whereNotNull('rfid_uid'))
+                ->when($request->query('card') === 'unregistered', fn ($q) => $q->whereNull('rfid_uid'))
+                ->orderBy('full_name')->paginate(20)->withQueryString();
+
+            return view('admin.rfid-attendance', compact('tab', 'rows', 'classes', 'cardStats', 'useStream'));
+        }
+
+        return view('admin.rfid-attendance', array_merge($this->todayData($request), compact('tab', 'classes', 'useStream')));
     }
 
     public function data(Request $request)
@@ -41,19 +42,43 @@ class RfidAttendanceController extends Controller
 
     public function stream(Request $request)
     {
-        return $this->liveResponse('attendance', fn () => $this->todayPayload($request), ['server_time']);
+        return $this->liveResponse('attendance', fn () => $this->todayPayload($request), fn () => $this->todaySignature());
     }
 
     public function registrationStream(Request $request, RfidService $rfid)
     {
-        return $this->liveResponse('registration', fn () => $this->state($request, $rfid)->getData(true), ['remaining_seconds', 'server_time']);
+        return $this->liveResponse('registration', fn () => $this->state($request, $rfid)->getData(true), null, ['remaining_seconds', 'server_time']);
     }
 
-    private function liveResponse(string $event, callable $payload, array $volatileFields)
+    public function settings(RfidService $rfid)
+    {
+        return view('admin.rfid-settings', ['settings' => $rfid->settings()]);
+    }
+
+    public function saveSettings(Request $request)
+    {
+        $data = $request->validate([
+            'late_enabled' => 'nullable|boolean',
+            'late_after' => 'nullable|required_if_accepted:late_enabled|date_format:H:i',
+        ]);
+        DB::table('rfid_settings')->updateOrInsert(['id' => 1], [
+            'late_enabled' => (bool) ($data['late_enabled'] ?? false),
+            'late_after' => isset($data['late_after']) ? $data['late_after'].':00' : null,
+            'updated_at' => now(),
+        ]);
+        AuditService::log('rfid.settings_update', null, null, null, $request->user()->id);
+
+        return back()->with('success', 'Pengaturan absensi RFID disimpan. Berlaku untuk scan berikutnya.');
+    }
+
+    /**
+     * When $signature is given it acts as a cheap change detector, so the payload is only built after a change.
+     */
+    private function liveResponse(string $event, callable $payload, ?callable $signature = null, array $volatileFields = [])
     {
         abort_unless(config('rfid.live_stream_enabled', true), 503, 'Koneksi live RFID dinonaktifkan.');
 
-        return response()->stream(function () use ($event, $payload, $volatileFields) {
+        return response()->stream(function () use ($event, $payload, $signature, $volatileFields) {
             set_time_limit(0);
             @ini_set('zlib.output_compression', '0');
             if (session_status() === PHP_SESSION_ACTIVE) {
@@ -72,12 +97,12 @@ class RfidAttendanceController extends Controller
             $deadline = microtime(true) + 45;
             echo "retry: 2000\n\n";
             while (! connection_aborted() && microtime(true) < $deadline) {
-                $data = $payload();
-                $stable = array_diff_key($data, array_flip($volatileFields));
-                $signature = hash('sha256', json_encode($stable));
-                if ($signature !== $lastSignature) {
-                    echo "event: {$event}\ndata: ".json_encode($data)."\n\n";
-                    $lastSignature = $signature;
+                $data = $signature ? null : $payload();
+                $current = $signature ? $signature()
+                    : hash('sha256', json_encode(array_diff_key($data, array_flip($volatileFields))));
+                if ($current !== $lastSignature) {
+                    echo "event: {$event}\ndata: ".json_encode($data ?? $payload())."\n\n";
+                    $lastSignature = $current;
                     $lastPing = time();
                 } elseif (time() - $lastPing >= 15) {
                     echo ": keep-alive\n\n";
@@ -97,35 +122,80 @@ class RfidAttendanceController extends Controller
         ]);
     }
 
-    private function todayPayload(Request $request): array
+    private function filteredStudents(Request $request)
     {
-        $students = Student::where('status', 'active')
+        return Student::where('status', 'active')
             ->when($request->query('class'), fn ($q, $v) => $q->where('class_name', $v))
             ->when($request->query('search'), fn ($q, $v) => $q->where(fn ($q) => $q
                 ->where('full_name', 'like', '%'.$v.'%')->orWhere('nis', 'like', '%'.$v.'%')->orWhere('nisn', 'like', '%'.$v.'%')));
+    }
+
+    private function todayData(Request $request): array
+    {
+        $view = in_array($request->query('view'), self::VIEWS, true) ? $request->query('view') : 'recorded';
+        $students = $this->filteredStudents($request);
         $records = Attendance::where('attendance_date', today()->toDateString())->whereIn('student_id', (clone $students)->select('id'));
         $summary = ['active' => (clone $students)->count(), 'recorded' => (clone $records)->count(),
-            'present' => (clone $records)->where('status', 'present')->count()];
+            'present' => (clone $records)->where('status', 'present')->count(),
+            'late' => (clone $records)->where('status', 'late')->count()];
         $summary['unrecorded'] = $summary['active'] - $summary['recorded'];
-        $rows = $records->with('student')->orderByDesc('check_in_at')->orderByDesc('id')->paginate(30)->withQueryString();
-        $lastScan = $this->lastScan();
-        $html = view('admin.partials.rfid-today-table', compact('rows', 'summary', 'lastScan'))->render();
+
+        $rows = $view === 'unrecorded'
+            ? $students->whereNotIn('id', (clone $records)->select('student_id'))->orderBy('class_name')->orderBy('full_name')
+            : $records->with('student')->when(in_array($view, ['present', 'late'], true), fn ($q) => $q->where('status', $view))
+                ->orderByDesc('check_in_at')->orderByDesc('id');
+        // The live stream renders this table too, so links must point at the page rather than the stream URL.
+        $rows = $rows->paginate(30)->withPath(route('admin.rfid.index'))->withQueryString();
+
+        return ['view' => $view, 'rows' => $rows, 'summary' => $summary,
+            'filters' => array_filter($request->only(['search', 'class'])),
+            'lastScan' => $this->lastScan(), 'reader' => $this->readerStatus()];
+    }
+
+    private function todayPayload(Request $request): array
+    {
+        $data = $this->todayData($request);
 
         return [
-            'summary' => $summary,
-            'html' => $html,
-            'lastScan' => $lastScan,
+            'summary' => $data['summary'],
+            'html' => view('admin.partials.rfid-today-table', $data)->render(),
+            'lastScan' => $data['lastScan'],
             'server_time' => now()->format('H:i:s'),
         ];
+    }
+
+    private function todaySignature(): string
+    {
+        $today = today()->toDateString();
+        $attendance = Attendance::where('attendance_date', $today)
+            ->selectRaw('count(*) as total, max(updated_at) as changed, max(id) as last_id')->first();
+        $state = DB::table('rfid_reader_state')->where('id', 1)->first(['last_message', 'last_uid', 'last_seen_at']);
+
+        return hash('sha256', json_encode([$today, $attendance?->toArray(), $state,
+            Student::max('updated_at'), $this->readerStatus()['online']]));
     }
 
     private function lastScan(): array
     {
         $state = DB::table('rfid_reader_state')->where('id', 1)->first();
+        $uid = $state?->last_uid;
 
         return [
             'message' => $state?->last_message,
             'seen_at' => $state?->last_seen_at ? Carbon::parse($state->last_seen_at)->format('H:i:s') : null,
+            'uid' => $uid,
+            'unregistered' => $uid !== null && ! Student::where('rfid_uid', $uid)->where('status', 'active')->exists(),
+        ];
+    }
+
+    private function readerStatus(): array
+    {
+        $seen = DB::table('rfid_reader_state')->where('id', 1)->value('device_seen_at');
+        $seen = $seen ? Carbon::parse($seen) : null;
+
+        return [
+            'online' => $seen !== null && $seen->gt(now()->subSeconds((int) config('rfid.device_offline_after', 30))),
+            'seen_at' => $seen ? ($seen->isToday() ? $seen->format('H:i:s') : $seen->format('d/m/Y H:i')) : null,
         ];
     }
 

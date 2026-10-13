@@ -143,9 +143,9 @@ class RfidAttendanceTest extends TestCase
         $this->student->update(['rfid_uid' => '12:AB:34:CD']);
         $this->scan()->assertOk();
         $this->actingAs($this->admin)->get('/admin/absensi-rfid')->assertOk()->assertSee('Siswa RFID')
-            ->assertViewHas('summary', fn ($s) => $s === ['active' => 1, 'recorded' => 1, 'present' => 1, 'unrecorded' => 0]);
+            ->assertViewHas('summary', fn ($s) => $s === ['active' => 1, 'recorded' => 1, 'present' => 1, 'late' => 0, 'unrecorded' => 0]);
         $this->get('/admin/absensi-rfid?class=OTHER')->assertOk()->assertSee('Belum Ada Absensi')
-            ->assertViewHas('summary', fn ($s) => $s === ['active' => 0, 'recorded' => 0, 'present' => 0, 'unrecorded' => 0]);
+            ->assertViewHas('summary', fn ($s) => $s === ['active' => 0, 'recorded' => 0, 'present' => 0, 'late' => 0, 'unrecorded' => 0]);
         $this->get('/admin/absensi-rfid?tab=registration&search=20260001')->assertOk()->assertSee('Siswa RFID');
         $this->actingAs(User::factory()->create(['role' => 'principal']))->get('/admin/absensi-rfid')->assertOk();
         $this->actingAs(User::factory()->create(['role' => 'teacher']))->getJson('/admin/absensi-rfid/state')->assertForbidden();
@@ -265,5 +265,76 @@ class RfidAttendanceTest extends TestCase
         $this->assertStringNotContainsString($session, $otherBody);
         $this->assertStringNotContainsString('12:AB:34:CD', $otherBody);
         $this->actingAs(User::factory()->create(['role' => 'teacher']))->getJson('/admin/absensi-rfid/registration-stream')->assertForbidden();
+    }
+
+    private function enableLate(?string $after): void
+    {
+        $this->actingAs($this->admin)->post('/admin/absensi-rfid/pengaturan', ['late_enabled' => $after ? 1 : 0, 'late_after' => $after])
+            ->assertRedirect()->assertSessionHasNoErrors();
+    }
+
+    public function test_late_threshold_is_configurable_from_admin(): void
+    {
+        $this->student->update(['rfid_uid' => '12:AB:34:CD']);
+        $this->actingAs($this->admin)->post('/admin/absensi-rfid/pengaturan', ['late_enabled' => 1])->assertSessionHasErrors('late_after');
+        $this->actingAs(User::factory()->create(['role' => 'teacher']))->postJson('/admin/absensi-rfid/pengaturan', ['late_enabled' => 0])->assertForbidden();
+
+        $this->enableLate('07:15');
+        $this->actingAs($this->admin)->get('/admin/absensi-rfid/pengaturan')->assertOk()->assertSee('07:15');
+
+        $this->travelTo(today()->setTime(7, 15, 0));
+        $this->scan()->assertOk();
+        $this->assertSame('present', Attendance::latest('id')->first()->status);
+
+        $this->travelTo(today()->addDay()->setTime(7, 15, 1));
+        $this->scan()->assertOk()->assertJsonPath('message', 'Terlambat dicatat: Siswa RFID');
+        $this->assertSame('late', Attendance::latest('id')->first()->status);
+        $this->actingAs($this->admin)->get('/admin/absensi-rfid?view=late')->assertOk()->assertSee('Terlambat')
+            ->assertViewHas('summary', fn ($s) => $s['late'] === 1 && $s['present'] === 0);
+
+        $this->enableLate(null);
+        $this->travelTo(today()->addDay()->setTime(9, 0));
+        $this->scan()->assertOk();
+        $this->assertSame('present', Attendance::latest('id')->first()->status);
+    }
+
+    public function test_unrecorded_view_lists_students_without_attendance(): void
+    {
+        $other = Student::create(['nisn' => '5555555555', 'full_name' => 'Siswa Belum Hadir', 'class_name' => 'X RPL', 'program_name' => 'RPL', 'status' => 'active']);
+        $this->student->update(['rfid_uid' => '12:AB:34:CD']);
+        $this->scan()->assertOk();
+        $this->actingAs($this->admin)->get('/admin/absensi-rfid?view=unrecorded')->assertOk()
+            ->assertSee($other->full_name)->assertDontSee('<strong>Siswa RFID</strong>', false);
+    }
+
+    public function test_live_table_pagination_links_point_to_admin_page(): void
+    {
+        for ($i = 0; $i < 31; $i++) {
+            $s = Student::create(['nisn' => (string) (2000000000 + $i), 'full_name' => 'Siswa '.$i, 'class_name' => 'X RPL', 'program_name' => 'RPL', 'status' => 'active']);
+            Attendance::create(['student_id' => $s->id, 'attendance_date' => today(), 'status' => 'present', 'recorded_by' => $this->admin->id]);
+        }
+        $html = html_entity_decode($this->actingAs($this->admin)->getJson('/admin/absensi-rfid/data')->assertOk()->json('html'));
+        $this->assertStringContainsString(route('admin.rfid.index').'?page=2', $html);
+        $this->assertStringNotContainsString('/absensi-rfid/data?page', $html);
+    }
+
+    public function test_unknown_card_uid_and_reader_heartbeat_are_shown(): void
+    {
+        $this->actingAs($this->admin)->get('/admin/absensi-rfid')->assertSee('Reader offline')->assertSee('belum pernah terhubung');
+        $this->getJson('/api/rfid/status', ['X-RFID-Token' => 'test-reader-secret'])->assertOk();
+        $this->scan('AA:BB:CC:DD')->assertNotFound();
+        $this->actingAs($this->admin)->get('/admin/absensi-rfid')->assertOk()
+            ->assertSee('Reader online')->assertSee('AA:BB:CC:DD')->assertSee('Daftarkan kartu ini');
+        $this->travel(31)->seconds();
+        $this->get('/admin/absensi-rfid')->assertSee('Reader offline');
+    }
+
+    public function test_registration_tab_filters_by_card_status(): void
+    {
+        Student::create(['nisn' => '7777777777', 'full_name' => 'Punya Kartu', 'class_name' => 'X RPL', 'program_name' => 'RPL', 'status' => 'active', 'rfid_uid' => 'AA:BB:CC:DD']);
+        $this->actingAs($this->admin)->get('/admin/absensi-rfid?tab=registration&card=unregistered')->assertOk()
+            ->assertSee('Siswa RFID')->assertDontSee('Punya Kartu')
+            ->assertViewHas('cardStats', ['total' => 2, 'registered' => 1]);
+        $this->get('/admin/absensi-rfid?tab=registration&card=registered')->assertSee('Punya Kartu')->assertDontSee('Siswa RFID');
     }
 }

@@ -205,6 +205,8 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     Route::get('/absensi-rfid/notifikasi', [RfidNotificationController::class, 'index'])->name('rfid.notifications');
     Route::post('/absensi-rfid/notifikasi', [RfidNotificationController::class, 'save'])->name('rfid.notifications.save');
     Route::post('/absensi-rfid/notifikasi/{delivery}/retry', [RfidNotificationController::class, 'retry'])->name('rfid.notifications.retry');
+    Route::get('/absensi-rfid/pengaturan', [RfidAttendanceController::class, 'settings'])->name('rfid.settings');
+    Route::post('/absensi-rfid/pengaturan', [RfidAttendanceController::class, 'saveSettings'])->name('rfid.settings.save');
     Route::get('/absensi-rfid', [RfidAttendanceController::class, 'index'])->name('rfid.index');
     Route::get('/absensi-rfid/data', [RfidAttendanceController::class, 'data'])->name('rfid.data');
     Route::get('/absensi-rfid/stream', [RfidAttendanceController::class, 'stream'])->name('rfid.stream');

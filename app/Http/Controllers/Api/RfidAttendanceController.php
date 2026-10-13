@@ -39,5 +39,6 @@ class RfidAttendanceController extends Controller
     {
         $token = (string) config('rfid.token');
         abort_if($token === '' || ! hash_equals($token, (string) $request->header('X-RFID-Token')), 401, 'Token perangkat tidak valid.');
+        DB::table('rfid_reader_state')->where('id', 1)->update(['device_seen_at' => now()]);
     }
 }

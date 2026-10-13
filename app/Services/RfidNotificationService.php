@@ -21,7 +21,8 @@ class RfidNotificationService
         $student = $attendance->student;
         $date = $attendance->attendance_date->format('d-m-Y');
         $time = $attendance->check_in_at->format('H:i:s');
-        $body = "Kehadiran {$student->full_name} ({$student->class_name}) tercatat melalui RFID pada {$date} pukul {$time} WIB. Status: Hadir.";
+        $status = $attendance->status === 'late' ? 'Terlambat' : 'Hadir';
+        $body = "Kehadiran {$student->full_name} ({$student->class_name}) tercatat melalui RFID pada {$date} pukul {$time} WIB. Status: {$status}.";
         Notification::create([
             'student_id' => $student->id, 'attendance_id' => $attendance->id,
             'type' => 'success', 'title' => 'Kehadiran RFID tercatat', 'body' => $body,
@@ -36,7 +37,7 @@ class RfidNotificationService
             '{{kelas}}' => $student->class_name,
             '{{tanggal}}' => $date,
             '{{jam_masuk}}' => $time.' WIB',
-            '{{status}}' => 'Hadir',
+            '{{status}}' => $status,
             '{{catatan}}' => 'Kehadiran tercatat melalui RFID.',
             '{{guru}}' => $attendance->recorder?->full_name ?: $attendance->recorder?->name ?: '-',
             '{{link_detail}}' => route('portal.kehadiran', ['student_id' => $student->id]),
