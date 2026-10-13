@@ -101,6 +101,9 @@
         <a href="{{ route('admin.rfid.index') }}" @class(['active' => request()->routeIs('admin.rfid.*')])>
           <span class="portal-menu-icon">▣</span><span class="portal-menu-label">Absensi RFID</span>
         </a>
+        <a href="{{ route('admin.attendance-recap.index') }}" @class(['active' => request()->routeIs('admin.attendance-recap.*')])>
+          <span class="portal-menu-icon">▤</span><span class="portal-menu-label">Rekap Absensi</span>
+        </a>
         <a href="{{ route('admin.subjects.index') }}"
           @class(['active'=> request()->routeIs('admin.subjects.*')])>
           <span class="portal-menu-icon">

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\PklController;
+use App\Http\Controllers\Admin\AttendanceRecapController;
 use App\Http\Controllers\Admin\RfidAttendanceController;
 use App\Http\Controllers\Admin\RfidNotificationController;
 use App\Http\Controllers\Admin\TelegramController as AdminTelegramController;
@@ -205,6 +206,9 @@ Route::middleware(['auth', 'role:admin,principal'])->prefix('admin')->name('admi
     Route::get('/absensi-rfid/notifikasi', [RfidNotificationController::class, 'index'])->name('rfid.notifications');
     Route::post('/absensi-rfid/notifikasi', [RfidNotificationController::class, 'save'])->name('rfid.notifications.save');
     Route::post('/absensi-rfid/notifikasi/{delivery}/retry', [RfidNotificationController::class, 'retry'])->name('rfid.notifications.retry');
+    Route::get('/rekap-absensi', [AttendanceRecapController::class, 'index'])->name('attendance-recap.index');
+    Route::get('/rekap-absensi/pdf', [AttendanceRecapController::class, 'pdf'])->name('attendance-recap.pdf');
+    Route::get('/rekap-absensi/excel', [AttendanceRecapController::class, 'excel'])->name('attendance-recap.excel');
     Route::get('/absensi-rfid/pengaturan', [RfidAttendanceController::class, 'settings'])->name('rfid.settings');
     Route::post('/absensi-rfid/pengaturan', [RfidAttendanceController::class, 'saveSettings'])->name('rfid.settings.save');
     Route::get('/absensi-rfid', [RfidAttendanceController::class, 'index'])->name('rfid.index');

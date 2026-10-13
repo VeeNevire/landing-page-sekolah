@@ -40,3 +40,7 @@ ESP32 dapat memakai adaptor USB, tetapi server dan Wi-Fi harus tetap hidup. Tida
 ## Verifikasi perangkat
 
 Daftarkan kartu percobaan, konfirmasi, lalu tap kembali dan cek satu baris Hadir. Tap ulang untuk memastikan tidak terduplikasi. Coba kartu tak dikenal, token salah, registrasi dengan dua browser Admin, batal/kedaluwarsa, serta kartu yang sudah terikat. Pengujian otomatis server: `php artisan test --filter=RfidAttendanceTest` memakai database pengujian terpisah.
+
+## Rekap Absensi
+
+Menu **Akademik → Rekap Absensi** (Admin/Kepala Sekolah) menampilkan rekap per siswa untuk rentang tanggal: Hadir, Terlambat, Sakit, Izin, Alpa, Belum Tercatat, dan % kehadiran. Data mencakup absensi RFID dan input manual guru. Filter periode (maks. 366 hari), kelas, dan nama/NIS; tombol **Unduh PDF** (A4 landscape) dan **Unduh Excel** (.xlsx, bisa di-import ke Google Sheets) memakai filter yang sedang aktif. Hari efektif adalah tanggal yang memiliki minimal satu catatan absensi, sehingga hari libur tidak dihitung.
